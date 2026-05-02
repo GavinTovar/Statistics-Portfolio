@@ -1,0 +1,436 @@
+---
+title: "(ST 412/512) Lab 5 <br> Case Influence Statistics"
+format:
+  revealjs:
+    incremental: TRUE
+    scrollable: TRUE
+    theme: dark
+    transition: concave
+    transition-speed: slow
+    auto-animate: TRUE
+    chalkboard: TRUE
+header-includes:
+  - |
+    <style>
+      .reveal .barelysmaller {
+          font-size: 0.90em;  /* Adjust as needed */
+        }
+      
+      .reveal .smaller {
+        font-size: 0.75em;  /* Adjust as needed */
+      }
+
+      .reveal .tiny-font {
+        font-size: 0.5em;  /* Even smaller font size */
+        white-space: nowrap;
+        overflow-x: auto;  /* Allow horizontal scrolling */
+      }
+    </style>
+---
+
+
+## Lab Objectives
+* Case Influence Statistics
+* Partial Residual Plots
+
+## Loading Data and Packages {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+library(Sleuth3)
+library(ggplot2)
+```
+
+## Dataset {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+* `case1102` (The Blood–Brain Barrier)
+  * The human brain is protected from bacteria and toxins, which course through the blood–stream, by a single layer of cells called the blood–brain barrier. These data come from an experiment (on rats, which possess a similar barrier) to study a method of disrupting the barrier by infusing a solution of concentrated sugars.
+  * 34 observations (rows)
+  * 9 variables (columns)
+    * `Brain`: Brain tumor count (per gm)
+    * `Liver`: Liver count (per gm)
+    * `Time`: Sacrifice time (in hours)
+    * Etc.
+
+## Dataset {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+case1102
+```
+
+## Dataset {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Rename dataset (technically copying under a different name)
+Data <- case1102
+```
+
+## Dataset {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+### Adjusting some variables
+# Setting up response variable
+Data$Antibody <- log(Data$Brain/Data$Liver)
+```
+
+## Dataset {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+### Adjusting some variables
+# Setting up response variable
+Data$Antibody <- log(Data$Brain/Data$Liver)
+
+# Turning sacrifice time and days to categorical variables
+Data$Sac <- as.factor(Data$Time)
+Data$Days <- as.factor(Data$Days)
+```
+
+## Fitting Linear Model {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Create linear model
+lin_mod <- lm(Antibody ~ Sac*Treatment + Days + Sex + Weight + Loss + Tumor, data = Data)
+```
+
+## Fitting Linear Model {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Pull residuals out of model
+res <- residuals(lin_mod)
+```
+
+## Fitting Linear Model {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Pull residuals out of model
+res <- residuals(lin_mod)
+
+# Pull fitted values out of model
+fit <- fitted(lin_mod)
+```
+
+## Plotting Linear Model {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Plot the fitted versus the residuals
+plot(fit, res)
+```
+
+## Plotting Linear Model {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Plot the fitted versus the residuals
+plot(fit, res)
+abline(0, 0, lty = 2) # Add horizontal dashed line at 0
+```
+
+## Plotting Linear Model {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Plot the fitted versus the residuals
+plot(fit, res)
+abline(0, 0, lty = 2) # Add horizontal dashed line at 0
+text(fit, res)
+```
+
+## Plotting Linear Model {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Plot the fitted versus the residuals
+plot(fit, res, cex = 0) # Get rid of point plotting characters
+abline(0, 0, lty = 2) # Add horizontal dashed line at 0
+text(fit, res)
+```
+
+## Plotting Linear Model {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Base R linear model plots
+plot(lin_mod)
+```
+
+## Plotting Linear Model {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Using ggplot
+Data <- fortify(lin_mod, Data)
+```
+
+## Plotting Linear Model {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+Data
+```
+
+## Plotting Linear Model {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Adding a column for observation numbers
+Data$obs_num <- 1:nrow(Data)
+```
+
+## Plotting Linear Model {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+Data
+```
+
+## Plotting Linear Model {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Saving numbers to be used in rule of thumb
+n <- nrow(Data)
+p <- summary(lin_mod)$df[1]
+```
+
+## Plotting Linear Model {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Plotting Leverage Values
+ggplot(Data, aes(obs_num, .hat)) + 
+  geom_point() + 
+  geom_hline(yintercept = 2*p/n) + 
+  ggtitle("Leverage")
+```
+
+## Plotting Linear Model {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Plotting Cooks (Influential) Values
+ggplot(Data, aes(obs_num, .cooksd)) + 
+  geom_point() + 
+  ggtitle("Cook's distance")
+```
+
+## Plotting Linear Model {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Plotting Residual Values
+ggplot(Data, aes(obs_num, .stdresid)) + 
+  geom_point() +
+  geom_hline(yintercept = 2) + 
+  geom_hline(yintercept = -2) +
+  ggtitle("Studentized residual")
+```
+
+## Subsetting Data {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Finding all the rows that have standardized residuals > 2 or < -2
+subset(Data, .stdresid > 2)
+subset(Data, .stdresid < -2)
+```
+
+## Plotting Linear Model {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: FALSE
+# Plotting all on a single plot
+library(reshape)
+ggplot(melt(Data[, c("obs_num",".hat",".cooksd",".stdresid")], id.vars = "obs_num"), aes(obs_num, value)) + 
+  geom_point() + 
+  facet_grid(variable ~ ., scale = "free_y")
+```
+
+## Plotting Linear Model {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+library(reshape)
+# What the melt() function is doing
+# melt(Data[, c("obs_num",".hat",".cooksd",".stdresid")], id.vars = "obs_num")
+Data[, c("obs_num",".hat",".cooksd",".stdresid")]
+```
+
+## Plotting Linear Model {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# What the melt() function is doing
+melt(Data[, c("obs_num",".hat",".cooksd",".stdresid")], id.vars = "obs_num")
+```
+
+## Plotting Linear Model {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Plotting all on a single plot
+ggplot(melt(Data[, c("obs_num",".hat",".cooksd",".stdresid")], id.vars = "obs_num"), aes(obs_num, value)) + 
+  geom_point() + 
+  facet_grid(variable ~ ., scale = "free_y")
+```
+
+## Fitting Linear Model {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Removing rows 31 and 34 then refitting
+Data2 <- Data[-c(31,34),]
+lin_mod2 <- lm(Antibody ~ Sac*Treatment + Days + Sex + Weight + Loss + Tumor, data = Data2)
+```
+
+## Fitting Linear Model {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Removing rows 31 and 34 then refitting
+lin_mod2 <- lm(Antibody ~ Sac*Treatment + Days + Sex + Weight + Loss + Tumor, data = Data2)
+summary(lin_mod2)
+```
+
+## Plotting Linear Model {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Pulling our residuals and fitted values
+res2 <- residuals(lin_mod2)
+fit2 <- fitted(lin_mod2)
+```
+
+## Plotting Linear Model {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Pulling our residuals and fitted values
+res2 <- residuals(lin_mod2)
+fit2 <- fitted(lin_mod2)
+
+# Plotting them
+plot(fit2, res2)
+abline(0, 0, lty = 2)
+```
+
+## Fitting Linear Model {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Fitting another model
+lin_mod3 <- lm(Antibody ~ Sac + Treatment + Loss, data = Data2)
+```
+
+## Fitting Linear Model {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Fitting another model
+lin_mod3 <- lm(Antibody ~ Sac + Treatment + Loss, data = Data2)
+summary(lin_mod3)
+```
+
+## Fitting Linear Model {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Compare the two models with an F-test
+anova(lin_mod3, lin_mod2)
+```
+
+## Next dataset {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Loading in new dataset
+load(url("http://stat512.cwick.co.nz/data/case_inf.rda"))
+```
+
+## Next dataset {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Loading in new dataset
+df
+```
+
+## Plotting {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Plotting
+ggplot(data = df, aes(X1, Y, colour = obs_num == 101)) + 
+  geom_point()
+```
+
+## Plotting {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Plotting
+ggplot(data = df, aes(X2, Y, colour = obs_num == 101)) + 
+  geom_point()
+```
+
+## Plotting {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Plotting
+ggplot(data = df, aes(X1, X2, colour = obs_num == 101)) + 
+  geom_point()
+```
+
+## Plotting  {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: FALSE
+library(gridExtra)
+plot1 <- ggplot(data = df, aes(X1, Y, colour = obs_num == 101)) + 
+  geom_point() +
+  theme_minimal() +
+  theme(legend.position = "none")
+plot2 <- ggplot(data = df, aes(X2, Y, colour = obs_num == 101)) + 
+  geom_point() +
+  theme_minimal() +
+  theme(legend.position = "none")
+plot3 <- ggplot(data = df, aes(X1, X2, colour = obs_num == 101)) + 
+  geom_point() +
+  theme_minimal() +
+  theme(legend.position = "none")
+grid.arrange(plot1, plot2, plot3, ncol = 3)
+```
+
+## Fitting Model {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+fit <- lm(Y ~ X1 + X2, data = df)
+```
+
+## Plotting {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+fit_diag <- fortify(fit, df)
+ggplot(melt(fit_diag[, c("obs_num",".hat",".cooksd",".stdresid")], id.vars = "obs_num"), 
+       aes(obs_num, value, colour = obs_num == 101)) +
+  geom_point() + facet_grid(variable ~ ., scale = "free_y")
+```
+
+## Plotting {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Recall linear model 3 created earlier
+lin_mod3 <- lm(Antibody ~ Sac + Treatment + Loss, data = Data2)
+```
+
+## Plotting {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Recall linear model 3 created earlier
+lin_mod3 <- lm(Antibody ~ Sac + Treatment + Loss, data = Data2)
+residuals(lin_mod3, type = "partial")
+```
+
+## Plotting {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Name partial residual object
+p_res <- residuals(lin_mod3, type = "partial")
+```
+
+## Plotting {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Name partial residual object
+p_res <- residuals(lin_mod3, type = "partial")
+
+# Change column names to be more distinct
+colnames(p_res) <- paste("res_", c("Sac", "Treatment", "Loss"), sep = "")
+Data_res <- cbind(Data2, p_res)
+head(Data_res)
+```
+
+## Plotting {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Plot
+ggplot(data = Data_res, aes(Sac, res_Sac)) + 
+  geom_point()
+```
+
+## Plotting {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Plot
+ggplot(data = Data_res, aes(Sac, Antibody)) + 
+  geom_point()
+```

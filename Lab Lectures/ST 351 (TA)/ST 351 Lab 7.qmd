@@ -1,0 +1,478 @@
+---
+title: "(ST 351) Lab 7 - Bootstrap Inference for a Population Mean"
+format: 
+  revealjs:
+    incremental: TRUE
+    scrollable: TRUE
+    theme: dark
+    transition: slide
+    chalkboard: TRUE
+---
+
+## Objective {transition="zoom" transition-speed="slow"}
+- Perform a hypothesis test and construct a confidence interval for a population mean using bootstrap methods
+
+## [P-value Definition]{transition="zoom" transition-speed="slow"} {.smaller}
+
+$$
+\frac{\text{# of sample statistics the same distance or further away from the hypothesized value}}{\text{total number of sample statistics in the sample space}}
+$$
+
+- Probability of observing a sample statistic ^[Note: Our sample statistic today is the sample mean] as or more unusual as observed given the null hypothesis is true.
+
+:::{.fragment}
+$$
+\frac{\text{# of sample statistics the same distance or further away from the hypothesized value}}{\text{total number of bootstrap samples generated}}
+$$
+:::
+
+## [Setting Working Directory & Loading in Data]{.r-fit-text} {auto-animate=true}
+```
+setwd("C:/Users/Ghcto/OneDrive/Desktop/Fall 2023/ST 351 (TA)")
+```
+## [Setting Working Directory & Loading in Data]{.r-fit-text} {auto-animate=true}
+```
+setwd("C:/Users/Ghcto/OneDrive/Desktop/Fall 2023/ST 351 (TA)")
+
+goofing <- read.delim("goofing.txt", sep = "")
+goofing
+```
+## Viewing Data
+```{r}
+# setwd("C:/Users/Ghcto/OneDrive/Desktop/Fall 2023/ST 351 (TA)")
+setwd("C:/Users/Ghcto/OneDrive/Desktop/School/Fall 2023/ST 351 (TA)/Lab 7")
+
+goofing <- read.delim("goofing.txt", sep = "")
+goofing
+```
+
+## Example Scenerio {transition="concave" transition-speed="slow"}
+Do people “goof off” too much at work? Many employers are concerned about employees wasting time by surfing the internet, texting, and e-mailing during work hours. However, other employers think some “goof off” time is good. At Google, for example, employees can spend 20 percent of their time on projects they’re personally interested in, which may involve personal e-mailing or Internet use (The Fiscal Times, April 25, 2012). Suppose the CEO of a large company wants to determine if workers at his/her company spend more than 20% of their time during an 8-hour work day (1.6 hours or 96 minutes) “goofing off”. Twenty workers from this company were randomly selected (no managers or executives knew who these people were) and asked how much time they spent working on other projects not related to work duties on a typical 8-hour work day (which included personal e-mailing, texting, and Internet use). The amount of time spent on such projects of these 20 people (in minutes) are given in the goofing data on Canvas. (The variable name in the data set is time (in minutes).)
+
+- Is there evidence that employees at this company spend more than 20% of an 8-hour work day “goofing off”, on average?
+
+- Let's determine the p-value using an "adjusted" bootstrap distribution
+
+## [Step 1: Identify the Variable of Interest and the Population]{.r-fit-text} 
+- What is the variable of interest?
+  - Time spent 'goofing off' (minutes)
+- What is the the population of interest?
+  - The company that was sampled from
+- Is the variable categorical or quantitative?
+  - Quantitative
+  
+## [Step 2: Assess Whether the Sample is Representative of the Population]{.r-fit-text}
+- It is representative since a random sample was taken
+
+## [Step 3: Determine if the Problem is an Estimation or Hypothesis Problem]{.r-fit-text}
+- Since we are looking to test a particular value^[20% of an 8 hour work day = 1.6 hours = 96 minutes], it is a hypothesis test problem
+
+## [Step 4: Define the Null and Alternative Hypothesis]{.r-fit-text}
+- Null Hypothesis:
+  - $H_{0}: \mu = 96$
+    - The average time spent "goofing off" is equal to 96 minutes
+- Alternative Hypothesis:
+  - $H_{A}: \mu > 96$
+    - The average time spent "goofing off" is greater than 96 minutes
+- Where $\mu$ = Population average (mean) time spent 'goofing off' (minutes)
+
+## [Step 5: Explore the Sample Data by Obtaining a Graph]{.r-fit-text} {auto-animate=true} 
+```r
+# Creating Histogram
+hist(goofing$time)
+```
+## [Step 5: Explore the Sample Data by Obtaining a Graph]{.r-fit-text} {auto-animate=true}
+```r
+# Creating Histogram
+hist(goofing$time,
+     main = "Time 'Goofing Off' at Work")
+```
+## [Step 5: Explore the Sample Data by Obtaining a Graph]{.r-fit-text} {auto-animate=true}
+```r
+# Creating Histogram
+hist(goofing$time,
+     main = "Time 'Goofing Off' at Work",
+     xlab = "Time Spent Goofing Off Each Day (minutes)")
+```
+## [Step 5: Explore the Sample Data by Obtaining a Graph]{.r-fit-text} {auto-animate=true}
+```r
+# Creating Histogram
+hist(goofing$time,
+     main = "Time 'Goofing Off' at Work",
+     xlab = "Time Spent Goofing Off Each Day (minutes)",
+     col = "plum")
+```
+## [Step 5: Explore the Sample Data by Obtaining a Graph]{.r-fit-text} {auto-animate=true}
+```{r, echo = TRUE}
+# Creating Histogram
+hist(goofing$time,
+     main = "Time 'Goofing Off' at Work",
+     xlab = "Time Spent Goofing Off Each Day (minutes)",
+     col = "plum")
+```
+
+## [Step 5: Explore the Sample Data by Obtaining a Graph]{.r-fit-text} {auto-animate=true}
+- Is there evidence to reject the null hypothesis based on this graph?
+  - Any guess on whether we will or will not reject the null? 
+
+## [Step 5: Explore the Sample Data by Obtaining the Summary Statistics]{.r-fit-text} {auto-animate=true}
+```r
+# Package Required for 'favstats' Function
+library(mosaic)
+```
+## [Step 5: Explore the Sample Data by Obtaining the Summary Statistics]{.r-fit-text} {auto-animate=true}
+```r
+# Package Required for 'favstats' Function
+library(mosaic)
+# Obtaining Summary Statistics
+favstats(goofing$time)
+```
+## [Step 5: Explore the Sample Data by Obtaining the Summary Statistics]{.r-fit-text} {auto-animate=true}
+```{r, echo = TRUE}
+# Package Required for 'favstats' Function
+library(mosaic)
+# Obtaining Summary Statistics
+favstats(goofing$time)
+```
+
+## [Step 5: Explore the Sample Data by Obtaining the Summary Statistics]{.r-fit-text} {auto-animate=true}
+```r
+# Package Required for 'favstats' Function
+library(mosaic)
+favstats(goofing$time)
+
+# Obtaining Summary Statistics (Alt.)
+summary(goofing$time)
+```
+## [Step 5: Explore the Sample Data by Obtaining the Summary Statistics]{.r-fit-text} {auto-animate=true}
+```{r, echo = TRUE}
+# Obtaining Summary Statistics (Alt.)
+summary(goofing$time)
+```
+## [Step 5: Explore the Sample Data by Obtaining the Summary Statistics]{.r-fit-text} {auto-animate=true}
+```r
+# Obtaining Summary Statistics (Alt.)
+summary(goofing$time)
+sd(goofing$time)
+```
+## [Step 5: Explore the Sample Data by Obtaining the Summary Statistics]{.r-fit-text} {auto-animate=true}
+```r
+# Obtaining Summary Statistics (Alt.)
+summary(goofing$time)
+sd(goofing$time)
+length(goofing$time)
+```
+## [Step 5: Explore the Sample Data by Obtaining the Summary Statistics]{.r-fit-text} {auto-animate=true}
+```{r, echo = TRUE}
+# Obtaining Summary Statistics (Alt.)
+summary(goofing$time)
+sd(goofing$time)
+length(goofing$time)
+```
+
+- Note: Do not directly copy and paste your summary statistic output 
+
+:::aside
+Insider secrets: points will be deducted if one copy and pastes output or doesn't include units
+:::
+
+## [Step 6: Determine the p-value - Generate "Adjusted" Bootstrap Distribution]{.r-fit-text} {auto-animate=true}
+- To determine a p-value, we need to create a sample data set where the mean of the new sample data is equal to the hypothesized value (i.e. value if the null hypothesis is true).
+  - So, we'll create this null distribution by:
+  
+## [Step 6: Determine the p-value - Generate "Adjusted" Bootstrap Distribution]{.r-fit-text} {auto-animate=true}
+```{r, echo = TRUE}
+# Store Sample Mean into an Object
+samp.mean <- mean(goofing$time)
+```
+
+## [Step 6: Determine the p-value - Generate "Adjusted" Bootstrap Distribution]{.r-fit-text} {auto-animate=true}
+```{r, echo = TRUE}
+# Store Sample Mean as Variable
+samp.mean <- mean(goofing$time)
+
+# Store Hypothesized Value as Variable
+H0 <- 96
+```
+
+## [Step 6: Determine the p-value - Generate "Adjusted" Bootstrap Distribution]{.r-fit-text} {auto-animate=true}
+```{r, echo = TRUE}
+# Store Sample Mean as Variable
+samp.mean <- mean(goofing$time)
+
+# Store Hypothesized Value as Variable
+H0 <- 96
+
+# Adjust Data by Subtracting the Difference Between Sample Mean and Hypothesized Value
+```
+
+## [Step 6: Determine the p-value - Generate "Adjusted" Bootstrap Distribution]{.r-fit-text} {auto-animate=true}
+```{r, echo = TRUE}
+# Store Sample Mean as Variable
+samp.mean <- mean(goofing$time)
+
+# Store Hypothesized Value as Variable
+H0 <- 96
+
+# Adjust Data by Subtracting the Difference Between Sample Mean and Hypothesized Value
+Adjdata <- goofing$time - (samp.mean - H0)
+```
+
+## [Step 6: Determine the p-value - Generate "Adjusted" Bootstrap Distribution]{.r-fit-text} {auto-animate=true}
+```{r, echo = TRUE}
+# Store Sample Mean as Variable
+samp.mean <- mean(goofing$time)
+
+# Store Hypothesized Value as Variable
+H0 <- 96
+
+# Adjust Data by Subtracting the Difference Between Sample Mean and Hypothesized Value
+Adjdata <- goofing$time - (samp.mean - H0)
+
+# Checking if we've done this correctly
+mean(Adjdata)
+```
+
+## [Step 6: Determine the p-value - Generate "Adjusted" Bootstrap Distribution]{.r-fit-text} {auto-animate=true}
+```{r, echo = TRUE}
+# Generating our Bootstrap Distribution
+boot.mean.adj <- do(10000)*mean(sample(Adjdata, length(Adjdata), replace=TRUE))
+```
+
+## [Step 6: Determine the p-value - Generate "Adjusted" Bootstrap Distribution]{.r-fit-text} {auto-animate=true}
+```{r, echo = TRUE}
+# Generating our Bootstrap Distribution
+boot.mean.adj <- do(10000)*mean(sample(Adjdata, length(Adjdata), replace=TRUE))
+
+# Generating our Bootstrap Distribution (Alt.)
+nsim <- 10000
+```
+
+## [Step 6: Determine the p-value - Generate "Adjusted" Bootstrap Distribution]{.r-fit-text} {auto-animate=true}
+```{r, echo = TRUE}
+# Generating our Bootstrap Distribution
+boot.mean.adj <- do(10000)*mean(sample(Adjdata, length(Adjdata), replace=TRUE))
+
+# Generating our Bootstrap Distribution (Alt.)
+nsim <- 10000
+Boot.mean.adj <- rep(0, nsim)
+```
+
+## [Step 6: Determine the p-value - Generate "Adjusted" Bootstrap Distribution]{.r-fit-text} {auto-animate=true}
+```{r, echo = TRUE}
+# Generating our Bootstrap Distribution
+boot.mean.adj <- do(10000)*mean(sample(Adjdata, length(Adjdata), replace=TRUE))
+
+# Generating our Bootstrap Distribution (Alt.)
+nsim <- 10000
+Boot.mean.adj <- rep(0, nsim)
+for(i in 1:nsim) {
+  Boot.mean.adj[i] <- mean(sample(Adjdata, length(Adjdata), replace = TRUE))
+}
+```
+
+## [Step 6: Determine the p-value - Generate "Adjusted" Bootstrap Distribution]{.r-fit-text} {auto-animate=true}
+```{r, echo = TRUE}
+# Generating our Bootstrap Distribution
+boot.mean.adj <- do(10000)*mean(sample(Adjdata, length(Adjdata), replace=TRUE))
+
+# Generating our Bootstrap Distribution (Alt.)
+nsim <- 10000
+Boot.mean.adj <- rep(0, nsim)
+for(i in 1:nsim) {
+  Boot.mean.adj[i] <- mean(sample(Adjdata, length(Adjdata), replace = TRUE))
+}
+Boot.mean.adj
+```
+
+## [Step 6: Determine the p-value - Calculate p-value]{.r-fit-text} {auto-animate=true}
+- Timeline Visual
+
+## [Step 6: Determine the p-value - Calculate p-value]{.r-fit-text} {auto-animate=true}
+```{r, echo = TRUE}
+# Counting the sample means as or more unusual as the one observed
+count(boot.mean.adj$mean >= samp.mean)
+```
+
+## [Step 6: Determine the p-value - Calculate p-value]{.r-fit-text} {auto-animate=true}
+```{r, echo = TRUE}
+# Numerator (Total Number of Sample Means)
+count(boot.mean.adj$mean >= samp.mean) / length(boot.mean.adj$mean)
+```
+
+## [Step 6: Determine the p-value - Calculate p-value]{.r-fit-text} {auto-animate=true}
+```{r, echo = TRUE}
+# Counting the sample means as or more unusual as the one observed (Alt.)
+length(boot.mean.adj[boot.mean.adj >= samp.mean])
+```
+
+## [Step 6: Determine the p-value - Calculate p-value]{.r-fit-text} {auto-animate=true}
+```{r, echo = TRUE}
+# Numerator (Total Number of Sample Means) (Alt.)
+length(boot.mean.adj[boot.mean.adj >= samp.mean]) / length(boot.mean.adj$mean)
+```
+
+## [Step 6: Determine the p-value - Calculate p-value -  Process IF Two-Sided]{.r-fit-text} {auto-animate=true}
+```{r, echo = TRUE}
+# Store Hypothesized Value as Variable
+H0 <- 96
+```
+
+## [Step 6: Determine the p-value - Calculate p-value -  Process IF Two-Sided]{.r-fit-text} {auto-animate=true}
+```{r, echo = TRUE}
+# Store Hypothesized Value as Variable
+H0 <- 96
+
+# Difference Between Sample Mean and Hypothesized Value
+diff <- abs(samp.mean - H0)
+```
+
+## [Step 6: Determine the p-value - Calculate p-value -  Process IF Two-Sided]{.r-fit-text} {auto-animate=true}
+```{r, echo = TRUE}
+# Store Hypothesized Value as Variable
+H0 <- 96
+
+# Difference Between Sample Mean and Hypothesized Value
+diff <- abs(samp.mean - H0)
+
+count1 <- count(boot.mean.adj$mean >= H0 + diff)
+```
+
+## [Step 6: Determine the p-value - Calculate p-value -  Process IF Two-Sided]{.r-fit-text} {auto-animate=true}
+```{r, echo = TRUE}
+# Store Hypothesized Value as Variable
+H0 <- 96
+
+# Difference Between Sample Mean and Hypothesized Value
+diff <- abs(samp.mean - H0)
+
+count1 <- count(boot.mean.adj$mean >= H0 + diff)
+count2 <- count(boot.mean.adj$mean <= H0 - diff)
+```
+
+## [Step 6: Determine the p-value - Calculate p-value -  Process IF Two-Sided]{.r-fit-text} {auto-animate=true}
+```{r, echo = TRUE}
+# Store Hypothesized Value as Variable
+H0 <- 96
+
+# Difference Between Sample Mean and Hypothesized Value
+diff <- abs(samp.mean - H0)
+
+count1 <- count(boot.mean.adj$mean >= H0 + diff)
+count2 <- count(boot.mean.adj$mean <= H0 - diff)
+totalcount <- count1 + count2
+```
+
+## [Step 6: Determine the p-value - Calculate p-value -  Process IF Two-Sided]{.r-fit-text} {auto-animate=true}
+```{r, echo = TRUE}
+# Store Hypothesized Value as Variable
+H0 <- 96
+
+# Difference Between Sample Mean and Hypothesized Value
+diff <- abs(samp.mean - H0)
+
+count1 <- count(boot.mean.adj$mean >= H0 + diff)
+count2 <- count(boot.mean.adj$mean <= H0 - diff)
+totalcount <- count1 + count2
+
+# p-value Calculations
+totalcount / length(boot.mean.adj$mean)
+```
+
+## [Contruct a Confidence Interal for the Population Mean]{.r-fit-text} {transition="zoom" transition-speed="slow"}
+- Using our **original** sample data, we'll construct another bootstrap distribution
+  - The confidence interval for population, needs to be centered at observed sample mean
+
+## [Contruct a Confidence Interal for the Population Mean]{.r-fit-text} {auto-animate=true}
+```{r, echo = TRUE}
+# Using 'favstats' Function
+boot.mean <- do(10000)*mean(sample(goofing$time, length(goofing$time), replace=TRUE))
+```
+
+## [Contruct a Confidence Interal for the Population Mean]{.r-fit-text} {auto-animate=true}
+```{r, echo = TRUE}
+# Alternative Code
+nsim <- 10000
+```
+
+## [Contruct a Confidence Interal for the Population Mean]{.r-fit-text} {auto-animate=true}
+```{r, echo = TRUE}
+# Alternative Code
+nsim <- 10000
+Boot.mean <- rep(0, nsim)
+```
+
+## [Contruct a Confidence Interal for the Population Mean]{.r-fit-text} {auto-animate=true}
+```{r, echo = TRUE}
+# Alternative Code
+nsim <- 10000
+Boot.mean <- rep(0, nsim)
+for(i in 1:nsim) {
+  Boot.mean[i] <- mean(sample(goofing$time, length(goofing$time), replace=TRUE))
+}
+```
+
+## [Contruct a Confidence Interal for the Population Mean]{.r-fit-text} {auto-animate=true}
+```{r, echo = TRUE}
+# Alternative Code
+nsim <- 10000
+Boot.mean <- rep(0, nsim)
+for(i in 1:nsim) {
+  Boot.mean[i] <- mean(sample(goofing$time, length(goofing$time), replace=TRUE))
+}
+Boot.mean
+```
+
+## [Contruct a Confidence Interal for the Population Mean]{.r-fit-text} {auto-animate=true}
+```{r, echo = TRUE}
+# Formula Method
+upper.bound <- mean(goofing$time) + 2*(sd(boot.mean$mean))
+```
+
+## [Contruct a Confidence Interal for the Population Mean]{.r-fit-text} {auto-animate=true}
+```{r, echo = TRUE}
+# Formula Method
+upper.bound <- mean(goofing$time) + 2*(sd(boot.mean$mean))
+lower.bound <- mean(goofing$time) - 2*(sd(boot.mean$mean))
+```
+
+## [Contruct a Confidence Interal for the Population Mean]{.r-fit-text} {auto-animate=true}
+```{r, echo = TRUE}
+# Formula Method
+upper.bound <- mean(goofing$time) + 2*(sd(boot.mean$mean))
+lower.bound <- mean(goofing$time) - 2*(sd(boot.mean$mean))
+CI <- c(lower.bound, upper.bound)
+```
+
+## [Contruct a Confidence Interal for the Population Mean]{.r-fit-text} {auto-animate=true}
+```{r, echo = TRUE}
+# Formula Method
+upper.bound <- mean(goofing$time) + 2*(sd(boot.mean$mean))
+lower.bound <- mean(goofing$time) - 2*(sd(boot.mean$mean))
+CI <- c(lower.bound, upper.bound)
+CI
+```
+
+## [Contruct a Confidence Interal for the Population Mean]{.r-fit-text} {auto-animate=true}
+```{r, echo = TRUE}
+# Percentile Method
+# Ordering the Bootstrap Elements
+boot.order <- sort(boot.mean$mean)
+```
+
+## [Contruct a Confidence Interal for the Population Mean]{.r-fit-text} {auto-animate=true}
+```{r, echo = TRUE}
+# Percentile Method
+# Ordering the Bootstrap Elements
+boot.order <- sort(boot.mean$mean)
+boot.order
+```
+
+## [Contruct a Confidence Interal for the Population Mean]{.r-fit-text} {auto-animate=true}
+```{r, echo = TRUE}
+# Percentile Method
+# Ordering the Bootstrap Elements
+boot.order <- sort(boot.mean$mean)
+
+quantile(boot.order, c(0.025, 0.975))
+```

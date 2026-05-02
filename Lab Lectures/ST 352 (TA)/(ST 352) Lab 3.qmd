@@ -1,0 +1,549 @@
+---
+title: "(ST 352) Lab 3 - Inference using the Two-Sample t-methods"
+format:
+  revealjs:
+    incremental: TRUE
+    scrollable: TRUE
+    theme: dark
+    transition: slide
+    chalkboard: TRUE
+---
+## Objectives {transition="zoom" transition-speed="slow"}
+- Recognize when the two-sample methods can be used for inference
+- Recognize when the pooled two-sample t-methods can be used.
+- Use R to perform a hypothesis test and construct a confidence interval for the difference in population means using the two-sample t-methods (including pooled two-sample t-methods)
+- Interpret the output from the two-sample t-methods.
+
+## Today's Example {transition="zoom" transition-speed="slow"}
+**Question:** Is there a difference in the average amount of time spent exercising each day between OSU students who have a job and OSU students who are not employed?
+
+## Data {transition="zoom" transition-speed="slow"}
+- The `studentsurvey` data set on Canvas are the results of a survey of ST 352 students several years ago. The first two variables in the data set are
+  - `work` (employed or notemployed (which is a one-word name that is used for students who were not employed))
+  - `exercise` (daily exercise in minutes)
+  
+```{r}
+#| echo: FALSE
+studentsurvey <- read.delim("C:/Users/Ghcto/OneDrive/Desktop/School/Spring 2024/ST 352 (TA)/Lab 3/studentsurvey.txt")
+```
+
+## Data {transition="zoom" transition-speed="slow"}
+```{r}
+#| echo: TRUE
+studentsurvey
+```
+
+## Data {transition="zoom" transition-speed="slow"}
+```{r}
+#| echo: TRUE
+studentsurvey[,1:2]
+```
+
+## [Usual Preliminary Steps]{.r-fit-text} {transition="zoom" transition-speed="slow"}
+- Step 1: Identify the variable of interest and population
+- Step 2: Assess whether the samples are representative of their respective populations
+- Step 3: Understand why a particular example is an estimation example or hypothesis test example
+- Step 4: Define null and alternative hypotheses
+
+## Defining Hypotheses
+- $H_{0}: \mu_{\text{employed}} - \mu_{\text{notemployed}} = 0$
+- $H_{A}: \mu_{\text{employed}} - \mu_{\text{notemployed}} \neq 0$
+  - $\mu_{\text{employed}}$ is the mean time spent exercising each day for employed OSU students
+  - $\mu_{\text{notemployed}}$ is the mean time spent exercising each day for unemployed (not employed) OSU students
+
+## Data Exploration {auto-animate=true}
+```{r}
+#| echo: TRUE
+boxplot(exercise ~ work, data = studentsurvey)
+```
+
+## Data Exploration {auto-animate=true}
+```{r}
+#| echo: TRUE
+boxplot(exercise ~ work, data = studentsurvey, horizontal = TRUE)
+```
+
+## Data Exploration {auto-animate=true}
+```{r}
+#| echo: TRUE
+boxplot(exercise ~ work, data = studentsurvey, horizontal = TRUE,
+        main = "Comparison of Time Spent Exercising Between Employed and Non-Employed Students")
+```
+
+## Data Exploration {auto-animate=true}
+```{r}
+#| echo: TRUE
+boxplot(exercise ~ work, data = studentsurvey, horizontal = TRUE,
+        main = "Comparison of Time Spent Exercising Between 
+        Employed and Non-Employed Students")
+```
+
+## Data Exploration {auto-animate=true}
+```{r}
+#| echo: TRUE
+boxplot(exercise ~ work, data = studentsurvey, horizontal = TRUE,
+        main = "Comparison of Time Spent Exercising Between \n Employed and Non-Employed Students")
+```
+
+## Data Exploration {auto-animate=true}
+```{r}
+#| echo: TRUE
+boxplot(exercise ~ work, data = studentsurvey, horizontal = TRUE,
+        main = "Comparison of Time Spent Exercising Between \n Employed and Non-Employed Students",
+        xlab = "Time Spent Exercising per day (minutes)",
+        ylab = "Work Status")
+```
+
+## Data Exploration {auto-animate=true}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+boxplot(exercise ~ work, data = studentsurvey, horizontal = TRUE,
+        main = "Comparison of Time Spent Exercising Between \n Employed and Non-Employed Students",
+        xlab = "Time Spent Exercising per day (minutes)",
+        ylab = "Work Status",
+        cex.main = 0.8) # Title font size
+```
+
+## Data Exploration {auto-animate=true}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+boxplot(exercise ~ work, data = studentsurvey, horizontal = TRUE,
+        main = "Comparison of Time Spent Exercising Between \n Employed and Non-Employed Students",
+        xlab = "Time Spent Exercising per day (minutes)",
+        ylab = "Work Status",
+        cex.main = 0.8) 
+axis(2, at = c(1,2), labels = c("Employed", "Not Employed")) # Adds custom y axis labels
+```
+
+## Data Exploration {auto-animate=true}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+boxplot(exercise ~ work, data = studentsurvey, horizontal = TRUE,
+        main = "Comparison of Time Spent Exercising Between \n Employed and Non-Employed Students",
+        xlab = "Time Spent Exercising per day (minutes)",
+        ylab = "Work Status",
+        cex.main = 0.8,
+        yaxt = "n") # Removes default y labels
+axis(2, at = c(1,2), labels = c("Employed", "Not Employed"))
+```
+
+## Data Exploration {auto-animate=true}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+boxplot(exercise ~ work, data = studentsurvey, horizontal = TRUE,
+        main = "Comparison of Time Spent Exercising Between \n Employed and Non-Employed Students",
+        xlab = "Time Spent Exercising per day (minutes)",
+        ylab = "Work Status",
+        cex.main = 0.8,
+        yaxt = "n")
+axis(2, at = c(1,2), labels = c("Employed", "Not Employed"),
+     las = 2) # Turns labels to be horizontal
+```
+
+## Data Exploration {auto-animate=true}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+boxplot(exercise ~ work, data = studentsurvey, horizontal = TRUE,
+        main = "Comparison of Time Spent Exercising Between \n Employed and Non-Employed Students",
+        xlab = "Time Spent Exercising per day (minutes)",
+        ylab = "Work Status",
+        cex.main = 0.8,
+        yaxt = "n")
+axis(2, at = c(1,2), labels = c("Employed", "Not Employed"),
+     las = 2,
+     cex.axis = 0.6) # Shrinks y label font size
+```
+
+## Data Exploration {auto-animate=true}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+boxplot(exercise ~ work, data = studentsurvey, horizontal = TRUE,
+        main = "Comparison of Time Spent Exercising Between \n Employed and Non-Employed Students",
+        xlab = "Time Spent Exercising per day (minutes)",
+        ylab = "Work Status",
+        cex.main = 0.8,
+        yaxt = "n",
+        col = "lawngreen")
+axis(2, at = c(1,2), labels = c("Employed", "Not Employed"),
+     las = 2,
+     cex.axis = 0.6)
+```
+
+## Data Exploration {auto-animate=true}
+```{r}
+#| echo: TRUE
+#| output-location: slide
+library(ggplot2)
+ggplot(data = studentsurvey) +
+  geom_boxplot(aes(x = work, y = exercise, fill = work), show.legend = FALSE) +
+  coord_flip() +
+  labs(y = "Time Spent Exercising per day (minutes)", x = "Work Status",
+       title = "Comparison of Time Spent Exercising Between Employed and Non-Employed Students",
+       caption = "Another visualization of the same plot using 'ggplot' package") +
+  scale_x_discrete(limits = c("notemployed", "employed"), labels = c("Not Employed", "Employed")) +
+  theme_bw() +
+  theme(plot.caption = element_text(color = "purple", face = "italic", hjust = 0),
+        panel.grid.major.x = element_blank(), # Remove vertical lines
+        panel.grid.minor.x = element_blank(), # Remove vertical lines
+        axis.title.y = element_text(hjust = 0.5, vjust = -5), 
+        axis.title.x = element_text(hjust = 0.5, vjust = -0.25), # Slightly move down x axis label
+        axis.title = element_text(size = 12.5)) # Increase x and y titles
+```
+
+## Data Exploration {auto-animate=true}
+```{r}
+#| echo: TRUE
+#| output-location: slide
+ggplot(data = studentsurvey) +
+  geom_violin(aes(x = work, y = exercise, fill = work), show.legend = FALSE) +
+  coord_flip() +
+  labs(y = "Time Spent Exercising per day (minutes)", x = "Work Status",
+       title = "Comparison of Time Spent Exercising Between Employed and Non-Employed Students",
+       caption = "Another visualization of the same plot using 'ggplot' package") +
+  scale_x_discrete(limits = c("notemployed", "employed"), labels = c("Not Employed", "Employed")) +
+  theme_bw() +
+  theme(plot.caption = element_text(color = "purple", face = "italic", hjust = 0),
+        panel.grid.major.x = element_blank(),
+        panel.grid.minor.x = element_blank(),
+        axis.title.y = element_text(hjust = 0.5, vjust = -5), 
+        axis.title.x = element_text(hjust = 0.5, vjust = -0.25),
+        axis.title = element_text(size = 12.5))
+```
+
+## Data Exploration - Summary Statistics {auto-animate=true}
+```{r}
+#| echo: TRUE
+library(mosaic)
+favstats(exercise ~ work, data = studentsurvey)
+```
+
+## Data Exploration - Summary Statistics {auto-animate=true}
+```{r}
+#| echo: TRUE
+# Alternative Code
+summary(studentsurvey$exercise[studentsurvey$work == "employed"])
+summary(studentsurvey$exercise[studentsurvey$work == "notemployed"])
+```
+
+## Data Exploration - Summary Statistics {auto-animate=true}
+```{r}
+#| echo: TRUE
+# Alternative Code
+summary(studentsurvey$exercise[studentsurvey$work == "employed"])
+summary(studentsurvey$exercise[studentsurvey$work == "notemployed"])
+
+length(studentsurvey$exercise[studentsurvey$work == "employed"])
+length(studentsurvey$exercise[studentsurvey$work == "notemployed"])
+```
+
+## Data Exploration - Summary Statistics {auto-animate=true}
+```{r}
+#| echo: TRUE
+# Alternative Code
+summary(studentsurvey$exercise[studentsurvey$work == "employed"])
+summary(studentsurvey$exercise[studentsurvey$work == "notemployed"])
+
+length(studentsurvey$exercise[studentsurvey$work == "employed"])
+length(studentsurvey$exercise[studentsurvey$work == "notemployed"])
+
+sd(studentsurvey$exercise[studentsurvey$work == "employed"])
+sd(studentsurvey$exercise[studentsurvey$work == "notemployed"])
+```
+
+## [Behind the Scenes of 't.test' function (Unequal Variance)]{.r-fit-text} {auto-animate=true}
+**Test Statistic:**
+$$
+\begin{aligned}
+t_{U}(\mu_{0}) & = \dfrac{(\bar{X} - \bar{Y}) - \mu_{0}}{\sqrt{\dfrac{s^{2}_{X}}{m} + \dfrac{s^{2}_{Y}}{n}}} \\[0.25cm]
+\end{aligned}
+$$
+
+:::aside
+$\bar{X}$ and $\bar{Y}$ are sample mean estimations for $\mu_{X}$ and $\mu_{Y}$ respectively
+:::
+
+## [Behind the Scenes of 't.test' function (Unequal Variance)]{.r-fit-text} {auto-animate=true}
+**Test Statistic:**
+$$
+\begin{aligned}
+t_{U}(\mu_{0}) & = \dfrac{(\bar{X} - \bar{Y}) - \mu_{0}}{\sqrt{\dfrac{s^{2}_{X}}{m} + \dfrac{s^{2}_{Y}}{n}}} \\[0.25cm]
+\text{We know,} \; \mu_{0} & = 0, \; \text{therefore:} \\[0.25cm]
+\end{aligned}
+$$
+
+## [Behind the Scenes of 't.test' function (Unequal Variance)]{.r-fit-text} {auto-animate=true}
+**Test Statistic:**
+$$
+\begin{aligned}
+t_{U}(\mu_{0}) = \dfrac{(\bar{X} - \bar{Y})}{\sqrt{\dfrac{s^{2}_{X}}{m} + \dfrac{s^{2}_{Y}}{n}}}
+\end{aligned}
+$$
+
+## [Behind the Scenes of 't.test' function (Unequal Variance)]{.r-fit-text} {transition="slide" transition-speed="slow"}
+**Welch-Satterthwaite Approximation**: to the null distribution of $t(\mu_{0})$
+$$
+\nu = \dfrac{\left(\dfrac{s^{2}_{X}}{m} + \dfrac{s^{2}_{Y}}{n}\right)^{2}}{\dfrac{s^{4}_{X}}{m^{2}(m-1)} + \dfrac{s^{4}_{Y}}{n^{2}(n-1)}}
+$$
+Note: $\min(m-1, n-1) \le \nu \le m+n-2$
+
+:::aside
+Note: $\nu$ are the degrees of freedom
+:::
+
+## [Behind the Scenes of 't.test' function (Unequal Variance)]{.r-fit-text} {transition="slide" transition-speed="slow"}
+**Confidence Interval:**
+$$
+(\bar{X} - \bar{Y}) \pm t_{(\nu)(1-\frac{\alpha}{2})}\sqrt{\dfrac{s^{2}_{X}}{m} + \dfrac{s^{2}_{Y}}{n}}
+$$
+
+:::aside
+Remember, unless specified otherwise, R will make group 1 the one that comes alphabetically first (`employed` in our example)
+:::
+
+## [Behind the Scenes of 't.test' function (Equal Variance)]{.r-fit-text} {transition="slide" transition-speed="slow"}
+$$
+t_{E}(\mu_{0}) = \dfrac{(\bar{X} - \bar{Y}) - \mu_{0}}{\sqrt{\dfrac{s_{p}^{2}}{m} + \dfrac{s_{p}^{2}}{n}}} = \dfrac{(\bar{X} - \bar{Y}) - \mu_{0}}{\sqrt{s_{p}^{2}\left(\dfrac{1}{m} + \dfrac{1}{n}\right)}}
+$$
+
+## [Behind the Scenes of 't.test' function (Equal Variance)]{.r-fit-text} {transition="slide" transition-speed="slow"}
+$$
+\begin{align*}
+s_{p}^{2} & = \dfrac{\sum\limits_{i=1}^{m}(X_{i} - \bar{X})^{2} + \sum\limits_{i=1}^{n}(Y_{i} - \bar{Y})^{2}}{(m - 1) + (n - 1)} \\[0.25cm]
+& = \dfrac{(m-1)s^{2}_{X} + (n-1)s^{2}_{Y}}{(m+n-2)}
+\end{align*}
+$$
+
+:::aside
+We use the pooled methods if we assume the two groups have equal variance (equal standard deviations)
+:::
+
+## [Behind the Scenes of 't.test' function (Equal Variance)]{.r-fit-text} {transition="slide" transition-speed="slow"}
+$$
+(\bar{X} - \bar{Y}) \pm t_{(m+n-2)(1-\frac{\alpha}{2})}\sqrt{s_{p}^{2}\left(\dfrac{1}{m} + \dfrac{1}{n}\right)}
+$$
+
+:::aside
+Notice the degrees of freedom = $m + n - 2$
+:::
+
+## [Behind the Scenes of 't.test' function (Summary)]{.r-fit-text} {transition="slide" transition-speed="slow"}
+
+- **Unequal Variance (un-pooled)**
+  - No assumption of equal variance
+  - Degrees of freedom calculated with complicated formula (R will do this for you)
+  - `var.equal = FALSE` (R's default)
+- **Equal Variance (pooled)**
+  - Assumption of equal variance
+  - Degrees of freedom: $m + n - 2$ 
+    - = Group 1 sample size + Group 2 sample size - 2
+  - `var.equal = TRUE`
+
+## 't.test' time (Unequal Variance) {transition="slide" transition-speed="slow"}
+```{r}
+#| echo: TRUE
+#| output: FALSE
+# Unequal Variance (non-pooled) code
+t.test(exercise ~ work, data = studentsurvey)
+```
+
+## 't.test' time (Unequal Variance) {transition="slide" transition-speed="slow"}
+```{r}
+#| echo: TRUE
+#| output: FALSE
+# Unequal Variance (non-pooled) code
+t.test(exercise ~ work, data = studentsurvey,
+       mu = 0)
+```
+
+## 't.test' time (Unequal Variance) {transition="slide" transition-speed="slow"}
+```{r}
+#| echo: TRUE
+#| output: FALSE
+# Unequal Variance (non-pooled) code
+t.test(exercise ~ work, data = studentsurvey,
+       mu = 0,
+       var.equal = FALSE)
+```
+
+## 't.test' time (Unequal Variance) {transition="slide" transition-speed="slow"}
+```{r}
+#| echo: TRUE
+#| output: FALSE
+# Unequal Variance (non-pooled) code
+t.test(exercise ~ work, data = studentsurvey,
+       mu = 0,
+       var.equal = FALSE,
+       alternative = "two.sided")
+```
+
+## 't.test' time (Unequal Variance) {transition="slide" transition-speed="slow"}
+```{r}
+#| echo: TRUE
+# Unequal Variance (non-pooled) code
+t.test(exercise ~ work, data = studentsurvey,
+       mu = 0,
+       var.equal = FALSE,
+       alternative = "two.sided",
+       conf.level = 0.95)
+```
+
+## 't.test' time (Equal Variance) {transition="slide" transition-speed="slow"}
+```{r}
+#| echo: TRUE
+# Equal Variance (pooled) code
+t.test(exercise ~ work, data = studentsurvey,
+       mu = 0,
+       var.equal = TRUE,
+       alternative = "two.sided",
+       conf.level = 0.95)
+```
+
+## 't.test' time (Equal Variance) {transition="slide" transition-speed="slow"}
+```{r}
+#| echo: TRUE
+#| code-line-numbers: "4"
+# Equal Variance (pooled) code
+t.test(exercise ~ work, data = studentsurvey,
+       mu = 0,
+       var.equal = TRUE,
+       alternative = "two.sided",
+       conf.level = 0.95)
+```
+
+## 't.test' time (Unequal vs. Equal) {transition="slide" transition-speed="slow" .smaller}
+:::: {.columns}
+
+::: {.column width="50%"}
+```{r}
+#| echo: TRUE
+# Unequal Variance (non-pooled) code
+t.test(exercise ~ work, data = studentsurvey,
+       mu = 0,
+       var.equal = FALSE,
+       alternative = "two.sided",
+       conf.level = 0.95)
+```
+:::
+
+::: {.column width="50%"}
+```{r}
+#| echo: TRUE
+# Equal Variance (pooled) code
+t.test(exercise ~ work, data = studentsurvey,
+       mu = 0,
+       var.equal = TRUE,
+       alternative = "two.sided",
+       conf.level = 0.95)
+```
+:::
+
+::::
+
+:::aside
+Notice we have our confidence intervals given here too
+:::
+
+## [When to use which t.test (pooled vs. unpooled)]{.r-fit-text}
+Standard deviation rule (Learning Path 3, part 2 lecture notes)
+
+$$
+\begin{align*}
+\frac{s_{1}}{s_{2}} < 1.5 \hspace{2cm} \text{where } s_{1} > s_{2}
+\end{align*}
+$$
+Less 'mathy' version:
+
+$$
+\frac{\text{larger standard deviation}}{\text{smaller standard deviation}} < 1.5 \hspace{0.5cm}(\text{or so})
+$$
+
+:::aside
+This is not the only criteria one can use, but it is what is recommended by your professor
+:::
+
+## [When to use which t.test (pooled vs. unpooled)]{.r-fit-text}
+```{r}
+#| echo: TRUE
+favstats(exercise ~ work, data = studentsurvey)
+
+# Alternative code
+sd(studentsurvey$exercise[studentsurvey$work == "employed"])
+sd(studentsurvey$exercise[studentsurvey$work == "notemployed"])
+
+# Ratio of largest over smallest standard deviation
+sd.ratio <- sd(studentsurvey$exercise[studentsurvey$work == "notemployed"]) / sd(studentsurvey$exercise[studentsurvey$work == "employed"])
+sd.ratio
+
+# Is this ratio less than 1.5?
+sd.ratio < 1.5
+```
+
+## [t.test of choice (based on sd rule)]{.r-fit-text}
+```{r}
+#| echo: TRUE
+# Equal Variance (pooled) code
+t.test(exercise ~ work, data = studentsurvey,
+       mu = 0,
+       var.equal = TRUE,
+       alternative = "two.sided",
+       conf.level = 0.95)
+```
+
+## Answer Question of Interest {.smaller}
+- There is not enough evidence to indicate the mean time spent exercising each day for employed OSU students is different than the mean time spent exercising each day for unemployed (not employed) OSU students (p-value = 0.5974).
+- Confidence interval for $\mu_{\text{employed}} - \mu_{\text{notemployed}} = (-12.03719 \text{ minutes}, \, 20.81971 \text{ minutes})$
+- We’re 95% confident that the mean time spent exercising each day for employed OSU students is between 12.04 minutes *less* to 21.82 minutes *more* than the mean time spent exercising each day for unemployed (not employed) OSU students.
+  - We’re 95% confident that the mean time spent exercising each day is between 12.04 minutes *less* to 21.82 minutes *more* for OSU students who work compared to those who do not work.
+
+:::aside
+Our p-value agrees with our confidence interval (since the C.I. contains 0)
+:::
+
+## I'll stop talking (for now)
+- Let me know if you have any questions
+- I'll provide some hints a little later
+
+## Lab Hints :)
+```{r}
+#| echo: TRUE
+facebook <- read.delim("C:/Users/Ghcto/OneDrive/Desktop/School/Spring 2024/ST 352 (TA)/Lab 3/facebook.txt")
+
+# Structure of data
+str(facebook)
+
+# Sample Standard Deviations
+sd(facebook$GPA[facebook$user == "Yes"])
+sd(facebook$GPA[facebook$user == "No"])
+
+# Ratio
+sd(facebook$GPA[facebook$user == "Yes"]) / sd(facebook$GPA[facebook$user == "No"])
+
+# Pooled t-test
+t.test(GPA ~ user, data = facebook,
+       mu = 0,
+       var.equal = TRUE,
+       alternative = "less")
+
+# Copying data set for modification
+facebook.2 <- facebook
+
+# Structure of data
+str(facebook)
+
+# Re-leveling the groups in user
+facebook.2$user <- factor(facebook.2$user, levels = c("Yes", "No"), ordered = TRUE)
+
+# What should we expected to happen
+t.test(GPA ~ user, data = facebook.2,
+       mu = 0,
+       var.equal = TRUE,
+       alternative = "less")
+
+```
+

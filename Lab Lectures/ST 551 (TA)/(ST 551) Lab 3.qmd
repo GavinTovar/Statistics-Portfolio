@@ -1,0 +1,778 @@
+---
+title: "(ST 551) Lab 3 <br> t vs z & Binomial Stuff"
+format:
+  revealjs:
+    incremental: TRUE
+    scrollable: TRUE
+    theme: dark
+    transition: concave
+    transition-speed: slow
+    auto-animate: TRUE
+    chalkboard: TRUE
+---
+
+## Welcome Back Kiddos!
+* Back Again... Woohoo...
+* Questions, Comments, Concerns?
+
+## Basic R Program {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{.asm}
+INCLUDE Irvine32.inc
+
+.data
+  array       DWORD 10 DUP(?)        ; Reserve space for 10 random integers (4 bytes each)
+  msg1        BYTE "Random numbers:", 0
+  msg2        BYTE "Mean = ", 0
+  msg3        BYTE "Variance = ", 0
+  count       DWORD 10               ; Total number of random values to generate
+  countMinus1 DWORD ?                ; Will store (count - 1) for variance calculation
+  mean        REAL4 ?                ; To store mean as a floating-point value
+  
+.code
+main PROC
+  CALL Randomize          ; Intialize seed
+
+  MOV  EDX, OFFSET msg1
+  CALL WriteString
+  CALL Crlf
+
+  ; Generate random numbers
+  MOV  ECX, count         ; Number of variables to draw
+  MOV  ESI, OFFSET array  ; Point ESI to first element
+generate_loop:            ; Counted loop
+  MOV EAX, 100            ; Produce random integer within 
+  CALL RandomRange        ; Random integer [0, 100)
+  MOV [ESI], EAX          ; Store in array
+  CALL WriteDec
+  CALL Crlf
+  ADD  ESI, 4             ; Advance pointer to next DWORD (next element)
+  LOOP generate_loop      ; Decrement ECX, Loop if ECX != 0
+
+  ; Sum generated numbers
+  MOV  ECX, count         ; Number of variables to sum
+  MOV  ESI, OFFSET array  ; Point ESI to first element
+  MOV  EAX, 0             ; Set EAX = 0
+sum_loop:
+  ADD  EAX, [ESI]         ; Add current element to running total in EAX
+  ADD  ESI, 4             ; Advance pointer to next DWORD (next element)
+  loop sum_loop           ; Decrement ECX, Loop if ECX != 0
+
+  ; Compute mean
+  FILD DWORD PTR count    ; Load count (as integer) onto FPU stack
+  PUSH EAX                ; Push total sum onto CPU stack (as integer)
+  FILD DWORD PTR [ESP]    ; Load sum (as integer) onto FPU stack
+  ADD  ESP, 4             ; Clean up CPU stack (remove pushed value)
+  FDIV                    ; Divide sum / count then store result in ST(0)
+  FSTP mean               ; Store result (mean) in memory
+  FLD  mean               ; Reload mean into FPU for later use
+
+  MOV  EDX, OFFSET msg2              
+  CALL WriteString
+  CALL WriteFloat                    
+  CALL Crlf
+
+  ; Compute variance
+  MOV  ECX, count         ; Loop counter = number of elements
+  MOV  ESI, OFFSET array  ; Point ESI to first array element
+  FLDZ                    ; Initialize FPU register ST(0) = 0 (sum of squares)
+
+var_loop:
+  FILD DWORD PTR [ESI]    ; Load current element as integer to float
+  FSUB mean               ; Subtract mean
+  FMUL ST(0), ST(0)       ; Square the difference
+  FADDP ST(1), ST(0)      ; Add to running sum of squares
+  ADD  ESI, 4             ; Move to next element
+  LOOP var_loop           ; Repeat for all elements
+
+  MOV  EAX, count
+  DEC  EAX                ; Subtract 1 to get our (n - 1)
+  MOV  countMinus1, EAX   ; Store as countMinus1 for denominator
+
+  FILD countMinus1        ; Load (n - 1) onto FPU stack
+  FDIV                    ; Divide sum of squares / (n - 1)
+  
+  MOV  EDX, OFFSET msg3
+  CALL WriteString
+  CALL WriteFloat
+  CALL Crlf
+
+  EXIT
+main ENDP
+END main
+```
+
+## Where The CLT Doesn't Apply {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: FALSE
+# What if we don't have a finite variance?
+nsim <- 10000
+n <- 1000
+```
+
+## Where The CLT Doesn't Apply {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: FALSE
+# What if we don't have a finite variance?
+nsim <- 10000
+n <- 1000
+
+t1.sampMeans <- rep(0, nsim)       # Initialize vector for sample means 
+```
+
+## Where The CLT Doesn't Apply {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: FALSE
+# What if we don't have a finite variance?
+nsim <- 10000
+n <- 1000
+
+t1.sampMeans <- rep(0, nsim)       # Initialize vector for sample means 
+for (i in 1:nsim) {                # Perform the following nsim times
+  t1.samp <- rt(n, 1)              # Draw a sample from a Cauchy distribution
+}
+```
+
+## Where The CLT Doesn't Apply {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+# What if we don't have a finite variance?
+nsim <- 10000
+n <- 1000
+
+t1.sampMeans <- rep(0, nsim)       # Initialize vector for sample means 
+for (i in 1:nsim) {                # Perform the following nsim times
+  t1.samp <- rt(n, 1)              # Draw a sample from a Cauchy distribution
+  t1.sampMeans[i] <- mean(t1.samp) # Take and store mean of sample
+}
+```
+
+## Where The CLT Doesn't Apply {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+# Plot it!
+hist(t1.sampMeans,
+     col = "orange",
+     border = "black",
+     main = "Histogram of Cauchy Sample Means (n = 1000)",
+     xlab = "Sample Means")
+```
+
+## Where The CLT Doesn't Apply {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Why does it look weird?
+range(t1.sampMeans)
+```
+
+* If $X \sim t_{(1)}$
+  * $\operatorname{E}(X)$ is undefined
+
+## t-tests {auto-animate="true" auto-animate-easing="ease-in-out"}
+* Listen up! -- About to give you the secret to Statistics
+  * Everything (pretty much) is a $t$-test
+  * It's also the best test (fact)
+
+## t-tests {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Create a sequence representing the degrees of freedom
+t.df <- seq(1, 50, 1)
+t.df
+```
+
+## t-tests {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Create a sequence representing the degrees of freedom
+t.df <- seq(1, 50, 1)
+
+# Create critical values for each element in the sequence
+t.crit.05 <- qt(1 - 0.05, t.df)
+t.crit.05
+```
+
+## t-tests {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Plot critical value corresponding to their df
+plot(t.df, t.crit.05, 
+     ylim = c(0, 7), 
+     xlab = "Degrees of Freedom (df)",
+     ylab = "t Critical Value (0.05)")
+```
+
+## t-tests {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Plot critical value corresponding to their df
+plot(t.df, t.crit.05, 
+     ylim = c(0, 7), 
+     xlab = "Degrees of Freedom (df)",
+     ylab = "t Critical Value (0.05)")
+abline(h = qnorm(1 - 0.05), lty = 3)
+```
+
+## t vs z {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+### Comparing the t-stat on a t vs z reference distribution
+n <- 30
+nsim <- 10000
+```
+
+## t vs z {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+### Comparing the t-stat on a t vs z reference distribution
+n <- 30
+nsim <- 10000
+# If you change the population distribution, you need to change your null hypothesis
+mu0 <- 4
+t.stat <- rep(0, nsim) # ``Empty'' vector for storing t-tests
+```
+
+## t vs z {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: FALSE
+### Comparing the t-stat on a t vs z reference distribution
+n <- 30
+nsim <- 10000
+# If you change the population distribution, you need to change your null hypothesis
+mu0 <- 4
+t.stat <- rep(0, nsim) # ``Empty'' vector for storing t-tests
+for (i in 1:nsim) {
+  dataSamp <- rchisq(n, 4)
+  t.stat[i] <- (mean(dataSamp) - mu0) / sqrt(var(dataSamp) / n)
+}
+```
+
+## t vs z {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+### Comparing the t-stat on a t vs z reference distribution
+n <- 30
+nsim <- 10000
+# If you change the population distribution, you need to change your null hypothesis
+mu0 <- 4
+t.stat <- rep(0, nsim) # ``Empty'' vector for storing t-tests
+for (i in 1:nsim) {
+  dataSamp <- rchisq(n, 4)
+  t.stat[i] <- (mean(dataSamp) - mu0) / sqrt(var(dataSamp) / n)
+}
+pvals.t <- 2 * (1 - pt(abs(t.stat), n - 1))
+pvals.z <- 2 * (1 - pnorm(abs(t.stat)))
+```
+
+## t vs z {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+mean(pvals.t < 0.05)
+mean(pvals.z < 0.05)
+```
+
+## t vs z {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+### Comparing the t-stat on a t vs z reference distribution
+par(mfrow = c(1, 2))
+hist(pvals.t, 
+     breaks = seq(0, 1, 0.05),
+     col = "lightgreen",
+     border = "black",
+     main = "Histogram of p-values \n from t-Distribution")
+hist(pvals.z, 
+     breaks = seq(0, 1, 0.05),
+     col = "lightblue",
+     border = "black",
+     main = "Histogram of p-values \n from Normal Distribution")
+```
+## t vs z {auto-animate="true" auto-animate-easing="ease-in-out"}
+* Wait... what are we even looking for in these histograms?
+* Why do I care about this proportion?
+* What proportion of $p$-values would we expect to be below $\alpha = 0.05$ if the null hypothesis is true
+
+## t vs z {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: FALSE
+### Comparing the t-stat on a t vs z reference distribution
+n <- 30
+nsim <- 10000
+mu0 <- 9               # Notice we had to change the null 
+t.stat <- rep(0, nsim)
+for (i in 1:nsim) {
+  dataSamp <- rgamma(n, shape = 3, scale = 3)
+  t.stat[i] <- (mean(dataSamp) - mu0) / sqrt(var(dataSamp) / n)
+}
+pvals.t <- 2 * (1 - pt(abs(t.stat), n - 1))
+pvals.z <- 2 * (1 - pnorm(abs(t.stat)))
+```
+
+## t vs z {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: FALSE
+#| code-line-numbers: "4"
+### Comparing the t-stat on a t vs z reference distribution
+n <- 30
+nsim <- 10000
+mu0 <- 9               # Notice we had to change the null 
+t.stat <- rep(0, nsim)
+for (i in 1:nsim) {
+  dataSamp <- rgamma(n, shape = 3, scale = 3)
+  t.stat[i] <- (mean(dataSamp) - mu0) / sqrt(var(dataSamp) / n)
+}
+pvals.t <- 2 * (1 - pt(abs(t.stat), n - 1))
+pvals.z <- 2 * (1 - pnorm(abs(t.stat)))
+```
+
+## t vs z {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+#| code-line-numbers: "7"
+### Comparing the t-stat on a t vs z reference distribution
+n <- 30
+nsim <- 10000
+mu0 <- 9               # Notice we had to change the null 
+t.stat <- rep(0, nsim)
+for (i in 1:nsim) {
+  dataSamp <- rgamma(n, shape = 3, scale = 3)
+  t.stat[i] <- (mean(dataSamp) - mu0) / sqrt(var(dataSamp) / n)
+}
+pvals.t <- 2 * (1 - pt(abs(t.stat), n - 1))
+pvals.z <- 2 * (1 - pnorm(abs(t.stat)))
+```
+
+## t vs z {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+### Comparing the t-stat on a t vs z reference distribution
+par(mfrow = c(1, 2))
+hist(pvals.t, 
+     breaks = seq(0, 1, 0.05),
+     col = "lightgreen",
+     border = "black",
+     main = "Histogram of p-values \n from t-Distribution")
+hist(pvals.z, 
+     breaks = seq(0, 1, 0.05),
+     col = "lightblue",
+     border = "black",
+     main = "Histogram of p-values \n from Normal Distribution")
+```
+
+## t vs z {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+mean(pvals.t < 0.05)
+mean(pvals.z < 0.05)
+```
+
+## Binomial Stuff {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+n <- 20
+p <- 0.5
+```
+
+## Binomial Stuff {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+n <- 20
+p <- 0.5
+x <- 0:n
+pmf.x <- dbinom(x, n, p)
+cdf.x <- pbinom(x, n, p)
+```
+
+## Binomial Stuff {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+par(mfrow = c(2, 2))
+plot(x, pmf.x, 
+     type = "h",
+     col = "lightpink",
+     main = paste("Binomial(", n, ", ", p, ") pmf", sep = ""),
+     ylab = "p(x)", xlab = "x")
+plot(x, cdf.x, 
+     type = "h",
+     col = "lightblue",
+     main = paste("Binomial(", n, ", ", p, ") cdf", sep = ""),
+     ylab = "F(x)", 
+     xlab = "x")
+barplot(pmf.x, 
+     names = x,
+     col = "lightpink",
+     main = paste("Binomial(", n, ", ", p, ") pmf", sep = ""),
+     ylab = "p(x)", 
+     xlab = "x")
+barplot(cdf.x, 
+     names = x,
+     col = "lightblue",
+     main = paste("Binomial(", n, ", ", p, ") cdf", sep = ""),
+     ylab = "F(x)", 
+     xlab = "x")
+```
+
+## Binomial Stuff {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# We can try our CLT approximation
+approx.cdf.x <- pnorm(x, n*p, sqrt(n*p*(1 - p)))
+cbind(cdf.x, approx.cdf.x)
+```
+
+## Binomial Stuff {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+par(mfrow = c(1, 1)) # Return plotting window back to normal
+plot(x, cdf.x, 
+     type = "h",
+     main = paste("Binomial(", n, ", ", p, ") cdf", sep = ""),
+     ylab = "F(x)", 
+     xlab = "x", 
+     lwd = 3)
+```
+
+## Binomial Stuff {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+plot(x, cdf.x, 
+     type = "h",
+     main = paste("Binomial(", n, ", ", p, ") cdf", sep = ""),
+     ylab = "F(x)", 
+     xlab = "x", 
+     lwd = 3)
+points(x, approx.cdf.x, type = "h", col = 2, lwd = 3)
+```
+
+## Binomial Stuff {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+plot(x, cdf.x, 
+     type = "h",
+     main = paste("Binomial(", n, ", ", p, ") cdf", sep = ""),
+     ylab = "F(x)", 
+     xlab = "x", 
+     lwd = 3)
+points(x + 0.25, approx.cdf.x, type = "h", col = 2, lwd = 3)
+```
+
+
+## Binomial Stuff {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Not bad, but consistently a tad low
+# To see why, consider
+pbinom(3, n, p)
+pbinom(3.5, n, p)
+pbinom(3.9, n, p)
+```
+
+## Binomial Stuff {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Not bad, but consistently a tad low
+# To see why, consider
+pbinom(3, n, p)
+pbinom(3.5, n, p)
+pbinom(3.9, n, p)
+# Since our data is discrete, the cdf is the same for x in [3.0, 4)
+```
+
+## Binomial Stuff {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Not the case for the Normal distribution (since continuous)
+pnorm(3, n * p, sqrt(n * p * (1 - p)))
+pnorm(3.5, n * p, sqrt(n * p * (1 - p)))
+pnorm(3.9, n * p, sqrt(n * p * (1 - p)))
+```
+
+## Binomial Stuff {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# We can try a ``continuity correction''
+approx.cdf.cc.x <- pnorm(x + 0.5, n * p, sqrt(n * p * (1 - p)))
+cbind(cdf.x, approx.cdf.x, approx.cdf.cc.x)
+```
+
+## Binomial Stuff {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+plot(x, cdf.x, 
+     type = "h",
+     main = paste("Binomial(", n, ", ", p, ") cdf", sep = ""),
+     ylab = "F(x)", 
+     xlab = "x", 
+     lwd = 3)
+points(x + 0.25, approx.cdf.x, type = "h", col = 2, lwd = 3)
+points(x + 0.5, approx.cdf.cc.x, type = "h", col = 3, lwd = 3)
+legend(0, 1, 
+       legend = c("Exact CDF", "Normal Approx", "Normal Approx w/ CC"), 
+       col = c(1, 2, 3), 
+       lwd = c(3, 3, 3))
+```
+
+## Binomial Stuff {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: FALSE
+#| output-location: fragment
+# Intuition behind continuity correction:
+# Generate a lot of samples to get an accurate sampling distribution
+rbinom(1000000, n, p) 
+```
+
+## Binomial Stuff {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+# Intuition behind continuity correction:
+hist(rbinom(1000000, n, p),
+     breaks = seq(-0.5, n + 0.5, 1),
+     col = "#eda3ff",
+     main = "Displaying Continuity Correction Reason",
+     xlab = "X ~ Binomial(n, p)",
+     freq = FALSE)
+```
+
+## Binomial Stuff {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+# Intuition behind continuity correction:
+hist(rbinom(1000000, n, p),
+     breaks = seq(-0.5, n + 0.5, 1),
+     col = "#eda3ff",
+     main = "Displaying Continuity Correction Reason",
+     xlab = "X ~ Binomial(n, p)",
+     freq = FALSE)
+lines(seq(0, n, 0.01), dnorm(seq(0, n, 0.01), n * p, sqrt(n * p * (1 - p))), col = "#42f578", lwd = 2)
+```
+
+## Binomial Stuff {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+# Intuition behind continuity correction:
+hist(rbinom(1000000, n, p),
+     breaks = seq(-0.5, n + 0.5, 1),
+     col = "#eda3ff",
+     main = "Displaying Continuity Correction Reason",
+     xlab = "X ~ Binomial(n, p)",
+     freq = FALSE)
+lines(seq(0, n, 0.01), dnorm(seq(0, n, 0.01), n * p, sqrt(n * p * (1 - p))), col = "#42f578", lwd = 2)
+abline(v = 11, lwd = 2)
+```
+
+
+## Binomial Stuff {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+pbinom(11, n, p)                                           # Exact Probability
+pnorm(11, mean = n * p, sd = sqrt(n * p * (1 - p)))        # No CC      
+pnorm(11 + 0.50, mean = n * p, sd = sqrt(n * p * (1 - p))) # CC
+```
+## Binomial Stuff {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+pbinom(11, n, p)                                           # Exact Probability
+pnorm(11, mean = n * p, sd = sqrt(n * p * (1 - p)))        # No CC      
+pnorm(11 + 0.50, mean = n * p, sd = sqrt(n * p * (1 - p))) # CC
+```
+## Binomial Stuff {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+pbinom(11, n, p)                                           # Exact Probability
+pnorm(11, mean = n * p, sd = sqrt(n * p * (1 - p)))        # No CC      
+pnorm(11 + 0.50, mean = n * p, sd = sqrt(n * p * (1 - p))) # CC
+```
+
+## Binomial Stuff {.smaller}
+Let 
+$$
+Y \sim \text{Binomial}(n = `r n`, p = `r p`)
+$$
+Using the Normal approximation to the Binomial distribution via the Central limit Theorem here. Our standardized quantity will be
+$$
+\frac{Y - \operatorname{E}(X)}{\sqrt{\operatorname{Var}(X)}}  = \frac{Y - np}{\sqrt{np(1-p)}} \overset{d}{\to} N(0, 1)
+$$
+Let's say the probability of interest is $P(Y \leq 11)$. Using the normal approximation with continuity correction:
+\begin{align*}
+    P\left(Y \le 11\right) & = P\left(Y \le 11.5\right) \\[0.25cm]
+    & = P\left(\frac{Y - np}{\sqrt{np(1-p)}} \le \frac{11.5 - np}{\sqrt{np(1-p)}}\right) \\[0.25cm]
+    & = P\left(\frac{Y - `r n * p`}{`r sqrt(n * p * (1 - p))`} \le \frac{11.5 - `r n * p`}{`r sqrt(n * p * (1 - p))`}\right) \\[0.25cm]
+    & \approx P\left(Z \le `r (11.5 - n * p) / sqrt(n * p * (1 - p))`\right) \\[0.25cm]
+    & = `r pnorm((11.5 - n * p) / sqrt(n * p * (1 - p)))`
+\end{align*}
+
+## Homework 2 Example {auto-animate="true" auto-animate-easing="ease-in-out"}
+The following is very similar to Question 4, Homework 2:
+
+* Exploring the performance (exactness) of the $t$-test for data from different distributions.
+* Consider $n = 25$
+* Let $X \sim \text{Gamma}\left(\text{shape} = 3, \text{scale} = 3\right)$
+* We want to generate a sample many times from this distribution and for each, calculate the $t$-statistic at the end we'll see (when the null is true) the proportion of $p$-values under 
+
+## Homework 2 Example {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: FALSE
+# Homework 2 Question 4 Simulation Setup
+nsim <- 10000
+n <- 25
+tStat <- rep(0, nsim)
+```
+
+## Homework 2 Example {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: FALSE
+# Homework 2 Question 4 Simulation Setup
+nsim <- 10000
+n <- 25
+tStat <- rep(0, nsim)
+for (i in 1:nsim) {
+  data <- rgamma(n, shape = 3, scale = 3)
+  trueMean <- 9
+}
+```
+
+## Homework 2 Example {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: FALSE
+# Homework 2 Question 4 Simulation Setup
+nsim <- 10000
+n <- 25
+tStat <- rep(0, nsim)
+for (i in 1:nsim) {
+  data <- rgamma(n, shape = 3, scale = 3)
+  trueMean <- 9
+  sampMean <- mean(data)
+  sampSD <- sd(data)
+}
+```
+
+## Homework 2 Example {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: FALSE
+# Homework 2 Question 4 Simulation Setup
+nsim <- 10000
+n <- 25
+tStat <- rep(0, nsim)
+for (i in 1:nsim) {
+  data <- rgamma(n, shape = 3, scale = 3)
+  trueMean <- 9
+  sampMean <- mean(data)
+  sampSD <- sd(data)
+  tStat[i] <- sqrt(n) * (sampMean - trueMean) / sampSD
+}
+```
+
+## Homework 2 Example {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: FALSE
+# Homework 2 Question 4 Simulation Setup
+nsim <- 10000
+n <- 25
+tStat <- rep(0, nsim)
+for (i in 1:nsim) {
+  data <- rgamma(n, shape = 3, scale = 3)
+  trueMean <- 9
+  sampMean <- mean(data)
+  sampSD <- sd(data)
+  tStat[i] <- sqrt(n) * (sampMean - trueMean) / sampSD
+}
+pVals <- 2 * (1 - pt(abs(tStat), n - 1))
+```
+
+## Homework 2 Example {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: FALSE
+#| code-line-numbers: "3"
+# Homework 2 Question 4 Simulation Setup
+nsim <- 10000
+n <- 25
+tStat <- rep(0, nsim)
+for (i in 1:nsim) {
+  data <- rgamma(n, shape = 3, scale = 3)
+  trueMean <- 9
+  sampMean <- mean(data)
+  sampSD <- sd(data)
+  tStat[i] <- sqrt(n) * (sampMean - trueMean) / sampSD
+}
+pVals <- 2 * (1 - pt(abs(tStat), n - 1))
+mean(pVals < 0.05)
+```
+
+## Homework 2 Example {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: FALSE
+#| code-line-numbers: "6-7"
+# Homework 2 Question 4 Simulation Setup
+nsim <- 10000
+n <- 25
+tStat <- rep(0, nsim)
+for (i in 1:nsim) {
+  data <- rgamma(n, shape = 3, scale = 3)
+  trueMean <- 9
+  sampMean <- mean(data)
+  sampSD <- sd(data)
+  tStat[i] <- sqrt(n) * (sampMean - trueMean) / sampSD
+}
+pVals <- 2 * (1 - pt(abs(tStat), n - 1))
+mean(pVals < 0.05)
+```
+
+## Homework 2 Example {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+#| code-line-numbers: "13"
+# Homework 2 Question 4 Simulation Setup
+nsim <- 10000
+n <- 25
+tStat <- rep(0, nsim)
+for (i in 1:nsim) {
+  data <- rgamma(n, shape = 3, scale = 3)
+  trueMean <- 9
+  sampMean <- mean(data)
+  sampSD <- sd(data)
+  tStat[i] <- sqrt(n) * (sampMean - trueMean) / sampSD
+}
+pVals <- 2 * (1 - pt(abs(tStat), n - 1))
+mean(pVals < 0.05)
+```
+
+## Homework 2 Example {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+#| output-location: fragment
+# Our p-values should be Unif(0, 1) if exact
+hist(pVals, 
+     breaks = seq(0, 1, 0.05),
+     col = "purple",
+     border = "black",
+     main = "Histogram of p-values \n from Gamma(3, 3) Distribution",
+     xlab = "p-values")
+```

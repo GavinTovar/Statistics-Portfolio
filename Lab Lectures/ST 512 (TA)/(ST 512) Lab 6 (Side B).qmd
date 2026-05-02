@@ -1,0 +1,426 @@
+---
+title: "(ST 412/512) <br> Case Influence Statistics"
+format:
+  revealjs:
+    incremental: true
+    scrollable: true
+    theme: dracula
+    transition: slide
+    transition-speed: slow
+    auto-animate: true
+    chalkboard: true
+    code-line-numbers: true
+    css: (ST 512) StyleSheets.css
+    plugins:
+      - reveal.js/plugin/zoom-js/zoom.js
+      - reveal.js/plugin/highlight/highlight.js
+---
+
+## Welcome Back
+* Any questions before we get started?
+* Office Hours: Thursday 10:00am - 11:00am
+
+## What Are Case Influence Statistics? {.smaller}
+- Case influence statistics help us identify **observations that disproportionately affect a regression model’s results**.
+- In regression analysis, some data points can:
+  - Strongly affect coefficient estimates  
+  - Change statistical significance
+  - Distort predictions
+  - Alter other model fit aspects
+- These points may be:
+  - **Outliers** (large residual values)  
+  - **High leverage points** (unusual predictor values)  
+  - **Influential observations** (large impact on model estimates)
+
+## Loading Data and Packages {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: FALSE
+case1101 <- read.csv("case1101.csv", header = TRUE)
+```
+
+## Loading Data and Packages {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Loading packages (optional)
+library(Sleuth3) # Actually contains case1101 dataset and much more
+library(ggplot2)
+```
+
+## Dataset Details {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+These data were collected on **18 women** and **14 men** to investigate a theory explaining why:
+
+- Women exhibit **lower tolerance for alcohol**
+- Women develop **alcohol-related liver disease more readily** than men
+- Variables
+  - **Subject** : Subject number in the study
+  - **Metabol** : First-pass metabolism of alcohol *(mmol/liter-hour)* 
+  - **Gastric** : Gastric alcohol dehydrogenase (AD) activity *(μmol/min/g of tissue)*
+  - **Sex** : Sex of the subject
+  - **Alcohol** : Alcoholic or non-alcoholic status
+  
+  
+## Checkin' Out Data {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: FALSE
+# This specifies the colors for the symbols
+myBg <- ifelse(case1101$Sex == "Female", "black", "white")
+
+# This specifies the symbols (circle or triangle)
+myPch <- ifelse(case1101$Alcohol == "Alcoholic", 21, 24)
+```
+
+## Checkin' Out Data {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: FALSE
+# This specifies the colors for the symbols
+myBg <- ifelse(case1101$Sex == "Female", "black", "white")
+
+# This specifies the symbols (circle or triangle)
+myPch <- ifelse(case1101$Alcohol == "Alcoholic", 21, 24)
+
+# Plot Action
+plot(case1101$Gastric, case1101$Metabol,
+  pch = myPch,
+  bg = myBg,
+  xlab = "Gastric AD Activity",
+  ylab = "First-Pass Metabolism"
+)
+```
+
+## Checkin' Out Data {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+#| output-location: slide
+# This specifies the colors for the symbols
+myBg <- ifelse(case1101$Sex == "Female", "black", "white")
+
+# This specifies the symbols (circle or triangle)
+myPch <- ifelse(case1101$Alcohol == "Alcoholic", 21, 24)
+
+# Plot Action
+plot(case1101$Gastric, case1101$Metabol,
+  pch = myPch,
+  bg = myBg,
+  xlab = "Gastric AD Activity",
+  ylab = "First-Pass Metabolism"
+)
+legend(1, 12,
+  pch = c(24, 24, 21, 21),
+  pt.bg = c("white", "black", "white", "black"),
+  c("Non-alcoholic Males",
+    "Non-alcoholic Females",
+    "Alcoholic Males",
+    "Alcoholic Females")
+)
+```
+
+## Checkin' Out Data {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+# Suppose we want to know which observations are the one's far right
+which(case1101$Gastric > 4) # Which observations have values of Gastric greater than 4 
+```
+
+## Checkin' Out Data {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+which(case1101$Gastric > 5) # Which observations have values of Gastric greater than 5 
+```
+
+## Checkin' Out Data {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+#| output-location: slide
+# This specifies the colors for the symbols
+myBg <- ifelse(case1101$Sex == "Female", "black", "white")
+
+# This specifies the symbols (circle or triangle)
+myPch <- ifelse(case1101$Alcohol == "Alcoholic", 21, 24)
+
+# Plot Action
+plot(case1101$Gastric, case1101$Metabol,
+  pch = myPch,
+  bg = myBg,
+  xlab = "Gastric AD Activity",
+  ylab = "First-Pass Metabolism"
+)
+legend(1, 12,
+  pch = c(24, 24, 21, 21),
+  pt.bg = c("white", "black", "white", "black"),
+  c("Non-alcoholic Males",
+    "Non-alcoholic Females",
+    "Alcoholic Males",
+    "Alcoholic Females")
+)
+labelsubs <- subset(case1101, Gastric > 4) # Identify observations with Gastric values > 4
+text(
+  labelsubs$Gastric,
+  labelsubs$Metabol,
+  row.names(labelsubs),
+  pos = 1,
+  col = "red"
+) # Add the observations numbers to the plot
+```
+
+## Fitting Model {.text-xxs auto-animate="true" auto-animate-easing="ease-in-out"}
+- Variables
+- **meta** : First-pass metabolism (μmol/liter-hour)
+- **gast** : Gastric alcohol dehydrogenase activity  (μmol/min/g tissue)
+- **fem** : Indicator variable (1 = Female, 0 = Male)
+- **alc** : Indicator variable (1 = Alcoholic, 0 = Non-alcoholic)
+
+::: {.fragment}
+$$
+\begin{align*}
+\mu\left(\text{meta} \mid gast,fem,alc\right) & =
+\beta_0 + \beta_1 gast + \beta_2 fem + \beta_3 alc
++ \beta_4 (gast \times fem) \\[0.20cm]
+& + \beta_5 (fem \times alc)
++ \beta_6 (gast \times alc)
++ \beta_7 (gast \times fem \times alc)
+\end{align*}
+$$
+:::
+
+## Fitting Model {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+# Defining some variables
+meta <- case1101$Metabol
+gast <- case1101$Gastric
+alc <- as.numeric(case1101$Alcohol == "Alcoholic") # Indicator variables
+fem <- as.numeric(case1101$Sex == "Female")        # Indicator variables
+```
+
+## Fitting Model {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+# Defining some variables
+meta <- case1101$Metabol
+gast <- case1101$Gastric
+alc <- as.numeric(case1101$Alcohol == "Alcoholic") # Indicator variables
+fem <- as.numeric(case1101$Sex == "Female")        # Indicator variables
+
+# A data frame containing the original data
+data_orig <- data.frame(meta, gast, alc, fem)
+```
+
+## Fitting Model {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+# Defining some variables
+meta <- case1101$Metabol
+gast <- case1101$Gastric
+alc <- as.numeric(case1101$Alcohol == "Alcoholic") # Indicator variables
+fem <- as.numeric(case1101$Sex == "Female")        # Indicator variables
+
+# A data frame containing the original data
+data_orig <- data.frame(meta, gast, alc, fem)
+
+# Note that "*" will produce the model above with all possible interactions
+mod1 <- lm(meta ~ gast * alc * fem, data = data_orig) 
+summary(mod1)
+```
+
+## Fitting Model {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+#| output-location: slide
+# We observe that, other than gast, the only term that is significant is the interaction gast × fem
+# Looking at the residuals from this model we obtain
+plot(mod1$fitted, mod1$resid,
+  xlab = "Fitted Values",
+  ylab = "Residual FPM",
+  pch = 16,
+  ylim = c(-4, 4)
+)
+abline(h = 0)
+```
+
+## Fitting Model {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+# We observe a couple of points away from the rest again
+which(mod1$fitted > 8) # Which observations fitted values greater than 8
+```
+
+## Fitting Model {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+which(as.vector(mod1$fitted) > 8) # Observe the difference with this statement
+```
+
+## Fitting Model {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+mod1$fitted # We can also inspect the entire list of fitted values
+```
+
+## Refitting Model {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+# Remove observations 31 and 32 from the original data
+data_rem <- data_orig[-c(31, 32), ] 
+
+# Re-fit the model removing the observations
+mod1_rem <- lm(meta ~ gast * alc * fem, data = data_rem) 
+
+summary(mod1_rem) # Print summary for comparisons 
+```
+
+## Case-Influence Statistics {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+What are case-influence statistics?
+- Numerical measures used to detect **influential observations**
+
+## [Case-Influence Statistics - Leverage]{.r-fit-text} {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+- Measures distance of predictor values from their overall mean  
+- High leverage → observation is far in predictor space  
+- May strongly influence the fitted model
+
+## [Case-Influence Statistics - Standardized Residuals]{.r-fit-text} {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+- Residual divided by its estimated standard deviation  
+- Places residuals on a common scale  
+- Helps detect unusual observations  
+
+::: {.aside}
+Note: Some sources use *studentized residuals* interchangeably. R distinguishes between standardized and studentized residuals.
+:::
+
+## [Case-Influence Statistics - Cook’s Distance]{.r-fit-text} {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+- Measures overall influence of removing an observation  
+- Assesses impact on estimated regression coefficients  
+- Large values → potentially influential case
+
+## [Case-Influence Statistics - Leverage]{.r-fit-text} {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+# We can extract the leverage of each observation in the model using the function hatvalues(.)
+hatvalues(mod1) # Looking at the leverage for each observation in the original model
+```
+
+## [Case-Influence Statistics - Leverage]{.r-fit-text} {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+#| output-location: slide
+# Plot leverage against the observations
+plot(1:nrow(case1101),
+     hatvalues(mod1),
+     ylab = "Leverage",
+     xlab = "Observations")
+# Rule of thumb 2 * p / n = 2 * 8 / 32 = 0.50
+abline(h = 0.5, lty = "dashed", col = "red") # We include this value for reference
+```
+
+## [Case-Influence Statistics - Leverage]{.r-fit-text} {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+which(hatvalues(mod1) > 0.5) # Identify observations greater than 0.5
+```
+
+## [Case-Influence Statistics - Standardized Residuals]{.r-fit-text} {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+#| output-location: slide
+plot(1:nrow(case1101), rstandard(mod1), 
+     ylab = "Standardized residuals", 
+     xlab = "Observations") # Plot leverage against the observations
+abline(h = 0, lty = "dashed") # We include line at 0 for reference
+abline(h = 2, lty = "dashed", col = "red") # We include this value for reference
+abline(h = -2, lty = "dashed", col = "red") # We include this value for reference
+```
+
+## [Case-Influence Statistics - Standardized Residuals]{.r-fit-text} {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+which(abs((rstandard(mod1))) > 2) # Identify observations greater than 2
+```
+
+
+## [Case-Influence Statistics - Cook’s Distance]{.r-fit-text} {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+cooks.distance(mod1) # Looking at the Cook distances for each observation in the original model
+```
+
+## [Case-Influence Statistics - Cook’s Distance]{.r-fit-text} {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+plot(1:nrow(case1101), cooks.distance(mod1), 
+     ylab = "Cook distance", 
+     xlab = "Observations") # Plot leverage against the observations
+abline(h = 1, lty = "dashed", col = "red") # We include this value for reference
+```
+
+## [Case-Influence Statistics - Cook’s Distance]{.r-fit-text} {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+which(cooks.distance(mod1) > 1) # Identify observations greater than 1
+```
+
+## [Case-Influence Statistics - Important Principles]{.r-fit-text} {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+- Reference lines are **guidelines**, not strict rules.
+- Do **not** rely on a single diagnostic measure.
+- Combine:
+  - Leverage
+  - Standardized residuals
+  - Cook’s distance
+- Influential observations are **not automatically errors**.
+
+## [Case-Influence Statistics - This Example]{.r-fit-text} {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+- **Obs 31 & 32**
+  - Large standardized residuals
+  - Large Cook’s distance
+  - High leverage (31 especially)
+  → Strong influence on model results
+
+- **Obs 1, 2, 23**
+  - High leverage
+  - Small residuals
+  - Smaller overall influence
+
+- **After Removing 31 & 32**
+  - Interaction terms lose significance
+  - $R^{2}$ decreases substantially
+  - Model conclusions change
+
+## [Case-Influence Statistics - Cook’s Distance]{.r-fit-text} {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+# Recall the model's output
+summary(mod1)
+```
+
+## [Case-Influence Statistics - Cook’s Distance]{.r-fit-text} {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+# Removing the "unusual" observations, how does our output change?
+data_rem <- data_orig[-c(31, 32), ]
+mod1_new <- lm(meta ~ gast * alc * fem, data = data_rem)
+summary(mod1_new)
+```
+

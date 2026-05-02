@@ -1,0 +1,12 @@
+---
+title: "(ST 411/511) Lab 6 <br> Midterm Study Fun!"
+format:
+  revealjs:
+    incremental: TRUE
+    scrollable: TRUE
+    theme: dark
+    transition: slide
+    transition-speed: slow
+    auto-animate: TRUE
+    chalkboard: TRUE
+---

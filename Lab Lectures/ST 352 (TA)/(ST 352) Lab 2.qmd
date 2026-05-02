@@ -1,0 +1,495 @@
+---
+title: "(ST 352) Lab 2 - Paired t-methods"
+format:
+  revealjs:
+    incremental: TRUE
+    scrollable: TRUE
+    theme: dark
+    transition: slide
+    chalkboard: TRUE
+---
+## Office Hours {transition="zoom" transition-speed="slow"}
+When are my office hours?
+
+- Wednesday, 10:00am - 11:00am
+- Friday, 8:00am - 9:00am
+  - Why are they so early?
+    - All the midday slots were taken :(
+- Where?
+  - Weniger, Room 205 
+- Why would you want to stop by?
+  - Questions on lab assignments
+  - Questions regarding Acrobatiq content
+  - To share a funny joke
+  - Questions about R
+  - Any miscellaneous statistical queries
+  - Etc.
+
+## The Q-Q Plot {transition="concave" transition-speed="slow"}
+- What is a QQ plot
+  - A graphical method used to compare two probability distributions via their quantiles.
+  - What we often see in practice is our sample (empirical probability distribution) against the theoretical (often Normal probability distribution)
+  - If the two are similar we expect points to land on and / or close to the reference line
+- Why do we construct them?
+  - We typically want to verify if a normality assumption is reasonable.
+
+## The Q-Q Plot {transition="concave" transition-speed="slow"}
+- How does one tell if the QQ plot suggests normality or not
+  - If the points land on and / or around the reference line
+- What if we have a large sample size?
+  - The more skewed our data is, the larger the sample size needed to reach approximate normality.
+- How do I typically approach these QQ plot interpretations?
+  - One can simulate normal data of equal sample size and construct a QQ plot
+
+## The Q-Q Plot {transition="concave" transition-speed="slow"}
+```{r}
+#| echo: FALSE
+setwd("C:/Users/Ghcto/OneDrive/Desktop/School/Spring 2024/ST 352 (TA)/Lab 2")
+television <- read.delim("television.txt")
+```
+
+```{r}
+#| echo: FALSE
+par(mfrow = c(1, 2))
+# Simulated Normal Data
+Normal.Data <- rnorm(183)
+qqnorm(Normal.Data,
+       main = "Simulated Normal Data",
+       pch = 19)
+qqline(Normal.Data)
+
+# Lab 1 Data
+qqnorm(scale(television$amount),
+       main = "Lab Assignment 1 Data",
+       pch = 19,
+       col = "lawngreen")
+qqline(scale(television$amount))
+
+```
+
+## The Q-Q Plot {transition="concave" transition-speed="slow"}
+Notice this is the same thing but displayed row-wise instead of column-wise
+```{r}
+#| echo: FALSE
+par(mfrow = c(2, 1))
+# Simulated Normal Data
+Normal.Data <- rnorm(183)
+qqnorm(Normal.Data,
+       main = "Simulated Normal Data",
+       pch = 19)
+qqline(Normal.Data)
+
+# Lab 1 Data
+qqnorm(scale(television$amount),
+       main = "Lab Assignment 1 Data",
+       pch = 19,
+       col = "lawngreen")
+qqline(scale(television$amount))
+par(mfrow = c(1, 1))
+```
+
+## The Q-Q Plot {transition="concave" transition-speed="slow"}
+Notice how depending on the plot window size, one can draw differing conclusions.
+
+- I recommend creating a large window to view plots to avoid unintended distortions.
+
+## Objectives {transition="zoom" transition-speed="slow"}
+- Recognize when the paired methods can be used
+- Use R to perform a hypothesis test and construct a confidence interval for the population mean of the differences using the paired t-methods
+- Interpret the output from analysis
+
+## Today's Example {transition="zoom" transition-speed="slow"}
+**Scenario:**
+Weights of 9 students (in pounds) before and after a month-long training schedule are given below. 
+
+**Question:**
+Is there evidence to indicate a mean weight loss after this month-long training program?
+
+## Loading in Data
+```{r}
+#| echo: TRUE
+training <- read.delim("training.txt")
+```
+
+## Why is this a matched-pairs design?
+- Because...
+  - We are interested in a difference between two variables of the same observation / subject.
+
+## Obtaining Difference {auto-animate=true}
+```{r}
+#| echo: TRUE
+training$change <- training$before - training$after
+```
+
+## Obtaining Difference {auto-animate=true}
+```{r}
+#| echo: TRUE
+training$change <- training$before - training$after
+training
+```
+
+## Obtaining Difference {auto-animate=true}
+```{r}
+#| echo: TRUE
+# To match the lab notes
+change <- training$before - training$after
+```
+
+## [Usual Preliminary Steps]{.r-fit-text} {transition="zoom" transition-speed="slow"}
+- Step 1: Identify the variable of interest and population
+- Step 2: Assess whether the samples are representative of their respective populations
+- Step 3: Understand why a particular example is an estimation example or hypothesis test example
+- Step 4: Define null and alternative hypotheses
+
+## Defining Hypothesis
+- $H_{0}: \mu_{\text{change}} = 0$
+- $H_{A}: \mu_{\text{change}} > 0$
+  - Where $\mu_{\text{change}}$ is the mean difference between start and end weight for student partaking in the month-long training program
+  - Where change = before - after
+
+:::aside
+Make sure on lab assignment question 2, to define how you subtracted to obtain the difference
+:::
+
+## Exploring Data {auto-animate=true}
+```{r}
+#| echo: TRUE
+require(mosaic) # library() and require() are essentially the same
+```
+
+## Exploring Data {auto-animate=true}
+```{r}
+#| echo: TRUE
+dotPlot(change)
+```
+
+## Exploring Data {auto-animate=true}
+```{r}
+#| echo: TRUE
+dotPlot(change,
+        main = "Change in Weight")
+```
+
+## Exploring Data {auto-animate=true}
+```{r}
+#| echo: TRUE
+dotPlot(change,
+        main = "Change in Weight",
+        xlab = "Weight Change in lbs (before - after)")
+```
+
+## Exploring Data {auto-animate=true}
+```{r}
+#| echo: TRUE
+dotPlot(change,
+        main = "Change in Weight",
+        xlab = "Weight Change in lbs (before - after)",
+        col = "pink")
+```
+
+## Exploring Data {auto-animate=true}
+```{r}
+#| echo: TRUE
+# Alternative code
+hist(change)
+```
+
+## Exploring Data {auto-animate=true}
+```{r}
+#| echo: TRUE
+hist(change,
+     main = "Change in Weight")
+```
+
+## Exploring Data {auto-animate=true}
+```{r}
+#| echo: TRUE
+hist(change,
+     main = "Change in Weight",
+     xlab = "Weight Change in lbs (before - after)")
+```
+
+## Exploring Data {auto-animate=true}
+```{r}
+#| echo: TRUE
+hist(change,
+     main = "Change in Weight",
+     xlab = "Weight Change in lbs (before - after)",
+     col = "pink")
+```
+
+## Exploring Data {auto-animate=true .smaller}
+:::: {.columns}
+
+::: {.column width="50%"}
+```{r}
+#| echo: TRUE
+# Using 'mosaic' package
+dotPlot(change,
+        main = "Change in Weight",
+        xlab = "Weight Change in lbs (before - after)",
+        col = "pink")
+```
+:::
+
+::: {.column width="50%"}
+```{r}
+#| echo: TRUE
+# No packages needed
+hist(change,
+     main = "Change in Weight",
+     xlab = "Weight Change in lbs (before - after)",
+     col = "pink")
+```
+:::
+
+::::
+
+## Exploring Data {auto-animate=true}
+```{r}
+#| echo: TRUE
+qqnorm(change)
+```
+
+## Exploring Data {auto-animate=true}
+```{r}
+#| echo: TRUE
+qqnorm(change,
+       pch = 19)
+```
+
+## Exploring Data {auto-animate=true}
+```{r}
+#| echo: TRUE
+qqnorm(change,
+       pch = 19,
+       col = "lawngreen")
+```
+
+## Exploring Data {auto-animate=true}
+```{r}
+#| echo: TRUE
+qqnorm(change,
+       pch = 19,
+       col = "lawngreen")
+qqline(change)
+```
+
+## Descriptive Statistics {auto-animate=true}
+```{r}
+#| echo: TRUE
+favstats(change) # Within 'mosaic' package
+```
+
+## Descriptive Statistics {auto-animate=true}
+```{r}
+#| echo: TRUE
+# Alternative code
+# No package needed
+```
+
+## Descriptive Statistics {auto-animate=true}
+```{r}
+#| echo: TRUE
+# Alternative code
+summary(change)
+```
+
+## Descriptive Statistics {auto-animate=true}
+```{r}
+#| echo: TRUE
+# Alternative code
+summary(change)
+length(change)
+```
+
+## Descriptive Statistics {auto-animate=true}
+```{r}
+#| echo: TRUE
+# Alternative code
+summary(change)
+length(change)
+sd(change)
+```
+
+## Descriptive Statistics {auto-animate=true .smaller}
+:::: {.columns}
+
+::: {.column width="50%"}
+```{r}
+#| echo: TRUE
+favstats(change)
+```
+:::
+
+::: {.column width="50%"}
+```{r}
+#| echo: TRUE
+# Alternative code
+summary(change)
+length(change)
+sd(change)
+```
+:::
+
+::::
+
+## Hypotheses
+- $H_{0}: \mu_{\text{change}} = 0$
+- $H_{A}: \mu_{\text{change}} > 0$
+  - Where $\mu_{\text{change}}$ is the mean difference between start and end weight for student partaking in the month-long training program
+  - Where change = before - after
+
+:::aside
+Same reminder: make sure on lab assignment question 2, to define how you subtracted to obtain the difference
+:::
+
+## Paired t-test (Option 1) {auto-animate=true}
+```{r}
+#| echo: TRUE
+#| output: FALSE
+t.test(training$before, training$after)
+```
+
+## Paired t-test (Option 1) {auto-animate=true}
+```{r}
+#| echo: TRUE
+#| output: FALSE
+t.test(training$before, training$after,
+       paired = TRUE)
+```
+
+## Paired t-test (Option 1) {auto-animate=true}
+```{r}
+#| echo: TRUE
+#| output: FALSE
+t.test(training$before, training$after,
+       paired = TRUE,
+       mu = 0)
+```
+
+## Paired t-test (Option 1) {auto-animate=true}
+```{r}
+#| echo: TRUE
+t.test(training$before, training$after,
+       paired = TRUE,
+       mu = 0,
+       alternative = "greater")
+```
+
+## Paired t-test (Option 2) {auto-animate=true}
+```{r}
+#| echo: TRUE
+#| output: FALSE
+t.test(change)
+```
+
+## Paired t-test (Option 2) {auto-animate=true}
+```{r}
+#| echo: TRUE
+#| output: FALSE
+t.test(change,
+       mu = 0)
+```
+
+## Paired t-test (Option 2) {auto-animate=true}
+```{r}
+#| echo: TRUE
+t.test(change,
+       mu = 0,
+       alternative = "greater")
+```
+
+## [Paired t-test (Option 1 vs. Option 2)]{.r-fit-text} {auto-animate=true}
+:::: {.columns}
+
+::: {.column width="56%"}
+```{r}
+#| echo: TRUE
+# Option 1
+t.test(training$before, training$after,
+       paired = TRUE,
+       mu = 0,
+       alternative = "greater")
+```
+:::
+
+::: {.column width="44%"}
+```{r}
+#| echo: TRUE
+# Option 2
+t.test(change,
+       mu = 0,
+       alternative = "greater")
+```
+:::
+
+::::
+
+## Confidence Interval {auto-animate=true}
+```{r}
+#| echo: TRUE
+#| output: FALSE
+t.test(training$before, training$after)
+```
+
+## Confidence Interval {auto-animate=true}
+```{r}
+#| echo: TRUE
+#| output: FALSE
+t.test(training$before, training$after,
+       paired = TRUE)
+```
+
+## Confidence Interval {auto-animate=true}
+```{r}
+#| echo: TRUE
+#| output: FALSE
+t.test(training$before, training$after,
+       paired = TRUE,
+       mu = 0)
+```
+
+## Confidence Interval {auto-animate=true}
+```{r}
+#| echo: TRUE
+#| output: FALSE
+t.test(training$before, training$after,
+       paired = TRUE,
+       mu = 0,
+       alternative = "two.sided")
+```
+
+## Confidence Interval {auto-animate=true}
+```{r}
+#| echo: TRUE
+t.test(training$before, training$after,
+       paired = TRUE,
+       mu = 0,
+       alternative = "two.sided",
+       conf.level = 0.95)
+```
+
+## Confidence Interval {auto-animate=true}
+```{r}
+#| echo: TRUE
+#| code-line-numbers: "4"
+t.test(training$before, training$after,
+       paired = TRUE,
+       mu = 0,
+       alternative = "two.sided",
+       conf.level = 0.95)
+```
+
+## Lab Assignment Hints
+- Appropriate graphs to support t-method claim should at least include one of the following:
+  - dotplot
+  - histogram
+  - Q-Q plot
+  - box-and-whisker plot of the *differences in prices*
+- Some conclusion components to remember to include:
+  - Amount of evidence
+  - Parameter of interest
+  - Variable
+  - Populations
+  - Alternative hypothesis context

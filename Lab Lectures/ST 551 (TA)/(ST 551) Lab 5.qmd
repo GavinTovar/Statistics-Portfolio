@@ -1,0 +1,644 @@
+---
+title: "(ST 551) Lab 5 <br> Test Galore!"
+format:
+  revealjs:
+    incremental: TRUE
+    scrollable: TRUE
+    theme: dracula
+    transition: slide
+    transition-speed: slow
+    auto-animate: TRUE
+    chalkboard: TRUE
+    code-line-numbers: TRUE
+    plugins:
+      - reveal.js/plugin/zoom-js/zoom.js
+      - reveal.js/plugin/highlight/highlight.js
+---
+
+<style>
+.slightlysmaller {
+  font-size: 0.85em;   /* Slightly smaller than normal */
+}
+
+.evensmaller {
+  font-size: 0.666em;   /* Slightly smaller than normal */
+}
+
+.bigger {
+  font-size: 1.15em;   /* Slightly bigger than normal */
+}
+
+.biggest {
+  font-size: 1.3em;    /* Larger, if needed */
+}
+
+.footnote {
+  position: absolute;
+  bottom: 1em;
+  font-size: 0.8em;
+  color: #555;
+}
+</style>
+
+## Yo!
+* No lab next week (midterm)
+* Questions, Comments, Concerns?
+
+## [Wilcoxon Signed-Rank Test Procedure (Quick Review)]{.r-fit-text} {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+To test that $c_{0}$ is the population *center*:
+
+- **Compute distances from $c_{0}$**
+
+::: {.fragment}
+$$
+  N_i = |Y_i - c_{0}|
+$$
+:::
+
+- **Rank the distances (absolute deviations)**
+
+::: {.fragment}
+$$
+   R_i = \text{Rank}(N_i) = \sum_{j=1}^{n} \mathbb{I}\{N_{i} \ge N_{j}\}
+$$
+:::
+
+- **Test statistic**: sum of ranks corresponding to observations greater than $c_{0}$ 
+
+::: {.fragment}
+$$
+   S = \sum_{i=1}^{n} R_i \mathbb{I}\{Y_i > c_{0}\}
+$$
+:::
+
+## [Reference Distribution - Exact p-value Method]{.r-fit-text} {.slightlysmaller}
+- Assume each rank is equally likely to be assigned to a value above or below $c_{0}$.  
+- If the population is symmetric about $c_{0}$:
+  - Each rank $1,2,\ldots,n$ independently has probability $0.5$ of being assigned to an observation above $c_{0}$.
+- Consider all possible assignments of ranks above/below $c_{0}$ to derive the exact distribution of $S$.
+
+---
+
+## [Reference Distribution - Normal Approximation]{.r-fit-text} {.slightlysmaller}
+If the population distribution is symmetric about $c_{0}$, then:
+
+- The test statistic $S$ is approximately normally distributed:
+
+::: {.fragment}
+$$
+  S \;\;\dot\sim\;\; \text{Normal}\left(\frac{n(n+1)}{4}, \frac{n(n+1)(2n+1)}{24}\right)
+$$
+:::
+
+- Construct a $Z$-statistic and compare to $N(0,1)$:
+
+::: {.fragment}
+$$
+  Z = \frac{S - \frac{n(n+1)}{4}}{\sqrt{\frac{n(n+1)(2n+1)}{24}}} \;\;\dot\sim\;\; \text{Normal}(0,1)
+$$
+:::
+  
+## Wilcoxon Signed-Rank Test {auto-animate="true" auto-animate-easing="ease-in-out"}
+* Setting the scene for the Wilcoxon Signed-Rank test
+
+::: {.fragment}
+$$
+n = 20, \qquad Y_{1}, \ldots, Y_{n} \overset{\text{iid}}{\sim} \chi^{2}_{(3)}
+$$
+:::
+
+::: {.fragment}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+n <- 20
+sampA <- rchisq(n, 3)
+```
+:::
+
+## Wilcoxon Signed-Rank Test {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+rslt1 <- wilcox.test(sampA, mu = 3)
+rslt1
+```
+
+## Wilcoxon Signed-Rank Test {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+rslt2 <- wilcox.test(sampA, mu = 3, exact = FALSE, correct = FALSE)
+rslt2
+```
+
+## Wilcoxon Signed-Rank Test {auto-animate="true" auto-animate-easing="ease-in-out"}
+* What is the difference between the two code chunks?
+  * (1) By default (if `exact` is not specified), an exact p-value is computed if the samples contain less than 50 finite values and there are no ties. Otherwise, a normal approximation is used
+  * (2) Normal approximation without a continuity correction
+
+## Wilcoxon Signed-Rank Test {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+# What are the different components (elements) of this object (list)
+names(rslt2)
+```
+
+## Wilcoxon Signed-Rank Test {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+# We can confirm the 2nd result `by hand'
+mu0 <- 3                                  # Null hypothesis value
+```
+
+## Wilcoxon Signed-Rank Test {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+# We can confirm the 2nd result `by hand'
+mu0 <- 3                                  # Null hypothesis value
+sampA.dists <- abs(sampA - mu0)           # Compute distances
+```
+
+## Wilcoxon Signed-Rank Test {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+# We can confirm the 2nd result `by hand'
+mu0 <- 3                                  # Null hypothesis value
+sampA.dists <- abs(sampA - mu0)           # Compute distances
+sampA.ranks <- rank(sampA.dists)          # Rank observation distances
+```
+
+## Wilcoxon Signed-Rank Test {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+# We can confirm the 2nd result `by hand'
+mu0 <- 3                                  # Null hypothesis value
+sampA.dists <- abs(sampA - mu0)           # Compute distances
+sampA.ranks <- rank(sampA.dists)          # Rank observation distances
+
+# Slap them together in a matrix to view it all
+cbind(sampA, sampA.dists, sampA.ranks)    
+```
+
+## Wilcoxon Signed-Rank Test {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+# We can confirm the 2nd result `by hand'
+mu0 <- 3                                  # Null hypothesis value
+sampA.dists <- abs(sampA - mu0)           # Compute distances
+sampA.ranks <- rank(sampA.dists)          # Rank observation distances
+
+# Calculate our S test statistic
+# Summing up all the ranks that corresponds to observations larger than null
+S.stat <- sum(sampA.ranks[sampA > mu0])
+```
+
+## Wilcoxon Signed-Rank Test {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+# We can confirm the 2nd result `by hand'
+mu0 <- 3                                  # Null hypothesis value
+sampA.dists <- abs(sampA - mu0)           # Compute distances
+sampA.ranks <- rank(sampA.dists)          # Rank observation distances
+
+# Calculate our S test statistic
+# Summing up all the ranks that corresponds to observations larger than null
+S.stat <- sum(sampA.ranks[sampA > mu0])
+S.stat
+```
+
+## Wilcoxon Signed-Rank Test {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+# Calculate our S test statistic
+# Summing up all the ranks that corresponds to observations larger than null
+S.stat <- sum(sampA.ranks[sampA > mu0])   
+S.stat
+
+mean.S <- n * (n + 1) / 4                 # Mean of S
+var.S <- n * (n + 1) * (2 * n + 1) / 24   # Variance of S
+```
+
+## Wilcoxon Signed-Rank Test {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+# Calculate our S test statistic
+# Summing up all the ranks that corresponds to observations larger than null
+S.stat <- sum(sampA.ranks[sampA > mu0])   
+S.stat
+
+mean.S <- n * (n + 1) / 4                 # Mean of S
+var.S <- n * (n + 1) * (2 * n + 1) / 24   # Variance of S
+Z.stat <- (S.stat - mean.S) / sqrt(var.S) # Z-stat
+pval <- 2 * (1 - pnorm(abs(Z.stat)))      # p-value
+pval
+```
+
+
+## Comparing With R {auto-animate="true" auto-animate-easing="ease-in-out"}
+
+::: columns
+::: column
+**Using R**
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+rslt2[["p.value"]]
+```
+:::
+
+::: column
+**"By Hand"**
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+pval
+```
+:::
+:::
+
+## [t-Test on Squared Deviations (Testing Variance)]{.r-fit-text} {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+Suppose, we are interesting in testing the population variance, that is:
+
+$$
+ H_{0}: \sigma^{2} = \sigma^{2}_{0}
+$$
+
+We have two main options:
+  
+1. Perform the Chi-squared test (assumes population is Normally distributed)
+  
+::: {.fragment}
+$$
+X(\sigma_0) = \dfrac{(n-1)s^2}{\sigma_{0}^2} \sim \chi^{2}_{(n-1)}
+$$
+:::
+
+2. $t$-test on squared deviations from mean: $W_{i} = \left(X_{i} - \bar{X}\right)^{2}$
+
+::: {.fragment}
+$$
+\frac{s^2-\sigma^2}{\sqrt{\operatorname{Var}\left(s^2\right)}} = \frac{\frac{n-1}{n}s^2 - \frac{n-1}{n}\sigma^2}{\sqrt{\operatorname{Var}(\frac{n-1}{n}s^2)}} = \frac{\bar{W} - \frac{n-1}{n}\sigma^2}{\sqrt{\operatorname{Var}(\bar{W})}}\overset{d}{\to} N(0, 1)
+$$
+:::
+
+  - Therefore, we can perform a test of $H_{0}: \sigma^2 = \sigma^2_0$ using a t-test to test that the population mean of the $W_{i}$ is $\frac{n-1}{n}\sigma_0$
+
+::: {.fragment}
+$$
+\quad\Rightarrow\quad t(\sigma_{0}^{2}) = \frac{\bar{W} - \frac{n-1}{n}\sigma^2_{0}}{\sqrt{\frac{s^2_W}{n}}}\overset{d}{\to} N(0, 1)
+$$
+:::
+
+## [t-Test on Squared Deviations (Testing Variance)]{.r-fit-text} {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+Suppose:
+
+::: {.fragment}
+$$
+n = 10, \qquad X_{i} \overset{\text{iid}}{\sim} \text{Uniform}(0, 1)
+$$
+:::
+
+::: {.fragment}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+n <- 10
+newSamp <- runif(n)
+```
+:::
+
+## [t-Test on Squared Deviations (Testing Variance)]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+newSamp
+```
+
+## [t-Test on Squared Deviations (Testing Variance)]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+wVals <- (newSamp - mean(newSamp))^2
+wVals
+```
+
+## [t-Test on Squared Deviations (Testing Variance)]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+wVals <- (newSamp - mean(newSamp))^2
+tStat <- (mean(wVals) - (n - 1) / n * 1 / 12) / sqrt(var(wVals) / n)
+tStat
+```
+
+## [t-Test on Squared Deviations (Testing Variance)]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+wVals <- (newSamp - mean(newSamp))^2
+tStat <- (mean(wVals) - (n - 1) / n * 1 / 12) / sqrt(var(wVals) / n)
+pVal <- 2 * (1 - pt(abs(tStat), n - 1))
+pVal
+```
+
+## [t-test (GOAT) vs Chi-Squared Test (Testing Variance)]{.r-fit-text} {.slightlysmaller auto-animate="true" auto-animate-easing="ease-in-out"}
+* As we have done many times before, we can compare the performance of these two tests
+
+::: {.fragment}
+$$
+n = 50, \qquad X_{i} \overset{\text{iid}}{\sim} \text{Uniform}(0, 1), \qquad H_{0}: \sigma^{2} = \frac{1}{12}
+$$
+:::
+
+* Since this is the true variance, so we are hoping that 5% of the resulting p-values will be less than 0.05
+  * That is, we want our tests to be exact, $p$-values having a Uniform(0, 1) distribution
+    * Note that it's only a coincidence that our $X_{i}$ and $p$-values share this distribution, our $X_{i}$ will often not be Uniform but our $p$-values will always be Uniform(0, 1) (if the test is exact)
+
+## [t-test (GOAT) vs Chi-Squared Test (Testing Variance)]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: FALSE
+nsim <- 10000
+n <- 50
+sig0sq <- 1 / 12
+pVals.t <- pVals.chi <- rep(0, nsim)
+```
+
+## [t-test (GOAT) vs Chi-Squared Test (Testing Variance)]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: FALSE
+nsim <- 10000
+n <- 50
+sig0sq <- 1 / 12
+pVals.t <- pVals.chi <- rep(0, nsim)
+for (i in 1:nsim) {
+  newSamp <- runif(n)
+  chisq.stat <- (n - 1) * var(newSamp) / sig0sq
+  wVals <- (newSamp - mean(newSamp))^2
+  t.stat <- (mean(wVals) - (n - 1) / n * sig0sq) / sqrt(var(wVals) / n)
+}
+mean(pVals.chi < 0.05)
+mean(pVals.t < 0.05)
+```
+
+## [t-test (GOAT) vs Chi-Squared Test (Testing Variance)]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: FALSE
+nsim <- 10000
+n <- 50
+sig0sq <- 1 / 12
+pVals.t <- pVals.chi <- rep(0, nsim)
+for (i in 1:nsim) {
+  newSamp <- runif(n)
+  chisq.stat <- (n - 1) * var(newSamp) / sig0sq
+  wVals <- (newSamp - mean(newSamp))^2
+  t.stat <- (mean(wVals) - (n - 1) / n * sig0sq) / sqrt(var(wVals) / n)
+  pVals.chi[i] <- 1 - pchisq(chisq.stat, n - 1)
+  pVals.t[i] <- 1 - pt(t.stat, n - 1)
+}
+```
+
+## [t-test (GOAT) vs Chi-Squared Test (Testing Variance)]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+nsim <- 10000
+n <- 50
+sig0sq <- 1 / 12
+pVals.t <- pVals.chi <- rep(0, nsim)
+for (i in 1:nsim) {
+  newSamp <- runif(n)
+  chisq.stat <- (n - 1) * var(newSamp) / sig0sq
+  wVals <- (newSamp - mean(newSamp))^2
+  t.stat <- (mean(wVals) - (n - 1) / n * sig0sq) / sqrt(var(wVals) / n)
+  pVals.chi[i] <- 1 - pchisq(chisq.stat, n - 1)
+  pVals.t[i] <- 1 - pt(t.stat, n - 1)
+}
+mean(pVals.chi < 0.05)
+mean(pVals.t < 0.05)
+```
+
+## [t-test (GOAT) vs Chi-Squared Test (Testing Variance)]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: FALSE
+#| code-line-numbers: "2"
+nsim <- 10000
+n <- 10
+sig0sq <- 1 / 12
+pVals.t <- pVals.chi <- rep(0, nsim)
+for (i in 1:nsim) {
+  newSamp <- runif(n)
+  chisq.stat <- (n - 1) * var(newSamp) / sig0sq
+  wVals <- (newSamp - mean(newSamp))^2
+  t.stat <- (mean(wVals) - (n - 1) / n * sig0sq) / sqrt(var(wVals) / n)
+  pVals.chi[i] <- 1 - pchisq(chisq.stat, n - 1)
+  pVals.t[i] <- 1 - pt(t.stat, n - 1)
+}
+mean(pVals.chi < 0.05)
+mean(pVals.t < 0.05)
+```
+
+## [t-test (GOAT) vs Chi-Squared Test (Testing Variance)]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+nsim <- 10000
+n <- 10
+sig0sq <- 1 / 12
+pVals.t <- pVals.chi <- rep(0, nsim)
+for (i in 1:nsim) {
+  newSamp <- runif(n)
+  chisq.stat <- (n - 1) * var(newSamp) / sig0sq
+  wVals <- (newSamp - mean(newSamp))^2
+  t.stat <- (mean(wVals) - (n - 1) / n * sig0sq) / sqrt(var(wVals) / n)
+  pVals.chi[i] <- 1 - pchisq(chisq.stat, n - 1)
+  pVals.t[i] <- 1 - pt(t.stat, n - 1)
+}
+mean(pVals.chi < 0.05)
+mean(pVals.t < 0.05)
+```
+
+## [t-test (GOAT) vs Chi-Squared Test (Testing Variance)]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+Suppose now...
+
+::: {.fragment}
+$$
+n = 50, \qquad X_{i} \overset{\text{iid}}{\sim} \chi^{2}_{(10)}, \qquad H_{0}: \sigma^{2} = 20
+$$
+:::
+
+
+## [t-test (GOAT) vs Chi-Squared Test (Testing Variance)]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: FALSE
+nsim <- 10000
+n <- 10
+sig0sq <- 20   # Updated to reflect null
+pVals.t <- pVals.chi <- rep(0, nsim)
+for (i in 1:nsim) {
+  newSamp <- rchisq(n, df = 10)   # Generating different data
+  chisq.stat <- (n - 1) * var(newSamp) / sig0sq
+  wVals <- (newSamp - mean(newSamp))^2
+  t.stat <- (mean(wVals) - (n - 1) / n * sig0sq) / sqrt(var(wVals) / n)
+  pVals.chi[i] <- 1 - pchisq(chisq.stat, n - 1)
+  pVals.t[i] <- 1 - pt(t.stat, n - 1)
+}
+mean(pVals.chi < 0.05)
+mean(pVals.t < 0.05)
+```
+
+## [t-test (GOAT) vs Chi-Squared Test (Testing Variance)]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+nsim <- 10000
+n <- 10
+sig0sq <- 20 # Updated to reflect null
+pVals.t <- pVals.chi <- rep(0, nsim)
+for (i in 1:nsim) {
+  newSamp <- rchisq(n, df = 10) # Generating different data
+  chisq.stat <- (n - 1) * var(newSamp) / sig0sq
+  wVals <- (newSamp - mean(newSamp))^2
+  t.stat <- (mean(wVals) - (n - 1) / n * sig0sq) / sqrt(var(wVals) / n)
+  pVals.chi[i] <- 1 - pchisq(chisq.stat, n - 1)
+  pVals.t[i] <- 1 - pt(t.stat, n - 1)
+}
+mean(pVals.chi < 0.05)
+mean(pVals.t < 0.05)
+```
+
+## [t-test (GOAT) vs Chi-Squared Test (Testing Variance)]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: FALSE
+#| code-line-numbers: "2"
+nsim <- 10000
+n <- 50
+sig0sq <- 20
+pVals.t <- pVals.chi <- rep(0, nsim)
+for (i in 1:nsim) {
+  newSamp <- rchisq(n, df = 10)
+  chisq.stat <- (n - 1) * var(newSamp) / sig0sq
+  wVals <- (newSamp - mean(newSamp))^2
+  t.stat <- (mean(wVals) - (n - 1) / n * sig0sq) / sqrt(var(wVals) / n)
+  pVals.chi[i] <- 1 - pchisq(chisq.stat, n - 1)
+  pVals.t[i] <- 1 - pt(t.stat, n - 1)
+}
+mean(pVals.chi < 0.05)
+mean(pVals.t < 0.05)
+```
+
+## [t-test (GOAT) vs Chi-Squared Test (Testing Variance)]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+nsim <- 10000
+n <- 50
+sig0sq <- 20
+pVals.t <- pVals.chi <- rep(0, nsim)
+for (i in 1:nsim) {
+  newSamp <- rchisq(n, df = 10)
+  chisq.stat <- (n - 1) * var(newSamp) / sig0sq
+  wVals <- (newSamp - mean(newSamp))^2
+  t.stat <- (mean(wVals) - (n - 1) / n * sig0sq) / sqrt(var(wVals) / n)
+  pVals.chi[i] <- 1 - pchisq(chisq.stat, n - 1)
+  pVals.t[i] <- 1 - pt(t.stat, n - 1)
+}
+mean(pVals.chi < 0.05)
+mean(pVals.t < 0.05)
+```
+
+## Kolmogorov–Smirnov Test {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+Testing some some population distribution $F$
+
+- Hypothesis:
+
+::: {.fragment}
+$$
+H_{0}: F = F_{0}
+$$
+:::
+
+- Test statistic
+
+::: {.fragment}
+$$
+D(G_{0}) = \sup_{x}\left|\hat{F}(x) - F_{0}(x)\right|
+$$
+:::
+
+  - Where $\hat{F}(x)$ is the empirical cdf
+
+::: {.fragment}
+$$
+\hat{F}(x) = \frac{1}{n}\sum_{i=1}^{n}\mathbb{I}\{X_{i} \le x\}
+$$
+:::
+
+## Kolmogorov–Smirnov Test {auto-animate="true" auto-animate-easing="ease-in-out"}
+* Suppose
+
+::: {.fragment}
+$$
+n = 20, \qquad X_{i} \overset{\text{iid}}{\sim} N(0, 1)
+$$
+:::
+
+::: {.fragment}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+n <- 20
+sampB <- rnorm(n, 0, 1)
+```
+:::
+
+
+## Kolmogorov–Smirnov Test {.slightlysmaller auto-animate="true" auto-animate-easing="ease-in-out"}
+* The function `ks.test()` performs the Kolmogorov–Smirnov test. 
+* You give the function a data set and a hypothesized distribution function (e.g., `pnorm`, `punif`, or `pchisq`) and also the hypothesized parameters of the distribution function.
+* Here we draw a sample from the $\text{Normal}(0,1)$ population distribution, and then test that the data come from a $\text{Uniform}(0,1)$ distribution.
+
+::: {.fragment}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+ks.test(sampB, punif, 0, 1)
+```
+:::
+
+## Kolmogorov–Smirnov Test {auto-animate="true" auto-animate-easing="ease-in-out"}
+We could instead test the true null hypothesis that the data come from a Normal$(0, 1)$ distribution:
+
+::: {.fragment}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+ks.test(sampB, pnorm, 0, 1)
+```
+:::
+
+## Kolmogorov–Smirnov Test {auto-animate="true" auto-animate-easing="ease-in-out"}
+Or we could instead test that the data come from a $t_{(5)}$ distribution:
+
+::: {.fragment}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+ks.test(sampB, pt, 5)
+```
+:::

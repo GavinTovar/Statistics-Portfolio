@@ -1,0 +1,401 @@
+---
+title: "(ST 551) Lab 7 <br> Efficiency & Tests"
+format:
+  revealjs:
+    incremental: TRUE
+    scrollable: TRUE
+    theme: dracula
+    transition: slide
+    transition-speed: slow
+    auto-animate: TRUE
+    chalkboard: TRUE
+    code-line-numbers: TRUE
+    plugins:
+      - reveal.js/plugin/zoom-js/zoom.js
+      - reveal.js/plugin/highlight/highlight.js
+---
+
+<style>
+.slightlysmaller {
+  font-size: 0.85em;   /* Slightly smaller than normal */
+}
+
+.evensmaller {
+  font-size: 0.666em;   /* Slightly smaller than normal */
+}
+
+.bigger {
+  font-size: 1.15em;   /* Slightly bigger than normal */
+}
+
+.biggest {
+  font-size: 1.3em;    /* Larger, if needed */
+}
+
+.footnote {
+  position: absolute;
+  bottom: 1em;
+  font-size: 0.8em;
+  color: #555;
+}
+</style>
+
+## Welcome Back
+* Questions, Comments, Concerns? 
+
+## [Homework Comments -- Some Dos and Donts]{.r-fit-text} {.smaller}
+- When using Rmarkdown, you don't need to use `cat()` statements to print everything... you can just write in plain text (outside the code chunks)
+- Please show your R code
+- Don't hide answers in R comments
+- Try to make different answers to different questions distinct
+
+<div class="footnote fragment" style="position: absolute; bottom: 1em; font-size: 0.8em;">
+   If you have any formatting questions, feel free to come ask me and I can try and help
+</div>
+
+## [Effciency Comparisons in R]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+Consider:
+
+::: {.fragment}
+$$
+n = 20, \qquad \mathbf{X}_{1} \equiv X_{11}, \ldots, X_{n1} \overset{\text{iid}}{\sim} N(0, 1)
+$$
+:::
+
+::: {.fragment}
+Let's say we have `nSim` of these samples all stored in a matrix
+$$
+\mathbf{X}_{(n \times \texttt{nSim})} = \begin{pmatrix} \mathbf{X}_{1} & \mathbf{X}_{2} & \cdots & \mathbf{X}_{\texttt{nSim}} \end{pmatrix}
+$$
+:::
+
+::: {.fragment}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+n <- 20
+nSim <- 1000000
+dataMat <- matrix(rnorm(n * nSim), nrow = n, ncol = nSim)
+```
+:::
+
+## [Effciency Comparisons in R]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+col.means.1 <- rep(0, nSim)
+for (i in 1:nSim) {
+  col.means.1[i] <- mean(dataMat[, i])
+}
+col.means.1[1:20] # First 20 column means
+```
+
+## [Effciency Comparisons in R]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+startTime.1 <- proc.time()
+col.means.1 <- rep(0, nSim)
+for (i in 1:nSim) {
+  col.means.1[i] <- mean(dataMat[, i])
+}
+compTime.1 <- proc.time() - startTime.1
+compTime.1
+```
+
+## [Effciency Comparisons in R]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+startTime.2 <- proc.time()
+col.means.2 <- apply(dataMat, 2, mean)
+compTime.2 <- proc.time() - startTime.2
+compTime.2
+```
+
+## [Effciency Comparisons in R]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+startTime.3 <- proc.time()
+col.means.3 <- rep(1 / n, n) %*% dataMat
+compTime.3 <- proc.time() - startTime.3
+compTime.3
+```
+
+## [Effciency Comparisons in R]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+colMeans
+```
+
+## [Effciency Comparisons in R]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+startTime.4 <- proc.time()
+col.means.4 <- colMeans(dataMat)
+compTime.4 <- proc.time() - startTime.4
+compTime.4
+```
+
+## [Effciency Comparisons in R]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+library(microbenchmark)
+microbenchmark(
+  colMeans.builtin = colMeans(dataMat),
+  colMeans.vector  = rep(1 / n, n) %*% dataMat,
+  times = 100L
+)
+```
+
+## [Effciency Comparisons in R]{.r-fit-text} {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+library(Rcpp)
+cppFunction("
+NumericVector colMeansCpp(NumericMatrix x) {
+  int n = x.nrow();
+  int p = x.ncol();
+  NumericVector means(p);
+  for (int j = 0; j < p; j++) {
+    double s = 0.0;
+    for (int i = 0; i < n; i++) {
+      s += x(i, j);
+    }
+    means[j] = s / n;
+  }
+  return means;
+}
+")
+# Example usage:
+colMeansCpp(dataMat)[1:20]
+```
+
+## [Effciency Comparisons in R]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+library(microbenchmark)
+microbenchmark(
+  colMeans.builtin = colMeans(dataMat),
+  colMeans.vector  = rep(1 / n, n) %*% dataMat,
+  colMeans.cpp     = colMeansCpp(dataMat),
+  times = 100L
+)
+```
+
+## Paired t-Test {auto-animate="true" auto-animate-easing="ease-in-out"}
+Consider testing:
+
+::: {.fragment}
+$$
+H_{0}: \delta = \delta_{0}
+$$
+:::
+
+::: {.fragment}
+with data:
+$$
+n = 20, \qquad X_{1}, \ldots, X_{n} \overset{\text{iid}}{\sim} \chi^{2}_{(3)}
+$$
+:::
+
+::: {.fragment}
+$$
+Y_{i} \overset{}{\sim} N(X_{i}, 1)
+$$
+:::
+
+::: {.fragment}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+n <- 20
+newSamp.A <- rchisq(n, 3)
+newSamp.B <- rnorm(n, newSamp.A, 1)
+```
+:::
+
+## Paired t-Test {auto-animate="true" auto-animate-easing="ease-in-out"}
+To compute paired differences and perform a one-sample $t$--test we use the test statistic:
+$$
+tz\left(\delta_{0}\right) = \frac{\bar{D} - \delta_{0}}{\sqrt{\frac{s^{2}_{D}}{n}}}
+$$
+
+
+## Paired t-Test {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+newSamp.diffs <- newSamp.A - newSamp.B
+```
+
+## Paired t-Test {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+newSamp.diffs <- newSamp.A - newSamp.B
+sampMean.diffs <- mean(newSamp.diffs)  # Computing the mean of differences
+sampVar.diffs <- var(newSamp.diffs)    # Computing the variance of differences
+```
+
+## Paired t-Test {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+# Setting up our test statistic
+delta0 <- 0
+tstat.diffs <- (sampMean.diffs - delta0) / sqrt(sampVar.diffs / n)
+tstat.diffs
+```
+
+## Paired t-Test {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+# Computing the p-value
+pval.diffs <- 2 * (1 - pt(abs(tstat.diffs), n - 1))
+pval.diffs
+```
+
+## Paired t-Test {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+newSamp.diffs <- newSamp.A - newSamp.B
+sampMean.diffs <- mean(newSamp.diffs)
+sampVar.diffs <- var(newSamp.diffs)
+delta0 <- 0
+tstat.diffs <- (sampMean.diffs - delta0) / sqrt(sampVar.diffs / n)
+pval.diffs <- 2 * (1 - pt(abs(tstat.diffs), n - 1))
+tstat.diffs
+pval.diffs
+```
+
+## Paired t-Test {auto-animate="true" auto-animate-easing="ease-in-out"}
+To compute the two sample means, sample variances, and sample covariance, and construct the test statistic directly. we use the test statistic:
+$$
+t\left(\delta_{0}\right) = \frac{\left(\bar{X} - \bar{Y}\right) - \delta_{0}}{\sqrt{\frac{s^{2}_{X}}{n} + \frac{s^{2}_{Y}}{n} - 2\frac{s^{2}_{XY}}{n}}}
+$$
+
+## Paired t-Test {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+sampMean.A <- mean(newSamp.A) # Sample mean X
+sampMean.B <- mean(newSamp.B) # Sample mean Y
+```
+
+## Paired t-Test {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+sampMean.A <- mean(newSamp.A)
+sampMean.B <- mean(newSamp.B)
+sampMean.A - sampMean.B
+sampMean.diffs
+# We can see the difference is indeed the same (good)
+```
+
+## Paired t-Test {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+# Calculating sample variances and covariance
+sampVar.A <- var(newSamp.A)
+sampVar.B <- var(newSamp.B)
+sampCov.AB <- cov(newSamp.A, newSamp.B)
+```
+
+## Paired t-Test {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+# Difference variance estimate (denominator of test stat squared)
+diffVarEst <- sampVar.A / n + sampVar.B / n - 2 * sampCov.AB / n
+diffVarEst
+sampVar.diffs / n
+```
+
+## Paired t-Test {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+# Test stat
+tstat.pair <- (sampMean.A - sampMean.B) / sqrt(diffVarEst)
+tstat.pair
+```
+
+## Paired t-Test {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+# We see it matches the other method's test stat (good)
+tstat.pair
+tstat.diffs
+```
+
+## Paired t-Test {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+# We have R to do all this for us though
+t.test(newSamp.A - newSamp.B)
+t.test(newSamp.diffs)
+```
+
+## Paired t-Test {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+# Perform a paired two-sample t-test directly
+t.test(newSamp.A, newSamp.B, paired = TRUE)
+```
+
+## [Pearson Chi-Squared Test for Two-Sample Binomial Proportions]{.r-fit-text} {.evensmaller auto-animate="true" auto-animate-easing="ease-in-out"}
+Suppose we sampled \(m = 25\) people from Eastern Oregon and \(n = 25\) from Western Oregon, classifying each as vegetarian or non-vegetarian:
+
+\begin{array}{lccc}
+    & \text{Western Oregon} & \text{Eastern Oregon} & \text{Totals} \\
+    \hline
+    \text{Vegetarian} & 15 & 5 & 20 \\
+    \text{Non-vegetarian} & 10 & 20 & 30 \\
+    \text{Totals} & 25 & 25 & 50 \\
+\end{array}
+
+::: {.fragment}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+tabA <- cbind(c(15, 10), c(5, 20))
+tabA
+```
+:::
+
+## [Pearson Chi-Squared Test for Two-Sample Binomial Proportions]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+testRslt <- chisq.test(tabA, correct = FALSE)
+testRslt
+```
+
+## [Pearson Chi-Squared Test for Two-Sample Binomial Proportions]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+names(testRslt)
+```
+
+## [Pearson Chi-Squared Test for Two-Sample Binomial Proportions]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+testRslt2 <- prop.test(tabA, correct = FALSE)
+testRslt2
+```

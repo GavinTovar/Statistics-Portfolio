@@ -1,0 +1,693 @@
+---
+title: "(ST 411/511) Lab 3 - Data Transformations"
+format:
+  revealjs:
+    incremental: TRUE
+    scrollable: TRUE
+    theme: dark
+    transition: slide        # Options: 'slide', 'fade', 'convex', 'concave', 'zoom'
+    transition-speed: slow
+    auto-animate: TRUE
+    auto-animate-easing: ease-in-out
+    chalkboard: TRUE
+    plugins:
+      - reveal.js/plugin/zoom-js/zoom.js  # Enable zooming in if needed
+      - reveal.js/plugin/highlight/highlight.js  # Enable syntax highlighting for code
+---
+
+##### Add something to clarify median interpretation, maybe some algebra or something?
+
+## Objectives {transition="zoom" transition-speed="slow"}
+- Do log and logit transformations
+- Locate data on a plot
+- Perform a t-test with specified data excluded
+  
+## Loading packages {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+library(Sleuth3)
+library(ggplot2)
+```
+
+## Today's Dataset
+- `case0301` (Cloud seeding case)
+  - 52 observations
+  - 2 variables
+    - `Rainfall`: the volume of rainfall in the target area (in acre-feet)
+    - `Treatement`: a factor with levels "Unseeded" and "Seeded" indicating whether the clouds were unseeded or seeded.
+
+## Today's Dataset {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+case0301
+```
+
+## Today's Dataset {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Some exploratory functions when looking at a new dataset
+names(case0301)
+```
+
+## Today's Dataset {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Some exploratory functions when looking at a new dataset
+summary(case0301)
+```
+
+## Today's Dataset {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Some exploratory functions when looking at a new dataset
+str(case0301)
+```
+
+## t-test Assumptions
+- Populations are normally-distributed
+- Given there are two populations, they have equal variance
+- Observations are statistically independent
+
+:::aside
+Answer alert! Homework 3 - Question 5
+:::
+
+## [t-test Assumptions (slightly more detailed)]{.r-fit-text}
+- Populations are normally-distributed
+  - Normality assumption OR if the sample size is large enough CLT will lead us to approximate normality
+- Given there are two populations, they have equal variance
+  - Equal variance assumption is only needed in the pooled (equal variance) two-sample t-test
+- Observations are statistically independent
+  - Independence between group (unless paired t-test) is also needed
+
+## Chatting About Boxplots {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+qplot(Treatment, Rainfall, data = case0301, geom = "boxplot")
+```
+
+## Chatting About Boxplots {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: FALSE
+ggplot(data = case0301, aes(x = Treatment, y = Rainfall)) +
+  geom_boxplot(aes(fill = as.factor(Treatment))) +
+  labs(title = "Rainfall Volume for Unseeded and Seeded Clouds",
+       x = "Treatment Group",
+       y = "Rainfall (acre-feet)",
+       fill = "Treatment") +
+  coord_flip() +
+  theme_classic() +
+  theme(legend.position = c(0.85, 0.75),
+        legend.key.size = unit(2, 'cm'),
+        plot.title = element_text(size = 18))
+```
+
+## Plotting {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: FALSE          # Hide the code
+#| fig-width: 16        # Adjust figure width (aspect ratio)
+#| fig-height: 9        # Adjust figure height (aspect ratio)
+#| fig-align: center    # Center the plot
+#| out.width: "100%"    # Full width of the slide
+#| out.height: "90vh"   # 90% of viewport height to avoid scrollbars
+#| dev.args: list(res = 300)  # High resolution for clarity
+
+# Generate the plot
+ggplot(data = case0301, aes(x = Treatment, y = Rainfall)) +
+  geom_boxplot(aes(fill = as.factor(Treatment))) +
+  labs(title = "Rainfall Volume for Unseeded and Seeded Clouds",
+       x = "Treatment Group",
+       y = "Rainfall (acre-feet)",
+       fill = "Treatment") +
+  coord_flip() +
+  theme_classic() +
+  theme(legend.position = c(0.85, 0.75),
+        legend.key.size = unit(2, 'cm'),
+        plot.title = element_text(size = 18))
+```
+
+## Normal Distributions
+- When we plot the data like we just did, we're looking to assess our assumptions, specifically the normality assumption
+  - But, what does data from a Normal distribution look like?
+
+:::aside
+Technically, in a confirmatory study, exploratory plotting like this should be done at the end to prevent data-snooping
+:::
+
+## Normal Distributions {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+# Generating (standard) Normal data (100 Observations)
+da.data <- data.frame(vals = rnorm(100, mean = 0, sd = 1))
+ggplot(data = da.data, aes(x = vals)) +
+  geom_histogram(binwidth = 0.25, fill = "#3fe0a5", col = "white", alpha = 0.8) +
+  labs(title = "Histogram of Simulated Standard Normal Data",
+       x = "",
+       y = "Frequency",
+       caption = "100 N(0,1) data points, binwidth = 0.25") +
+  xlim(-4, 4) +
+  scale_x_continuous(breaks = seq(-4, 4, length = 9)) +
+  theme_bw()
+```
+
+## Normal Distributions {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+# Generating (standard) Normal data (100 Observations)
+ggplot(data = da.data, aes(x = vals)) +
+  geom_histogram(binwidth = 0.10, fill = "#3fe0a5", col = "white", alpha = 0.8) +
+  labs(title = "Histogram of Simulated Standard Normal Data",
+       x = "",
+       y = "Frequency",
+       caption = "100 N(0,1) data points, binwidth = 0.10") +
+  xlim(-4, 4) +
+  scale_x_continuous(breaks = seq(-4, 4, length = 9)) +
+  theme_bw()
+```
+
+## Normal Distributions {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+# Generating (standard) Normal data (1000 Observations)
+da.data <- data.frame(vals = rnorm(1000, mean = 0, sd = 1))
+ggplot(data = da.data, aes(x = vals)) +
+  geom_histogram(binwidth = 0.25, fill = "#3fe0a5", col = "white", alpha = 0.8) +
+  labs(title = "Histogram of Simulated Standard Normal Data",
+       x = "",
+       y = "Frequency",
+       caption = "1000 N(0,1) data points, binwidth = 0.25") +
+  xlim(-4, 4) +
+  scale_x_continuous(breaks = seq(-4, 4, length = 9)) +
+  theme_bw()
+```
+
+## Normal Distributions {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+# Generating (standard) Normal data (1000 Observations)
+ggplot(data = da.data, aes(x = vals)) +
+  geom_histogram(binwidth = 0.10, fill = "#3fe0a5", col = "white", alpha = 0.8) +
+  labs(title = "Histogram of Simulated Standard Normal Data",
+       x = "",
+       y = "Frequency",
+       caption = "1000 N(0,1) data points, binwidth = 0.10") +
+  xlim(-4, 4) +
+  scale_x_continuous(breaks = seq(-4, 4, length = 9)) +
+  theme_bw()
+```
+
+## Normal Distributions {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+# Generating (standard) Normal data (10000 Observations)
+da.data <- data.frame(vals = rnorm(10000, mean = 0, sd = 1))
+ggplot(data = da.data, aes(x = vals)) +
+  geom_histogram(binwidth = 0.25, fill = "#3fe0a5", col = "white", alpha = 0.8) +
+  labs(title = "Histogram of Simulated Standard Normal Data",
+       x = "",
+       y = "Frequency",
+       caption = "10,000 N(0,1) data points, binwidth = 0.25") +
+  xlim(-4, 4) +
+  scale_x_continuous(breaks = seq(-4, 4, length = 9)) +
+  theme_bw()
+```
+
+## Normal Distributions {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+# Generating (standard) Normal data (10000 Observations)
+ggplot(data = da.data, aes(x = vals)) +
+  geom_histogram(binwidth = 0.10, fill = "#3fe0a5", col = "white", alpha = 0.8) +
+  labs(title = "Histogram of Simulated Standard Normal Data",
+       x = "",
+       y = "Frequency",
+       caption = "10,000 N(0,1) data points, binwidth = 0.10") +
+  xlim(-4, 4) +
+  scale_x_continuous(breaks = seq(-4, 4, length = 9)) +
+  theme_bw()
+```
+
+
+## Normal Distributions
+- A Normal distribution is unimodel and symmetric (very similar to the $t$-distribution)
+- What if our data are not unimodel and symmetric?
+  - Data transformations are an option
+  
+## Transforming Data
+- A common data transformation is the log transformation
+  - Often for right-skewed positive data
+- One of the most abused data transformations
+
+:::aside
+To statisticians, only *log base e* exists. Also know as the natural log, denoted $\ln(\cdot)$. Why do we (they) use $\log(\cdot)$ notation instead? I have no idea, but don't worry I'll talk to the top dogs
+:::
+
+## [Log-transformation Tangent / Soapbox Ted-Talk]{.r-fit-text}
+Testing hypotheses regarding population means on the original data can answer a different question than testing hypotheses regarding population means of transformed data since
+
+$$
+E(g(T)) \neq g(E(T))
+$$
+
+Transforming inference back to the original scale is very challenging to interpret unless strong assumptions are made
+
+## [Log-transformation Tangent / Soapbox Ted-Talk]{.r-fit-text}
+- When might be a good time to perform a log transformation?
+  - If we have right skewed positive data that once transformed has a symmetric distribution
+  - Or we are more interested in the results on the actual log scale
+
+## [Log-transformation Tangent / Soapbox Ted-Talk]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+# Generating right-skewed positive data (log-normal data)
+set.seed(1)
+da.data <- data.frame(vals = rlnorm(10000, mean = 0, sd = 1))
+ggplot(data = da.data, aes(x = vals)) +
+  geom_histogram(binwidth = 0.25, fill = "#eb34de", col = "white", alpha = 0.8) +
+  labs(x = expression(X),
+       y = "Frequency",
+       title = "Right-Skewed Positive Data (Log-Normal Data)") +
+  xlim(0, 20) +
+  theme_bw()
+```
+
+## [Log-transformation Tangent / Soapbox Ted-Talk]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+# Natural log of that data
+ggplot(data = log(da.data), aes(x = vals)) +
+  geom_histogram(binwidth = 0.25, fill = "#eb34de", col = "white", alpha = 0.8) +
+  labs(x = expression(ln(X)),
+       y = "Frequency",
+       title = "Exact Same Data, Log Transformed") +
+  theme_bw()
+```
+
+## [Log-transformation Tangent / Soapbox Ted-Talk]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+library(gridExtra)
+p1 <- ggplot(data = da.data, aes(x = vals)) +
+  geom_histogram(binwidth = 0.25, fill = "#eb34de", col = "white", alpha = 0.8) +
+  labs(x = expression(X),
+       y = "Frequency",
+       title = "Right-Skewed Positive Data (Log-Normal Data)") +
+  xlim(0, 20) +
+  theme_bw()
+
+p2 <- ggplot(data = log(da.data), aes(x = vals)) +
+  geom_histogram(binwidth = 0.25, fill = "#eb34de", col = "white", alpha = 0.8) +
+  labs(x = expression(ln(X)),
+       y = "Frequency",
+       title = "Exact Same Data, Log Transformed") +
+  theme_bw()
+gridExtra::grid.arrange(p1, p2, ncol = 2)
+```
+
+## [Log-transformation Tangent / Soapbox Ted-Talk]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+# Load the necessary libraries
+# install.packages("reshape2")
+library(reshape2)
+
+# Data
+dat.data <- cbind.data.frame(da.data, log(da.data))
+colnames(dat.data) <- c("Y", "log(Y)")
+
+# Reshape the data for ggplot
+dat_long <- melt(dat.data, variable.name = "variable", value.name = "value")
+
+# Create the boxplot with customization
+ggplot(dat_long, aes(x = variable, y = value, fill = variable)) +
+  geom_boxplot(outlier.color = "black", outlier.shape = 16, outlier.size = 1.25) +  # Customize outliers
+  scale_fill_manual(values = c("Y" = "#eb34de", "log(Y)" = "#eb34de")) +       # Custom colors
+  theme_minimal() +
+  theme(
+    axis.title = element_blank(),            # Remove x and y labels
+    axis.text.x = element_text(size = 14),   # Increase x-axis text size
+    axis.text.y = element_text(size = 12),   # Increase y-axis text size
+    legend.position = "none",                # Remove legend
+    panel.grid.minor = element_blank(),      # Remove minor grid lines
+    plot.title = element_text(hjust = 0.5)   # Center the title
+  ) +
+  labs(title = "Boxplot of Y vs log(Y)")    # Title
+```
+
+
+## [Log-transformation Tangent / Soapbox Ted-Talk]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+- The right skewed data shown was log-normal so unless you assume that your data is log-normal you won't have completely Normal data once transformed
+  - The couple following of slides will illustrate this
+  
+## [Log-transformation Tangent / Soapbox Ted-Talk]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+# Generating right-skewed positive data (exponential data)
+set.seed(1)
+da.data <- data.frame(vals = rexp(10000, rate = 1))
+ggplot(data = da.data, aes(x = vals)) +
+  geom_histogram(binwidth = 0.25, fill = "#ed6728", col = "white", alpha = 0.8) +
+  labs(x = expression(X),
+       y = "Frequency",
+       title = "Right-Skewed Positive Data (Exponential)") +
+  xlim(0, 20) +
+  theme_bw()
+```
+
+## [Log-transformation Tangent / Soapbox Ted-Talk]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+# Natural log of that data
+ggplot(data = log(da.data), aes(x = vals)) +
+  geom_histogram(binwidth = 0.25, fill = "#ed6728", col = "white", alpha = 0.8) +
+  labs(x = expression(ln(X)),
+       y = "Frequency",
+       title = "Exact Same Data, Log Transformed") +
+  theme_bw()
+```
+
+## [Log-transformation Tangent / Soapbox Ted-Talk]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+# Plotting side-by-side
+p3 <- ggplot(data = da.data, aes(x = vals)) +
+  geom_histogram(binwidth = 0.25, fill = "#ed6728", col = "white", alpha = 0.8) +
+  labs(x = expression(X),
+       y = "Frequency",
+       title = "Right-Skewed Positive Data (Exponential)") +
+  xlim(0, 20) +
+  theme_bw()
+p4 <- ggplot(data = log(da.data), aes(x = vals)) +
+  geom_histogram(binwidth = 0.25, fill = "#ed6728", col = "white", alpha = 0.8) +
+  labs(x = expression(ln(X)),
+       y = "Frequency",
+       title = "Exact Same Data, Log Transformed") +
+  theme_bw()
+grid.arrange(p3, p4, ncol = 2)
+```
+
+## [Log-transformation Tangent / Soapbox Ted-Talk]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+- We can see that since our original data was not log-normal we don't end up with a symmetric distribution
+- Notice that just because a distribution is unimodal and symmetric does not mean it’s normal
+  - But for the purposes of this class we won't stress about it too much
+- Also, if you have negative values you cannot take the natural log
+    - Some people shift the data before log-transforming, then interpretation becomes challenging / impossible
+    
+## [Log-transformation Tangent / Soapbox Ted-Talk]{.r-fit-text .smaller} {auto-animate="true" auto-animate-easing="ease-in-out"}
+- Be wary of transformations and if you're unsure you seek out a statistical consultant
+- Consulting advertisement
+  - Statistical advice to currently enrolled OSU graduate students on an OSU-related research project is offered without charge in weeks 2 through 10 of fall, winter and spring term.
+- I'm not saying that transformation should never be used, they just need to be used thoughtfully
+
+:::aside
+This slide is brought to you by the OSU statistical consulting services 
+:::
+
+## Plotting Log-Transformed Data {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+qplot(Treatment, log(Rainfall), data = case0301, geom = "boxplot")
+```
+
+:::aside
+Homework 3 - Question 4: Hint: log(response variable) when plotting
+:::
+
+## [Comparing Box-Plots (Untransformed to Transformed)]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+p3 <- ggplot(data = case0301, aes(x = Treatment, y = log(Rainfall))) +
+  geom_boxplot(aes(fill = as.factor(Treatment))) +
+  labs(title = "Rainfall Volume for Unseeded and Seeded Clouds (Transformed)",
+       x = "Treatment Group",
+       y = "Rainfall (acre-feet)",
+       fill = "Treatment") +
+  coord_flip() +
+  theme_classic() +
+  theme(legend.position = c(0.90, 0.85),
+        legend.key.size = unit(1.25, 'cm'),
+        plot.title = element_text(size = 12))
+
+p4 <- ggplot(data = case0301, aes(x = Treatment, y = Rainfall)) +
+  geom_boxplot(aes(fill = as.factor(Treatment))) +
+  labs(title = "Rainfall Volume for Unseeded and Seeded Clouds (Untransformed)",
+       x = "Treatment Group",
+       y = "Rainfall (acre-feet)",
+       fill = "Treatment") +
+  coord_flip() +
+  theme_classic() +
+  theme(legend.position = c(0.90, 0.85),
+        legend.key.size = unit(1.25, 'cm'),
+        plot.title = element_text(size = 12))
+grid.arrange(p3, p4, nrow = 2)
+```
+
+## t-test Time! {auto-animate="true" auto-animate-easing="ease-in-out"}
+- **Research Question**: Does cloud-seeding increase rainfall?
+  - What are our hypotheses?
+
+## t-test Time! {.smaller} 
+$$
+  H_{0}: \mu_{\text{Seeded}} - \mu_{\text{Unseeded}} = 0 \quad\quad\quad H_{1}: \mu_{\text{Seeded}} - \mu_{\text{Unseeded}} > 0
+$$
+
+where
+
+- $\mu_{\text{Seeded}}$ is the population mean in the `Seeded` cloud group
+- $\mu_{\text{Unseeded}}$ is the population mean in the `Unseeded` cloud group
+
+## t-test Time! {auto-animate="true" auto-animate-easing="ease-in-out"}
+- Notice the hypothesis are set up to match R's default coding order
+  - `Seeded` is before `Unseeded` alphabetically 
+
+## t-test Time! {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+#| code-overflow: wrap
+t.test(log(Rainfall) ~ Treatment, data = case0301, var.equal = TRUE, 
+       alternative = "greater")
+```
+
+:::aside
+Homework 3 - Question 7 & 8: Hint: log(response variable) when running t-test
+:::
+
+## Interpretation
+- There is strong evidence that the **median** acre-feet of rain is greater for the seeded than the unseeded days (one-sided $p = 0.007041$ from a two-sample t-test)
+- Why "median" and not mean?
+
+## Interpretation
+- Recall an earlier warning that "testing hypotheses regarding population means on the original data can answer a different question than testing hypotheses regarding population means of transformed data since"
+  - In the case of the log-transformed data having a symmetric distribution, we can work out that the mean of our logged data is equal to the median of the log data
+
+## Interpretation
+Once the data has been back-transformed
+
+$$
+e^{\bar{X}_{1}} \quad\text{  estimates  }\quad \text{Median}(X_{1}) \\[0.25cm]
+e^{\bar{X}_{1} - \bar{X}_{2}} \quad\text{  estimates  }\quad \left(\frac{\text{Median}(X_{1})}{\text{Median}(X_{2})}\right)
+$$
+
+:::aside
+More information about this process can be found in The Statistical Sleuth in section 3.5.1
+:::
+
+## Confidence Interval Construction {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+#| code-overflow: wrap
+t.test(log(Rainfall) ~ Treatment, data = case0301, var.equal = TRUE, 
+       alternative = "greater")
+```
+
+## Confidence Interval Construction {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+#| code-overflow: wrap
+t.test(log(Rainfall) ~ Treatment, data = case0301, var.equal = TRUE, 
+       alternative = "two.sided")
+```
+
+:::aside
+Not best practice to obtain two-sided confidence interval but for the purposes of this class...
+:::
+
+## Confidence Interval Construction {auto-animate="true" auto-animate-easing="ease-in-out"}
+Exponentiation of the confidence interval
+
+$$
+\Big(0.240865 \,,\, 2.046697\Big) \quad\Rightarrow\quad \Big(e^{0.240865} \,,\, e^{2.046697}\Big) = 
+$$
+
+## Confidence Interval Construction {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+point.est <- 5.134187 - 3.990406
+exp.point.est <- exp(point.est)
+exp.point.est
+```
+
+## Confidence Interval Construction {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+CI.Bounds <- c(0.240865, 2.046697)
+exp.CI <- exp(CI.Bounds)
+exp.CI
+```
+
+
+## Logit Function
+$$
+\text{logit}(Y) = \ln\left(\frac{Y}{1-Y}\right)
+$$
+
+## Visual of Data Transformation
+```{r}
+#| echo: FALSE
+set.seed(1)
+df <- data.frame(x = runif(10000), logit = log(runif(10000) / (1-runif(10000))))
+p1 <- ggplot(data = df, aes(x = x)) +
+  geom_histogram(binwidth = 0.025, fill = "#50e2f2", col = "white", alpha = 0.8) +
+  labs(x = "X",
+       y = "Frequency",
+       title = "Uniform Data") +
+  theme_bw()
+
+p2 <- ggplot(data = df, aes(x = logit)) +
+  geom_histogram(binwidth = 0.25, fill = "#50e2f2", col = "white", alpha = 0.8) +
+  labs(x = "Logit(X)",
+       y = "Frequency",
+       title = "Exact Same Data, Logit Transformed") +
+  theme_bw()
+gridExtra::grid.arrange(p1, p2, ncol = 2)
+```
+
+## Loading in Data {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+setwd("C:/Users/Ghcto/OneDrive/Desktop/School/Year 2/Fall 2024/ST 511 (TA)/Labs/Lab 3")
+```
+
+## Loading in Data {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+setwd("C:/Users/Ghcto/OneDrive/Desktop/School/Year 2/Fall 2024/ST 511 (TA)/Labs/Lab 3")
+C_dalli <- read.csv("C_dalli.csv")
+```
+
+:::aside
+One of many options to read in a .csv file (Homework 3 - Question 1)
+:::
+
+## Loading in Data {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+C_dalli
+```
+
+## Explortatory Plotting {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+qplot(as.factor(time_point), pct_cover, data = C_dalli, geom = "boxplot")
+```
+
+## Performing logit transformation {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+logit_pct <- with(C_dalli, log((pct_cover) / (100 - pct_cover)))
+logit_pct
+```
+
+## Performing logit transformation {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+qplot(as.factor(time_point), logit_pct, data = C_dalli, geom = "boxplot")
+```
+
+## Comparing Plots {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: FALSE
+p10 <- qplot(as.factor(time_point), pct_cover, data = C_dalli, geom = "boxplot") +
+  labs(title = "Untransformed",
+       x = "Time Point",
+       y = "Percent Cover") +
+  theme_bw()
+p11 <- qplot(as.factor(time_point), logit_pct, data = C_dalli, geom = "boxplot") +
+  labs(title = "Transformed",
+       x = "Time Point",
+       y = "Logit(Percent Cover)") +
+  theme_bw()
+grid.arrange(p10, p11)
+```
+
+## Case Study 3.1.2 - Dioxin Data {auto-animate="true" auto-animate-easing="ease-in-out"}
+- 743 Observations
+- 2 Variables
+  - `Dioxin` :the concentration of TCDD, in parts per trillion
+  - `Veteran`: factor variable with two levels, "Vietnam" and "Other", to indicate the type of veteran
+
+## Case Study 3.1.2 - Dioxin Data {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+head(case0302)
+```
+
+## Case Study 3.1.2 - Dioxin Data {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+qplot(Veteran, Dioxin, data = case0302, geom = "boxplot")
+```
+
+## Removing Outliers {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+# Using identify() function
+# Base R plotting
+plot(Dioxin ~ Veteran, data = case0302)
+with(case0302, identify(x = Veteran, y = Dioxin))
+```
+
+## Removing Outliers {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+# Getting R to tell us
+with(case0302, which(Dioxin > 10))
+```
+
+## Two-Sample t-test
+$$
+H_{0}: \mu_{V} - \mu_{N} = 0, \quad\quad\quad H_{1}: \mu_{V} - \mu_{N} > 0
+$$
+
+- $\mu_{V}$ represents the population mean dioxin concentrations for Vietnam veterans
+- $\mu_{N}$ represents the population mean dioxin concentrations for non-Vietnam veterans
+
+## Two-Sample t-test {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Verify how R is ordering groups
+summary(case0302$Veteran)
+```
+
+## Two-Sample t-test {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+# t-test time!
+t.test(Dioxin ~ Veteran, data = case0302, var.equal = TRUE, 
+       alternative = "less")
+```
+
+## Two-Sample t-test {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+# t-test time! (without observation 646)
+t.test(Dioxin ~ Veteran, data = case0302, var.equal = TRUE, 
+       alternative = "less", subset = -646)
+```
+
+## Two-Sample t-test {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+# t-test time! (without observations 646 and 645)
+t.test(Dioxin ~ Veteran, data = case0302, var.equal = TRUE, 
+       alternative = "less", subset = -c(646, 645))
+```

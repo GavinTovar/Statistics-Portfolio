@@ -1,0 +1,714 @@
+---
+title: "(ST 412/512) Lab 1 <br>"
+format:
+  revealjs:
+    incremental: true
+    scrollable: true
+    theme: dracula
+    transition: slide
+    transition-speed: slow
+    auto-animate: true
+    chalkboard: true
+    code-line-numbers: true
+    css: styles.css
+    plugins:
+      - reveal.js/plugin/zoom-js/zoom.js
+      - reveal.js/plugin/highlight/highlight.js
+---
+
+```{r}
+#| echo: FALSE
+data <- read.csv("polymers.csv", header = TRUE)
+```
+
+## Hello! {.smaller}
+* Who am I?
+  * A deep philosophical question
+  * So instead, I will answer any questions anyone may have about my identity
+  * If there are no questions I am content to be anonymous for the term and we can continue
+* Office Hours
+  * Thursday 10:00am - 11:00am
+* Lab Structure
+  * I'll yap for a while
+  * After I have put everyone to sleep, I'll go around answering any homework (or whatever) questions
+
+## R we Ready to go?
+* Hopefully everyone has R and RStudio installed on their system
+
+## Lab Objectives
+
+## Today's Dataset {.text-sm}
+* The dataset we're working with today is contained in the "polymers.csv" file on Canvas
+  * The response variable \(y\) is the amount of suspended solids in a coal cleansing system. 
+  * Using a quantitative regressor variable \(x\), the pH of the cleansing tank is recorded. 
+  * The cleansing operation involves the use of a polymer. In this case three different polymers were used in the experiment. All other important conditions were held constant.
+
+## Reading In Data {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: FALSE
+data <- read.csv("polymers.csv", header = TRUE) # Define the .csv file as "data" 
+```
+
+## Reading In Data {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+# To print the data
+data
+```
+
+## Indexing {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+# To print the dataset's first column
+data[, 1]
+```
+
+## Indexing {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+# Since this is a dataframe (list) we could instead use
+data$ph
+```
+
+## `attach()` Function {auto-animate="true" auto-animate-easing="ease-in-out"}
+* Instead of indexing, Another alternative is to `attach()` the data to simply call any variables by their original names (without referring to the name of the data frame).
+  * This technically just adds the dataset to R's search path
+  * This alternative is less appealing with working with larger or multiple data sets, where variables can have similar names or we can have coincidences. But here we’ll go with this option
+
+## `attach()` Function {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+attach(data)
+```
+
+## `attach()` Function {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+ph
+```
+
+## `subset()` Function {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+# Subset of the original data that corresponds to polymer 1
+subset(data, polymer == 1)
+```
+
+## Subsetting {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+# First 6 observations of the variable ph (in this case corresponding to polymer 1)
+ph[1:6]
+```
+
+## Subsetting {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+# Typically we'd do (without attach())
+data$ph[1:6]
+```
+
+## Subsetting {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+# Observations in ph that correspond to polymer 1 (in this case the first 6 observations)
+ph[polymer == 1]
+
+# data$ph[polymer == 1]
+```
+
+## Scatterplots {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+#| output-location: fragment
+# If we ignore the polymer variable and construct a scatterplot of solids vs ph:
+# Produce the scatterplot
+plot(ph, solids,
+  type = "p",
+  pch = 20,
+  col = "blue",
+  main = "Solids vs pH ignoring polymers",
+  xlab = "pH",
+  ylab = "Amount of Solids"
+) 
+```
+
+## Scatterplots {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+# If we wanted the correlation between the two variables
+cor(ph, solids)
+```
+
+## Scatterplots {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+# Print three plots in a horizontal array in the same window 
+par(mfrow = c(1, 3))
+```
+
+## Scatterplots {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+#| output-location: fragment
+# Print three plots in a horizontal array in the same window 
+par(mfrow = c(1, 3)) 
+
+# Scatterplot, regression line and correlation for observation in polymer 1 
+plot(ph[polymer == 1], solids[polymer == 1],
+  type = "p",
+  pch = 20,
+  col = "blue",
+  main = "Solids vs pH polymer 1",
+  xlab = "pH",
+  ylab = "Amount of Solids"
+)
+```
+
+## Scatterplots {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+#| output-location: fragment
+# Print three plots in a horizontal array in the same window 
+par(mfrow = c(1, 3)) 
+
+# Scatterplot, regression line and correlation for observation in polymer 1 
+plot(ph[polymer == 1], solids[polymer == 1],
+  type = "p",
+  pch = 20,
+  col = "blue",
+  main = "Solids vs pH polymer 1",
+  xlab = "pH",
+  ylab = "Amount of Solids"
+)
+abline(lm(solids[polymer == 1] ~ ph[polymer == 1]), col = "red")
+```
+
+## Scatterplots {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+cor(solids[polymer == 1], ph[polymer == 1])
+```
+
+## Scatterplots {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: FALSE
+#| output-location: fragment
+# Scatterplot, regression line and correlation for observation in polymer 2
+plot(ph[polymer == 2], solids[polymer == 2],
+  type = "p",
+  pch = 20,
+  col = "blue",
+  main = "Solids vs pH polymer 2",
+  xlab = "pH",
+  ylab = "Amount of Solids"
+)
+```
+
+```{r}
+#| echo: FALSE
+#| eval: TRUE
+#| output-location: fragment
+# Print three plots in a horizontal array in the same window 
+par(mfrow = c(1, 3)) 
+
+# Scatterplot, regression line and correlation for observation in polymer 1 
+plot(ph[polymer == 1], solids[polymer == 1],
+  type = "p",
+  pch = 20,
+  col = "blue",
+  main = "Solids vs pH polymer 1",
+  xlab = "pH",
+  ylab = "Amount of Solids"
+)
+abline(lm(solids[polymer == 1] ~ ph[polymer == 1]), col = "red")
+
+# Scatterplot, regression line and correlation for observation in polymer 2
+plot(ph[polymer == 2], solids[polymer == 2],
+  type = "p",
+  pch = 20,
+  col = "blue",
+  main = "Solids vs pH polymer 2",
+  xlab = "pH",
+  ylab = "Amount of Solids"
+)
+```
+
+## Scatterplots {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: FALSE
+#| output-location: fragment
+# Scatterplot, regression line and correlation for observation in polymer 2
+plot(ph[polymer == 2], solids[polymer == 2],
+  type = "p",
+  pch = 20,
+  col = "blue",
+  main = "Solids vs pH polymer 2",
+  xlab = "pH",
+  ylab = "Amount of Solids"
+)
+abline(lm(solids[polymer == 2] ~ ph[polymer == 2]), col = "red")
+```
+
+```{r}
+#| echo: FALSE
+#| eval: TRUE
+#| output-location: fragment
+# Print three plots in a horizontal array in the same window 
+par(mfrow = c(1, 3)) 
+
+# Scatterplot, regression line and correlation for observation in polymer 1 
+plot(ph[polymer == 1], solids[polymer == 1],
+  type = "p",
+  pch = 20,
+  col = "blue",
+  main = "Solids vs pH polymer 1",
+  xlab = "pH",
+  ylab = "Amount of Solids"
+)
+abline(lm(solids[polymer == 1] ~ ph[polymer == 1]), col = "red")
+
+# Scatterplot, regression line and correlation for observation in polymer 2
+plot(ph[polymer == 2], solids[polymer == 2],
+  type = "p",
+  pch = 20,
+  col = "blue",
+  main = "Solids vs pH polymer 2",
+  xlab = "pH",
+  ylab = "Amount of Solids"
+)
+abline(lm(solids[polymer == 2] ~ ph[polymer == 2]), col = "red")
+```
+
+## Scatterplots {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+cor(solids[polymer == 2], ph[polymer == 2])
+```
+
+## Scatterplots {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: FALSE
+#| output-location: fragment
+# Scatterplot, regression line and correlation for observation in polymer 3
+plot(ph[polymer == 3], solids[polymer == 3],
+  type = "p",
+  pch = 20,
+  col = "blue",
+  main = "Solids vs pH polymer 3",
+  xlab = "pH",
+  ylab = "Amount of Solids"
+)
+```
+
+```{r}
+#| echo: FALSE
+#| eval: TRUE
+#| output-location: fragment
+# Print three plots in a horizontal array in the same window 
+par(mfrow = c(1, 3)) 
+
+# Scatterplot, regression line and correlation for observation in polymer 1 
+plot(ph[polymer == 1], solids[polymer == 1],
+  type = "p",
+  pch = 20,
+  col = "blue",
+  main = "Solids vs pH polymer 1",
+  xlab = "pH",
+  ylab = "Amount of Solids"
+)
+abline(lm(solids[polymer == 1] ~ ph[polymer == 1]), col = "red")
+
+# Scatterplot, regression line and correlation for observation in polymer 2
+plot(ph[polymer == 2], solids[polymer == 2],
+  type = "p",
+  pch = 20,
+  col = "blue",
+  main = "Solids vs pH polymer 2",
+  xlab = "pH",
+  ylab = "Amount of Solids"
+)
+abline(lm(solids[polymer == 2] ~ ph[polymer == 2]), col = "red")
+
+# Scatterplot, regression line and correlation for observation in polymer 3
+plot(ph[polymer == 3], solids[polymer == 3],
+  type = "p",
+  pch = 20,
+  col = "blue",
+  main = "Solids vs pH polymer 3",
+  xlab = "pH",
+  ylab = "Amount of Solids"
+)
+```
+
+## Scatterplots {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: FALSE
+#| output-location: fragment
+# Scatterplot, regression line and correlation for observation in polymer 3
+plot(ph[polymer == 3], solids[polymer == 3],
+  type = "p",
+  pch = 20,
+  col = "blue",
+  main = "Solids vs pH polymer 3",
+  xlab = "pH",
+  ylab = "Amount of Solids"
+)
+abline(lm(solids[polymer == 3] ~ ph[polymer == 3]), col = "red")
+```
+
+```{r}
+#| echo: FALSE
+#| eval: TRUE
+#| output-location: fragment
+# Print three plots in a horizontal array in the same window 
+par(mfrow = c(1, 3)) 
+
+# Scatterplot, regression line and correlation for observation in polymer 1 
+plot(ph[polymer == 1], solids[polymer == 1],
+  type = "p",
+  pch = 20,
+  col = "blue",
+  main = "Solids vs pH polymer 1",
+  xlab = "pH",
+  ylab = "Amount of Solids"
+)
+abline(lm(solids[polymer == 1] ~ ph[polymer == 1]), col = "red")
+
+# Scatterplot, regression line and correlation for observation in polymer 2
+plot(ph[polymer == 2], solids[polymer == 2],
+  type = "p",
+  pch = 20,
+  col = "blue",
+  main = "Solids vs pH polymer 2",
+  xlab = "pH",
+  ylab = "Amount of Solids"
+)
+abline(lm(solids[polymer == 2] ~ ph[polymer == 2]), col = "red")
+
+# Scatterplot, regression line and correlation for observation in polymer 3
+plot(ph[polymer == 3], solids[polymer == 3],
+  type = "p",
+  pch = 20,
+  col = "blue",
+  main = "Solids vs pH polymer 3",
+  xlab = "pH",
+  ylab = "Amount of Solids"
+)
+abline(lm(solids[polymer == 3] ~ ph[polymer == 3]), col = "red")
+```
+
+## Scatterplots {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+cor(solids[polymer == 3], ph[polymer == 3])
+```
+
+## So... {auto-animate="true" auto-animate-easing="ease-in-out"}
+* What do you think of the model fits and correlations when we consider separate regression lines?
+  * Difficult when they're all on different plots
+
+## Scatterplots Again {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+#| output-location: fragment
+# Scatterplot of observations for polymer 1. 
+# Note xlim and ylim is fixin the scale of the plot
+plot(ph[1:6],solids[1:6],
+  type = "p",
+  pch = paste(1),
+  col = "blue",
+  xlim = c(min(ph), max(ph)),
+  ylim = c(min(solids), max(solids)),
+  main = "Solids vs pH by polymers",
+  xlab = "pH",
+  ylab = "Amount of Solids"
+)
+```
+
+## Scatterplots Again {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+#| output-location: fragment
+# Scatterplot of observations for polymer 1. 
+# Note xlim and ylim is fixin the scale of the plot
+plot(ph[1:6],solids[1:6],
+  type = "p",
+  pch = paste(1),
+  col = "blue",
+  xlim = c(min(ph), max(ph)),
+  ylim = c(min(solids), max(solids)),
+  main = "Solids vs pH by polymers",
+  xlab = "pH",
+  ylab = "Amount of Solids"
+)
+# Add regression line for polymer 1
+abline(lm(solids[1:6] ~ ph[1:6]), col = "blue") 
+```
+
+## Scatterplots Again {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+#| output-location: slide
+# Scatterplot of observations for polymer 1. 
+# Note xlim and ylim is fixin the scale of the plot
+plot(ph[1:6],solids[1:6],
+  type = "p",
+  pch = paste(1),
+  col = "blue",
+  xlim = c(min(ph), max(ph)),
+  ylim = c(min(solids), max(solids)),
+  main = "Solids vs pH by polymers",
+  xlab = "pH",
+  ylab = "Amount of Solids"
+)
+# Add regression line for polymer 1
+abline(lm(solids[1:6] ~ ph[1:6]), col = "blue")
+
+# Add points corresponding to polymer 2
+points(ph[7:12], solids[7:12],
+       type = "p",
+       pch = paste(2),
+       col = "red")
+```
+
+## Scatterplots Again {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+#| output-location: slide
+# Scatterplot of observations for polymer 1. 
+# Note xlim and ylim is fixin the scale of the plot
+plot(ph[1:6],solids[1:6],
+  type = "p",
+  pch = paste(1),
+  col = "blue",
+  xlim = c(min(ph), max(ph)),
+  ylim = c(min(solids), max(solids)),
+  main = "Solids vs pH by polymers",
+  xlab = "pH",
+  ylab = "Amount of Solids"
+)
+# Add regression line for polymer 1
+abline(lm(solids[1:6] ~ ph[1:6]), col = "blue")
+
+# Add points corresponding to polymer 2
+points(ph[7:12], solids[7:12],
+       type = "p",
+       pch = paste(2),
+       col = "red")
+
+# Add regression line for polymer 2
+abline(lm(solids[7:12] ~ ph[7:12]), col = "red")
+```
+
+## Scatterplots Again {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+#| output-location: slide
+# Scatterplot of observations for polymer 1. 
+# Note xlim and ylim is fixin the scale of the plot
+plot(ph[1:6],solids[1:6],
+  type = "p",
+  pch = paste(1),
+  col = "blue",
+  xlim = c(min(ph), max(ph)),
+  ylim = c(min(solids), max(solids)),
+  main = "Solids vs pH by polymers",
+  xlab = "pH",
+  ylab = "Amount of Solids"
+)
+# Add regression line for polymer 1
+abline(lm(solids[1:6] ~ ph[1:6]), col = "blue")
+
+# Add points corresponding to polymer 2
+points(ph[7:12], solids[7:12],
+       type = "p",
+       pch = paste(2),
+       col = "red")
+# Add regression line for polymer 2
+abline(lm(solids[7:12] ~ ph[7:12]), col = "red") 
+
+# Add points corresponding to polymer 3
+points(ph[13:18], solids[13:18],
+  type = "p",
+  pch = paste(3),
+  col = "darkgreen"
+)
+```
+
+## Scatterplots Again {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+#| output-location: slide
+# Scatterplot of observations for polymer 1. 
+# Note xlim and ylim is fixin the scale of the plot
+plot(ph[1:6],solids[1:6],
+  type = "p",
+  pch = paste(1),
+  col = "blue",
+  xlim = c(min(ph), max(ph)),
+  ylim = c(min(solids), max(solids)),
+  main = "Solids vs pH by polymers",
+  xlab = "pH",
+  ylab = "Amount of Solids"
+)
+# Add regression line for polymer 1
+abline(lm(solids[1:6] ~ ph[1:6]), col = "blue")
+
+# Add points corresponding to polymer 2
+points(ph[7:12], solids[7:12],
+       type = "p",
+       pch = paste(2),
+       col = "red")
+# Add regression line for polymer 2
+abline(lm(solids[7:12] ~ ph[7:12]), col = "red") 
+
+# Add points corresponding to polymer 3
+points(ph[13:18], solids[13:18],
+  type = "p",
+  pch = paste(3),
+  col = "darkgreen"
+)
+
+# Add regression line for polymer 3
+abline(lm(solids[13:18] ~ ph[13:18]), col = "darkgreen")
+```
+
+## Fitting Regression Model {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+# Name model "mod0"
+mod0 <- lm(solids ~ ph)
+```
+
+## Fitting Regression Model {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+# Name model "mod0"
+mod0 <- lm(solids ~ ph)
+
+# Print the summary of the model
+summary(mod0)
+```
+
+## Fitting Regression Model {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+# Model and output for polymer 1
+mod1 <- lm(solids[polymer == 1] ~ ph[polymer == 1])
+```
+
+## Fitting Regression Model {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+# Model and output for polymer 1
+mod1 <- lm(solids[polymer == 1] ~ ph[polymer == 1])
+summary(mod1)
+```
+
+## Fitting Regression Model {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+# Model and output for polymer 2
+mod2 <- lm(solids[polymer == 2] ~ ph[polymer == 2])
+```
+
+## Fitting Regression Model {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+# Model and output for polymer 2
+mod2 <- lm(solids[polymer == 2] ~ ph[polymer == 2])
+summary(mod2)
+```
+
+## Fitting Regression Model {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+# Model and output for polymer 3
+mod3 <- lm(solids[polymer == 3] ~ ph[polymer == 3])
+```
+
+## Fitting Regression Model {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+# Model and output for polymer 3
+mod3 <- lm(solids[polymer == 3] ~ ph[polymer == 3])
+summary(mod3)
+```
+
+## Fitting Regression Model {auto-animate="true" auto-animate-easing="ease-in-out"}
+* Can one write the fitted equations for each of these models? 
+* How can one decide whether is better to consider a single regression line (that ignores the polymer type) vs three separate regression lines (one per polymer)?
+
+## Fitting Regression Model {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+# This variable has 1's for the observations that correspond to polymer 1 and 0's everywhere else
+poly1 <- as.numeric(polymer == 1) 
+poly1
+```
+
+## Fitting Regression Model {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+# Fitting a regression model that looks only at polymers 1 and 2 and includes the indicator variable
+# Polymers 1 and 2 correspond to the first 12 observations in the data 
+mod4 <- lm(solids[1:12] ~ ph[1:12] + poly1[1:12] + ph[1:12] * poly1[1:12])
+summary(mod4)
+```
+
+## Fitting Regression Model {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+# In reality, we'd simply 
+mod5 <- lm(solids ~ ph + as.factor(polymer))
+summary(mod5)
+```
+
+## Fitting Regression Model {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+# Or to include interactions
+mod6 <- lm(solids ~ ph + as.factor(polymer) + ph * as.factor(polymer))
+summary(mod6)
+```

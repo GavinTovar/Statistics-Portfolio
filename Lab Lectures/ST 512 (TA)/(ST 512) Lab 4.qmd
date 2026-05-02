@@ -1,0 +1,582 @@
+---
+title: "(ST 412/512) Lab 4 <br> Inference on Multiple Linear Regression in R"
+format:
+  revealjs:
+    incremental: TRUE
+    scrollable: TRUE
+    theme: dark
+    transition: concave
+    transition-speed: slow
+    auto-animate: TRUE
+    chalkboard: TRUE
+header-includes:
+  - |
+    <style>
+      .reveal .barelysmaller {
+          font-size: 0.90em;  /* Adjust as needed */
+        }
+      
+      .reveal .smaller {
+        font-size: 0.75em;  /* Adjust as needed */
+      }
+
+      .reveal .tiny-font {
+        font-size: 0.5em;  /* Even smaller font size */
+        white-space: nowrap;
+        overflow-x: auto;  /* Allow horizontal scrolling */
+      }
+    </style>
+---
+
+
+## Lab Objectives
+* F-test
+* Estimated means, confidence intervals and prediction intervals
+
+## Loading Data and Packages {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+library(Sleuth3)
+library(ggplot2)
+```
+
+## Dataset {.smaller}
+* `case0901` (Effects of Light on Meadowfoam Flowering)
+  * Shining lights on some plants to see if they would grow?
+  * 24 observations (rows)
+  * 3 variables (columns)
+    * `Flowers`: average number of flowers per meadowfoam plant
+    * `Time`: time light intensity regiments started; 1 = Late, 2 = Early
+    * `Intensity`: light intensity (in some wacky unit, idk)
+
+## ANOVA F Test {.smaller}
+* When two models are "nested" they can be compared using the ANOVA (ESS) F Test
+  * What is a nested model?
+    * A model is said to be nested in another if it is a special case of it for example we could look the model:
+    
+::: {.fragment}
+
+$$
+\begin{align*}
+\mu\left(\text{Flowers} \mid \text{Intensity}, \text{Time}\right) & = \beta_{0} + \beta_{1}\text{Intensity300} + \beta_{2}\text{Intensity450} \\
+& \quad + \beta_{3}\text{Intensity600} + \beta_{4}\text{Intensity750} \\
+& \quad + \beta_{5}\text{Intensity900} + \beta_{6}\text{Time}
+\end{align*}
+$$
+
+:::
+
+* So instead of treating `intensity` as a factor we can make special case by treating it as a continuous variable which leads to a nested model
+
+::: {.fragment}
+
+$$
+\mu\left(\text{Flowers} \mid \text{Intensity}, \text{Time}\right) = \beta_{0} + \beta_{1}\text{Intensity} + \beta_{2}\text{Time}
+$$
+
+:::
+
+## ANOVA F Test {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+## Categorical Intensity Variable
+fit_indic <- lm(Flowers ~ factor(Intensity) + Time, data = case0901)
+```
+
+## ANOVA F Test {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+## Categorical Intensity Variable
+fit_indic <- lm(Flowers ~ factor(Intensity) + Time, data = case0901)
+
+## Continuous Intensity Variable
+fit_contin <- lm(Flowers ~ Intensity + Time, data = case0901)
+```
+
+## ANOVA F Test {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+## Comparing Models
+anova(fit_contin, fit_indic)
+```
+
+## ANOVA F Test {auto-animate="true" auto-animate-easing="ease-in-out"}
+* Perhaps an obvious model that can be found nested in another is the null model, that is
+
+::: {.fragment}
+
+$$
+\mu\left(\text{Flowers}\right) = \beta_{0} 
+$$
+
+:::
+
+* We can again use the `anova()` function to get an ANOVA table to do an $F$-test
+  * We don't have to formally create the null model since R does it for us but I will show they are the same
+
+## ANOVA F Test {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Creating the null model, though it is not required
+fit_null <- lm(Flowers ~ 1, data = case0901)
+```
+
+## ANOVA F Test {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Creating the null model, though it is not required
+fit_null <- lm(Flowers ~ 1, data = case0901)
+
+# Same model as before with Intensity as continuous
+fit_contin <- lm(Flowers ~ Intensity + Time, data = case0901)
+```
+
+## ANOVA F Test {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+## Comparing Models
+anova(fit_null, fit_contin)
+```
+
+
+## ANOVA F Test {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+## Equivalent to just having the single model in the function
+## Though it looks slightly different since this is the generic ANOVA table
+anova(fit_contin)
+```
+
+## ANOVA Table Exercise {.barelysmaller}
+
+* The following table summarizes the results of an ANOVA F-test:
+
+::: {.fragment}
+
+```{=latex}
+\begin{array}{|c|c|c|c|}
+\hline
+\textbf{Source} & \textbf{DF} & \textbf{Sum of Squares} & \textbf{Mean Square} \\ \hline
+\text{Regression} & 2 & 3466.7 & 1733.35 \\ \hline
+\text{Residual} & 21 & 871.24 & 41.49 \\ \hline
+\text{Total} & 23 & 4337.94 & \\ \hline
+\end{array}
+```
+
+:::
+
+* The task is to find the $p$-value, aka complete the table
+
+## ANOVA Table Exercise {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Manual way
+F.stat <- 1733.35/41.49
+```
+
+## ANOVA Table Exercise {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Manual way
+F.stat <- 1733.35/41.49
+p.value <- 1 - pf(F.stat, 2, 21)
+p.value
+```
+
+## ANOVA Table Exercise {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Pulling from summary() output
+summary(lm(Flowers ~ Intensity + Time, data = case0901))$fstatistic
+```
+
+## ANOVA Table Exercise {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Pulling from summary() output
+F.value <- summary(lm(Flowers ~ Intensity + Time, data = case0901))$fstatistic
+
+# p-value of the F-test
+pf(F.value[1], F.value[2], F.value[3], lower.tail=FALSE)
+```
+
+## Dataset {.smaller}
+* `ex0923` (Comparing Male and Female Incomes)
+  * 2,584 observations (rows)
+  * 5 variables (columns)
+    * `Subject`: the subject identification number
+    * `Gender`: a factor with levels "female" and "male"
+    * `AFQT`: percentile score on the AFQT intelligence test
+    * `Educ`: years of education achieved by 2005
+    * `Income2005`: annual income in 2005
+
+## Dataset {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+ex0923
+```
+
+## Confidence and Prediction Intervals {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Model we will use
+fit <- lm(log(Income2005) ~ AFQT + Educ + Gender,
+          data = ex0923, na.action = na.exclude)
+```
+
+## Confidence and Prediction Intervals {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Model we will use
+summary(fit)
+```
+
+## Confidence and Prediction Intervals {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Creating a grid of all possible combinations of explanatory values
+newdf <- expand.grid(
+  Educ = unique(ex0923$Educ),
+  AFQT = seq(0, 100, 10),
+  Gender = unique(ex0923$Gender)
+)
+```
+
+## Confidence and Prediction Intervals {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Creating a grid of all possible combinations of explanatory values
+newdf <- expand.grid(
+  Educ = unique(ex0923$Educ),
+  AFQT = seq(0, 100, 10),
+  Gender = unique(ex0923$Gender)
+)
+newdf
+```
+
+## Confidence and Prediction Intervals {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# We can then use predict to estimate the mean response for each combination of explanatory variables
+pred_values <- predict(fit, newdata = newdf)
+```
+
+## Confidence and Prediction Intervals {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# We can then use predict to estimate the mean response for each combination of explanatory variables
+pred_values <- predict(fit, newdata = newdf)
+pred_values
+```
+
+## Confidence and Prediction Intervals {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Just renaming to perhaps something more clear
+# and attaching it to our grip of explanatory variables
+newdf$est_mean <- predict(fit, newdata = newdf)
+```
+
+## Confidence and Prediction Intervals {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+newdf
+```
+
+## Confidence and Prediction Intervals {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+qplot(AFQT, est_mean, data = subset(newdf, Educ == 12), 
+      geom = "line", colour = Gender) + 
+  ylab("Log Income")
+```
+
+## Confidence and Prediction Intervals {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+# ggplot() syntax
+ggplot(data = subset(newdf, Educ == 12), aes(x = AFQT, y = est_mean)) +
+  geom_line(aes(color = Gender)) +
+  labs(y = "Log Income")
+```
+
+## Confidence and Prediction Intervals {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+# ggplot() syntax
+ggplot(data = subset(newdf, Educ == 12), aes(x = AFQT, y = est_mean)) +
+  geom_line(aes(color = Gender)) +
+  labs(y = "Log Income") +
+  scale_color_manual(
+    values = c("female" = "orange", "male" = "green"),
+    labels = c("Female", "Male")) +
+  theme_bw()
+```
+
+## Confidence and Prediction Intervals {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+qplot(AFQT, exp(est_mean), data = subset(newdf, Educ == 12), 
+      geom = "line", colour = Gender) + 
+  ylab("Estimated median income")
+```
+
+## Confidence and Prediction Intervals {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+# ggplot() syntax
+ggplot(data = subset(newdf, Educ == 12), aes(x = AFQT, y = exp(est_mean))) +
+  geom_line(aes(color = Gender)) +
+  labs(y = "Estimated median income")
+```
+
+## Confidence and Prediction Intervals {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Confidence interval time!
+pred_interval <- predict(fit, newdata = newdf, interval = "confidence")
+head(pred_interval)
+```
+
+## Confidence and Prediction Intervals {auto-animate="true" auto-animate-easing="ease-in-out"}
+
+:::: {.columns}
+
+::: {.column width="50%"}
+```{r}
+#| echo: TRUE
+# Confidence interval time!
+pred_interval <- predict(fit, newdata = newdf, interval = "confidence")
+pred_interval
+```
+
+:::
+
+::: {.column width="50%"}
+```{r}
+#| echo: TRUE
+# Predictions
+pred_values <- predict(fit, newdata = newdf)
+pred_values
+```
+
+::: 
+
+::::
+
+## Confidence and Prediction Intervals {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Confidence interval time!
+cis <- predict(fit, newdata = newdf, interval = "confidence")
+```
+
+## Confidence and Prediction Intervals {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Confidence interval time!
+cis <- predict(fit, newdata = newdf, interval = "confidence")
+newdf <- cbind(cis, newdf)
+```
+
+## Confidence and Prediction Intervals {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Updated dataframe
+newdf
+```
+
+## Confidence and Prediction Intervals {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+# Back to plotting
+# Line for mean response
+qplot(AFQT, fit, data = subset(newdf, Educ==12 & Gender == "male"), 
+      geom = "line")
+```
+
+## Confidence and Prediction Intervals {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+# ggplot() syntax
+ggplot(data = subset(newdf, Educ==12 & Gender == "male"), aes(x = AFQT, y = fit)) +
+  geom_line()
+```
+
+## Confidence and Prediction Intervals {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+# Add another line for upper limit of CI
+qplot(AFQT, fit, data = subset(newdf, Educ==12 & Gender == "male"), 
+      geom = "line") + 
+  geom_line(aes(y = upr), colour = "red")
+```
+
+## Confidence and Prediction Intervals {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+# ggplot() syntax
+ggplot(data = subset(newdf, Educ==12 & Gender == "male"), aes(x = AFQT, y = fit)) +
+  geom_line() +
+  geom_line(aes(y = upr), color = "red")
+```
+
+## Confidence and Prediction Intervals {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+# Add another for the lower limits
+qplot(AFQT, fit, data = subset(newdf, Educ == 12 & Gender == "male"), 
+      geom = "line") + 
+  geom_line(aes(y = upr), colour = "red") + 
+  geom_line(aes(y = lwr), colour = "red", linetype = "dashed")
+```
+
+## Confidence and Prediction Intervals {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+# ggplot() syntax
+ggplot(data = subset(newdf, Educ==12 & Gender == "male"), aes(x = AFQT, y = fit)) +
+  geom_line() +
+  geom_line(aes(y = upr), color = "red") +
+  geom_line(aes(y = lwr), color = "red", linetype = "dashed")
+```
+
+## Confidence and Prediction Intervals {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+# Add a ribbon for the interval instead
+qplot(AFQT, fit, data = subset(newdf, Educ == 12 & Gender == "male"), 
+      geom = "line") + 
+  geom_ribbon(aes(ymin = lwr, ymax = upr), linetype = "dotted", alpha = I(0.2))
+```
+
+## Confidence and Prediction Intervals {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+# ggplot() syntax
+ggplot(data = subset(newdf, Educ==12 & Gender == "male"), aes(x = AFQT, y = fit)) +
+  geom_line() +
+  geom_ribbon(aes(ymin = lwr, ymax = upr), linetype = "dotted", alpha = I(0.2))
+```
+
+## Confidence and Prediction Intervals {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+# Create a line for each gender
+qplot(AFQT, fit, data = subset(newdf, Educ == 12), 
+      colour = Gender, geom = "line") + 
+  geom_ribbon(aes(ymin = lwr, ymax = upr), linetype = "dotted", alpha = I(0.2))
+```
+
+## Confidence and Prediction Intervals {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+# ggplot() syntax
+ggplot(data = subset(newdf, Educ == 12), aes(x = AFQT, y = fit, color = Gender)) +
+  geom_line() +
+  geom_ribbon(aes(ymin = lwr, ymax = upr), linetype = "dotted", alpha = I(0.2))
+```
+
+## Confidence and Prediction Intervals {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+# Estimated median response on the original scale just back-transform 
+# the mean and interval endpoints - Under symmetry assumption
+qplot(AFQT, exp(fit), data = subset(newdf, Educ == 12 & Gender == "male"), 
+      geom = "line") +
+  geom_ribbon(aes(ymin = exp(lwr), ymax = exp(upr)), linetype = "dotted", alpha = I(0.2))
+```
+
+## Confidence and Prediction Intervals {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+# ggplot() syntax
+ggplot(data = subset(newdf, Educ == 12 & Gender == "male"), aes(x = AFQT, y = exp(fit))) +
+  geom_line() +
+  geom_ribbon(aes(ymin = exp(lwr), ymax = exp(upr)), linetype = "dotted", alpha = I(0.2))
+```
+
+## Confidence and Prediction Intervals {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Prediction intervals!
+pis <- predict(fit, newdata = newdf, interval = "prediction")
+head(pis)
+```
+
+## Confidence and Prediction Intervals {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Prediction intervals!
+pis <- predict(fit, newdata = newdf, interval = "prediction")
+pis
+```
+
+## Confidence and Prediction Intervals {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Prediction intervals!
+colnames(pis) <- c("pi_fit", "pi_lwr", "pi_upr")
+newdf <- cbind(pis, newdf)
+```
+
+## Confidence and Prediction Intervals {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Prediction intervals!
+newdf
+```
+
+## Confidence and Prediction Intervals {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+# Plotting prediction intervals
+qplot(AFQT, fit, data = subset(newdf, Educ == 12 & Gender == "male"), 
+      geom = "line") + 
+  geom_ribbon(aes(ymin = lwr, ymax = upr), linetype = "dotted", alpha = I(0.2)) +
+  geom_ribbon(aes(ymin = pi_lwr, ymax = pi_upr), alpha = I(0.2))
+```
+
+## Confidence and Prediction Intervals {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+# ggplot() syntax
+ggplot(data = subset(newdf, Educ == 12 & Gender == "male"), aes(x = AFQT, y = fit)) +
+  geom_line() +
+  geom_ribbon(aes(ymin = lwr, ymax = upr), linetype = "dotted", alpha = I(0.2)) +
+  geom_ribbon(aes(ymin = pi_lwr, ymax = pi_upr), alpha = I(0.2))
+```
+
+## Confidence and Prediction Intervals {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: slide
+# A nicer plot...
+ggplot(data = subset(newdf, Educ == 12 & Gender == "male"), aes(x = AFQT, y = fit)) +
+  geom_line(linewidth = 1) +
+  geom_ribbon(aes(ymin = lwr, ymax = upr), linetype = "dotted", color = "red", fill = "pink", alpha = I(0.8)) +
+  geom_ribbon(aes(ymin = pi_lwr, ymax = pi_upr), color = "blue", fill = "lightblue", alpha = I(0.333)) +
+  labs(
+    y = "Fitted Mean Response",
+    title = "Regression Line with Confidence and Prediction Intervals") +
+  theme_bw()
+```

@@ -1,0 +1,269 @@
+---
+title: "(ST 411/511) Lab 1 - Intro to R"
+format:
+  revealjs:
+    incremental: TRUE
+    scrollable: TRUE
+    theme: dark
+    transition: slide
+    transition-speed: slow
+    auto-animate: TRUE
+    chalkboard: TRUE
+---
+## Hello!
+- My office hours
+  - Tuesday, 2:00pm - 3:00pm
+  - Friday, 11:00am - 12:00pm
+  
+## Why show up for lab?
+- The lab material is going to be directly applicable to homework assignments
+- Great time to get assistance with homework
+- Reinforcement of course material
+- Programming assistance
+
+:::aside
+If no one shows I'll be super sad...
+:::
+
+## Objectives {transition="zoom" transition-speed="slow"}
+- Introduce RStudio
+- Install and load R packages
+- Produce some simple graphs (histogram, boxplot, dotplot)
+- Calculate sample statistics (mean, median, standard deviation, etc.)
+- Perform a t-test
+- Knit an R Markdown document
+
+## Getting R and RStudio
+- If using personal computer
+  - Instructions to install are provided in the Lab 1 PDF, step 1
+  - Can also use Citrix Workspace
+  - Or Posit Cloud
+- If using lab computer
+  - R and RStudio should both be installed and ready for use
+  
+## Loading Sleuth3 package {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+## install.packages("Sleuth3")
+library(Sleuth3) # Load the Sleuth3 package
+```
+
+## Viewing a Dataset {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+head(case0102)
+```
+
+## Viewing a Dataset {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+case0102
+```
+
+## Viewing a Dataset {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: FALSE
+# The View() function allows the dataset to be viewed in its own tab 
+View(case0102)
+
+# The help() function will provide additional details (if available)
+help(case0102)
+help(package = Sleuth3)
+```
+
+## Loading ggplot2 package {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+## install.packages("ggplot2")
+library(ggplot2) # Load the ggplot2 package
+```
+
+## Plotting in ggplot2 {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+qplot(case0102$Salary)
+```
+
+## Plotting in ggplot2 {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+qplot(case0102$Salary, geom = "histogram")
+```
+
+## Plotting in ggplot2 {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+with(case0102, qplot(Salary, geom = "histogram"))
+```
+
+## Plotting in ggplot2 {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+qplot(Salary, data = case0102, geom = "histogram")
+```
+
+## Plotting in ggplot2 {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+with(case0102, qplot(Salary[Sex == "Male"], geom = "histogram"))
+```
+
+## Plotting in ggplot2 {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+with(case0102, qplot(Salary[Sex == "Female"], geom = "histogram"))
+```
+
+## Plotting in ggplot2 {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+with(case0102, qplot(Salary[Sex == "Female"], 
+                     geom = "histogram",
+                     breaks = c(3800, 4200, 4600, 5000, 5400, 5800, 6200, 6600)))
+```
+
+## Learning About a Function {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: FALSE
+# The help() function will provide additional details of a function
+help(qplot)
+?qplot
+```
+
+## Plotting in ggplot2 {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+qplot(Sex, Salary, data = case0102, geom = "boxplot")
+```
+
+## Plotting in ggplot2 {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+qplot(Sex, Salary, geom = "boxplot", data = case0102)
+```
+
+## Plotting in ggplot2 {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+qplot(Salary, Sex, data = case0102, geom = "boxplot")
+```
+
+## Plotting in ggplot2 {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+qplot(y = Salary, x = Sex, data = case0102, geom = "boxplot")
+```
+
+## Plotting in ggplot2 {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+ggplot(case0102, aes(x = Sex, y = Salary)) + 
+  geom_boxplot()
+```
+
+## Plotting in ggplot2 {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+ggplot(case0102, aes(x = Sex, y = Salary)) + 
+  geom_boxplot(aes(fill = Sex))
+```
+
+## Plotting in ggplot2 {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+ggplot(case0102, aes(x = Sex, y = Salary)) + 
+  geom_boxplot(aes(fill = Sex)) +
+  ggtitle("Starting Salaries")
+```
+
+## Plotting in ggplot2 {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+ggplot(case0102, aes(x = Sex, y = Salary)) + 
+  geom_boxplot(aes(fill = Sex)) +
+  labs(title = "Starting Salaries",
+       y = "Salary (US$)")
+```
+
+## Barplots {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+with(case0102, boxplot(Salary ~ Sex))
+```
+
+## Stem-and-Leaf Plots {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+with(case0102, stem(Salary[Sex == "Male"]))
+with(case0102, Salary[Sex == "Male"])
+```
+
+## Summary Statistics {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+with(case0102, summary(Salary[Sex == "Female"]))
+```
+
+## Summary Statistics {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+with(case0102, sd(Salary[Sex == "Female"]))
+with(case0102, length(Salary[Sex == "Female"]))
+```
+
+## Summary() Function {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+with(case0102, summary(Sex))
+```
+
+## Typing of Variable {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+with(case0102, is.factor(Sex))
+```
+
+## Typing of Variable {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+str(case0102$Sex)
+```
+
+## t-test {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+# One-sided two-sample equal variance t-test
+t.test(Salary ~ Sex, alternative = "less", data = case0102, var.equal = TRUE)
+```
+
+## R-Markdown
+- Allows text, code, and corresponding output to be compiled in a single document
+- Steps to get started are outlined in the Lab 1 PDF
+
+## Homework 1
+- I would advise we use the last portion of lab to get started on the computation portions of the homework

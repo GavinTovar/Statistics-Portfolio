@@ -1,0 +1,585 @@
+---
+title: "(ST 551) Lab 4 <br> Binomial and Sign Tests"
+format:
+  revealjs:
+    incremental: TRUE
+    scrollable: TRUE
+    theme: dark
+    transition: concave
+    transition-speed: slow
+    auto-animate: TRUE
+    chalkboard: TRUE
+---
+
+## Welcome Back Kiddos!
+* Back Again... Woohoo...
+* Questions, Comments, Concerns?
+
+## First Some Grilling!
+* Are you guys asking questions in class?
+* Are you guys answering questions in class?
+
+## Warning!
+* You guys need to start answering questions in class more
+  * *Dramatic pause*
+* If not, Sarah might snap
+  * She's already showing symptoms
+    * She's concerned that she her perfection is intimidating -- her exact words were: "I don't want to challenge the Gods"
+
+## Exact Binomial Test {auto-animate="true" auto-animate-easing="ease-in-out"}
+* The following ramblings are related to your Homework 3 - Question 1 (different numbers)
+* Suppose we are in a situation such that
+
+::: {.fragment}
+$$
+H_{0}: p_{0} = 0.30, \quad\text{and}\quad x = 1, \quad n = 8, \quad\Rightarrow\quad \hat{p} = \frac{x}{n} = \frac{1}{8}
+$$
+:::
+
+## Exact Binomial Test {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+# Two-sided by default
+binom.test(1, 8, 0.5)
+```
+
+## Exact Binomial Test {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+# Lower alternative
+binom.test(1, 8, 0.3, alt = "less")
+```
+
+## Exact Binomial Test {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+# Upper alternative
+binom.test(1, 8, 0.3, alt = "greater")
+```
+
+## Exact Binomial Test {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+# Let's say we run a two-sided test and we want to extract some results
+names(binom.test(1, 8, 0.3))
+```
+
+## Exact Binomial Test {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+# We could pull out the p-value
+binom.test(1, 8, 0.3)$p.val
+```
+
+## Exact Binomial Test {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+# We could pull out the p-value
+binom.test(1, 8, 0.3)$p.val
+
+# The confidence interval
+binom.test(1, 8, 0.3)$conf.int
+```
+
+## Exact Binomial Test {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+# We could pull out the p-value
+binom.test(1, 8, 0.3)$p.val
+
+# The confidence interval
+binom.test(1, 8, 0.3)$conf.int
+
+# The test statistic
+binom.test(1, 8, 0.3)$statistic
+```
+
+## Exact Binomial Test {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+# Notice that R allows for partial tagging with the $ operator
+binom.test(1, 8, 0.3)$stat
+```
+
+## Exact Binomial Test {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+# Notice that R allows for partial tagging with the $ operator
+binom.test(1, 8, 0.3)$stat
+binom.test(1, 8, 0.3)$s
+```
+
+## Exact Binomial Test {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+# Notice that R allows for partial tagging with the $ operator
+binom.test(1, 8, 0.3)$stat
+binom.test(1, 8, 0.3)$s
+binom.test(1, 8, 0.3)$p
+```
+
+## Exact Binomial Test {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+# So I could just type this to get our p-values?
+binom.test(1, 8, 0.3)$p
+```
+
+## Exact Binomial Test {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+# Well, partial such that it's not ambiguous
+binom.test(1, 8, 0.3)$pa # parameter
+binom.test(1, 8, 0.3)$p. # p.value
+```
+
+## Exact Binomial Test {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+# Well, partial such that it's not ambiguous
+binom.test(1, 8, 0.3)$pa # parameter
+binom.test(1, 8, 0.3)$p. # p.value
+# We've got two components that start with p so R doesn't know which one to get
+```
+
+## Exact Binomial Test {auto-animate="true" auto-animate-easing="ease-in-out"}
+In class you guys talked about:
+
+- Under $H_0: p = p_0$, $X \sim \text{Binomial}(n, p_0)$ for a two-sided alternative $H_A: p \neq p_0$
+- We reject $H_0$ for values of $X$ far from the expected value under $H_0$?
+- **Rejection Region (distance-based):**  
+$$
+|X - n p_0| > c
+$$
+
+  - Values of $X$ least probable under $H_0$?  
+
+- **Rejection Region (probability-based):**  
+$$
+p_0(X) \le c
+$$ 
+  - where $p_0(X)$ is the pmf of a $\text{Binomial}(n, p_0)$ distribution, evaluated at $X$.
+
+## Exact Binomial Test {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+### We can check R is doing what was discussed in class to compute p-values
+# Our probability mass function (under the null) at each x
+dbinom(0:8, 8, 0.3)
+```
+
+## Exact Binomial Test {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+### We can check R is doing what was discussed in class to compute p-values
+# Our probability mass function (under the null) at each x
+dbinom(0:8, 8, 0.3)
+
+# Checking which probabilities under the null are less than or equal to
+# the probabilities when we observe 1 success (like our example)
+which(dbinom(0:8, 8, 0.3) <= dbinom(1, 8, 0.3))
+```
+
+## Exact Binomial Test {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+### We can check R is doing what was discussed in class to compute p-values
+# Our probability mass function (under the null) at each x
+dbinom(0:8, 8, 0.3)
+
+# Checking which probabilities under the null are less than or equal to
+# the probabilities when we observe 1 success (like our example)
+which(dbinom(0:8, 8, 0.3) <= dbinom(1, 8, 0.3))
+
+# Using this vector to index (mask) & Summing up the null probabilities 
+p.two <- sum(dbinom(0:8, 8, 0.3)[dbinom(0:8, 8, 0.3) <= dbinom(1, 8, 0.3)])
+p.two
+```
+
+## Exact Binomial Test {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+### One-sided p-values are a more straightforward
+# Summing up the null probabilities less than / equal to x (= 1)
+p.lo <- sum(dbinom(0:1, 8, 0.3))
+p.lo
+```
+
+## Exact Binomial Test {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+### One-sided p-values are a more straightforward
+# Summing up the null probabilities greater than / equal to x (= 1)
+p.up <- sum(dbinom(1:8, 8, 0.3))
+p.up
+```
+
+## Exact Binomial Test {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+### Notice pbinom() is doing this for us, for example
+# Lower alternative
+pbinom(4, 12, 0.7)         # Lower tail by default
+sum(dbinom(0:4, 12, 0.7))
+```
+
+## Exact Binomial Test {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+### Notice pbinom() is doing this for us, for example
+# Upper alternative
+1 - pbinom(7, 12, 0.7)
+sum(dbinom(8:12, 12, 0.7))
+```
+
+## Exact Binomial Test {auto-animate="true" auto-animate-easing="ease-in-out"}
+* Lastly, something that might spark some ideas for Homework 3 - Question 1 (f)
+* Notice that the confidence interval remains the same regardless of which null hypothesis we test, because it depends only on the observed data---not on the hypothesized value of $p$.
+
+## Exact Binomial Test {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+binom.test(1, 8, 0.25)
+binom.test(1, 8, 0.50)
+binom.test(1, 8, 0.75)
+```
+
+
+## Approximate z-test of Proportions {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+#| warning: TRUE
+### If we want some Normal approximation action
+prop.test(1, 8, 0.3, correct = FALSE)
+```
+
+## Approximate z-test of Proportions {auto-animate="true" auto-animate-easing="ease-in-out"}
+The test gives back a $\chi^{2}_{(1)}$ test statistic, which is the same thing as a $z$-stat squared, that is:
+$$
+\chi^{2} = \left(\frac{\hat{p} - p_{0}}{\sqrt{\frac{p_{0}(1 - p_{0})}{n}}}\right)^{2} = Z^{2}
+$$
+
+* The warning we get is just telling us our sample size might not be large enough to justify a Normal approximation
+* We can verify R is doing the above:
+
+## Approximate z-test of Proportions {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+# Our setting
+n <- 8
+x <- 1
+p0 <- 0.3
+pHat <- x / n
+pHat
+```
+
+## Approximate z-test of Proportions {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+# Calculate z-stat
+n <- 8
+x <- 1
+p0 <- 0.3
+pHat <- x / n
+zStat <- (pHat - p0) / sqrt(p0 * (1 - p0) / n)
+zStat
+pVal <- 2 * (1 - pnorm(abs(zStat)))
+```
+
+## Approximate z-test of Proportions {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+# Calculate p-value
+zStat <- (pHat - p0) / sqrt(p0 * (1 - p0) / n)
+pVal <- 2 * (1 - pnorm(abs(zStat)))
+pVal
+```
+
+## Approximate z-test of Proportions {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+# Checking the z-statistic squared is the same as the chi-squared stat
+zStat^2
+prop.test(x, n, p0, correct = FALSE)[["statistic"]]
+```
+
+## Approximate z-test of Proportions {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+# We see the warning is thrown when our expected counts are < 5
+prop.test
+```
+
+
+## Sign Test {auto-animate="true" auto-animate-easing="ease-in-out"}
+* For the Sign test... we just use some other tests...
+  * Specifically we can just use `binom.test()` or `prop.test()`
+* We can try testings $H_{0}: M = 0$ on $\mathbf{X} \sim t_{(3)}$
+
+
+## Sign Test {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+# Generate Data
+n <- 15
+newSamp <- rt(n, 3)
+newSamp
+```
+
+## Sign Test {auto-animate="true" auto-animate-easing="ease-in-out"}
+* In practice (aka comps) we just use a z-test of proportions...
+* The test statistic for the Sign Test, equal to the Binomial test with $H_{0}: p_{0} = 0.50$
+
+::: {.fragment}
+$$
+  Z = \frac{\hat{p}_{M_{0}} - p_{0}}{\sqrt{\frac{p_{0}(1-p_{0})}{n}}}
+$$
+:::
+
+* where $\hat{p}_{M_{0}} = \frac{x}{n}$, and $x$ = number of observations $< M_{0}$ (median under null).
+
+## Sign Test {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+# Find number of observations less than null hypothesis median
+x <- sum(newSamp < 0)
+x
+```
+
+## Sign Test {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+# Find number of observations less than null hypothesis median
+x <- sum(newSamp < 0)
+
+# Run our tests
+binom.test(x, n, 0.5)
+prop.test(x, n, 0.5, correct = FALSE)
+```
+
+## t-test (GOAT) vs Sign test {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+# Classic simulation time
+nSim <- 10000
+n <- 15
+pvals.t <- pvals.sign <- rep(0, nSim)
+```
+
+## t-test (GOAT) vs Sign test {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: FALSE
+nSim <- 10000
+n <- 15
+pvals.t <- pvals.sign <- rep(0, nSim)
+for (i in 1:nSim) {
+  newSamp <- rt(n, 3)
+  tStat <- mean(newSamp) / sqrt(var(newSamp) / n)
+  x <- sum(newSamp < 0)
+}
+```
+
+## t-test (GOAT) vs Sign test {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: FALSE
+nSim <- 10000
+n <- 15
+pvals.t <- pvals.sign <- rep(0, nSim)
+for (i in 1:nSim) {
+  newSamp <- rt(n, 3)
+  tStat <- mean(newSamp) / sqrt(var(newSamp) / n)
+  x <- sum(newSamp < 0)
+  pvals.t[i] <- 2 * (1 - pt(abs(tStat), n - 1))
+  pvals.sign[i] <- binom.test(x, n, 0.5)[["p.value"]]
+}
+```
+
+## t-test (GOAT) vs Sign test {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+nSim <- 10000
+n <- 15
+pvals.t <- pvals.sign <- rep(0, nSim)
+for (i in 1:nSim) {
+  newSamp <- rt(n, 3)
+  tStat <- mean(newSamp) / sqrt(var(newSamp) / n)
+  x <- sum(newSamp < 0)
+  pvals.t[i] <- 2 * (1 - pt(abs(tStat), n - 1))
+  pvals.sign[i] <- binom.test(x, n, 0.5)[["p.value"]]
+}
+
+mean(pvals.t < 0.05)
+mean(pvals.sign < 0.05)
+```
+
+## t-test (GOAT) vs Sign test {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+#| output-location: fragment
+# Our p-values should be Unif(0, 1) if exact
+hist(pvals.t, 
+     breaks = seq(0, 1, 0.05),
+     col = "lightgreen",
+     border = "black",
+     main = "Histogram of p-values from t-test",
+     xlab = "p-values")
+```
+
+## t-test (GOAT) vs Sign test {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+#| output-location: fragment
+# Our p-values should be Unif(0, 1) if exact
+hist(pvals.sign, 
+     breaks = seq(0, 1, 0.05),
+     col = "lightpink",
+     border = "black",
+     main = "Histogram of p-values from Sign test",
+     xlab = "p-values")
+```
+
+## t-test (GOAT) vs Sign test {auto-animate="true" auto-animate-easing="ease-in-out"}
+* We could instead generate:
+
+::: {.fragment}
+$$
+\mathbf{X} \sim t_{(3)} + 1
+$$
+:::
+
+* Meaning we just shift our data up by one (so our population mean and median are now 1)
+* But we are still testing $H_{0}: M = 0$
+* Since the null hypothesis is false, we can evaluate the power of these two tests now
+
+## t-test (GOAT) vs Sign test {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: FALSE
+#| code-line-numbers: "6"
+# New simulation set-up (basically the same)
+nSim <- 10000
+n <- 15
+pvals.t <- pvals.sign <- rep(0, nSim)
+for (i in 1:nSim) {
+  newSamp <- rt(n, 3) + 1
+  tStat <- mean(newSamp) / sqrt(var(newSamp) / n)
+  x <- sum(newSamp < 0)
+  pvals.t[i] <- 2 * (1 - pt(abs(tStat), n - 1))
+  pvals.sign[i] <- binom.test(x, n, 0.5)[["p.value"]]
+}
+```
+
+## t-test (GOAT) vs Sign test {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+# New simulation set-up (basically the same)
+nSim <- 10000
+n <- 15
+pvals.t <- pvals.sign <- rep(0, nSim)
+for (i in 1:nSim) {
+  newSamp <- rt(n, 3) + 1
+  tStat <- mean(newSamp) / sqrt(var(newSamp) / n)
+  x <- sum(newSamp < 0)
+  pvals.t[i] <- 2 * (1 - pt(abs(tStat), n - 1))
+  pvals.sign[i] <- binom.test(x, n, 0.5)[["p.value"]]
+}
+
+mean(pvals.t < 0.05)
+mean(pvals.sign < 0.05)
+```
+
+## t-test (GOAT) vs Sign test {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: FALSE
+#| code-line-numbers: "3"
+# New simulation set-up (basically the same)
+nSim <- 10000
+n <- 50
+pvals.t <- pvals.sign <- rep(0, nSim)
+for (i in 1:nSim) {
+  newSamp <- rt(n, 3) + 1
+  tStat <- mean(newSamp) / sqrt(var(newSamp) / n)
+  x <- sum(newSamp < 0)
+  pvals.t[i] <- 2 * (1 - pt(abs(tStat), n - 1))
+  pvals.sign[i] <- binom.test(x, n, 0.5)[["p.value"]]
+}
+```
+
+## t-test (GOAT) vs Sign test {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+# New simulation set-up (basically the same)
+nSim <- 10000
+n <- 50
+pvals.t <- pvals.sign <- rep(0, nSim)
+for (i in 1:nSim) {
+  newSamp <- rt(n, 3) + 1
+  tStat <- mean(newSamp) / sqrt(var(newSamp) / n)
+  x <- sum(newSamp < 0)
+  pvals.t[i] <- 2 * (1 - pt(abs(tStat), n - 1))
+  pvals.sign[i] <- binom.test(x, n, 0.5)[["p.value"]]
+}
+
+mean(pvals.t < 0.05)
+mean(pvals.sign < 0.05)
+```
+
+## [Homework 3 - Question 4 - Tech Support]{.r-fit-text} {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+**Problem:** 
+
+* What is the power of the sign test for testing that the population median is $0$ ($H_0: m = 0$) if the true population distribution is $\text{Normal}(1,1)$,  for a sample of size $n = 30$? 
+  * Answer this using theoretical arguments and the normal cdf, and then perform simulations to confirm your answer.
+
+**Tips:**
+
+* For the simulation portion, I'd just follow the hints and you'll get pretty much all the way there:
+  * Just a few lines in the previous `for` loop templates shown today need to be changed
+* For the theoretical portion...
+  * Essentially you want to get your rejection region in terms of $\hat{p}$ then to calculate those probabilities you can use the CLT, we know:
+
+::: {.fragment}
+$$
+\left|\frac{\hat{p}-p}{\sqrt{\frac{{p(1-p)}}{n}}}\right| \overset{\cdot}{\sim} N(0,1)
+$$
+:::
+
+* and you can find $p = P(X > 0)$ since we know the distribution of $X$ is Normal(1, 1)

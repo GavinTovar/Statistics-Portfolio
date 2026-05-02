@@ -1,0 +1,571 @@
+---
+title: "(ST 551) Lab 2 <br> Still Welcoming R + CLT"
+format:
+  revealjs:
+    incremental: TRUE
+    scrollable: TRUE
+    theme: dark
+    transition: slide
+    transition-speed: slow
+    auto-animate: TRUE
+    chalkboard: TRUE
+---
+
+```{r}
+#| echo: FALSE
+# Here if I want to load something in the background
+```
+
+## Welcome Back Kiddos!
+* Another day another R session, please try and contain your excitement
+* I've added in an example today that will mimic your Homework 1 Question 4
+* I still have office hours Wednesday 3:00pm - 4:00pm (right before this)
+  * Don't worry I won't start crying about being lonely I know there is not many homework questions for now
+* Questions, Comments, Concerns before I speak rapidly about R?
+
+## Loading Data {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# If package is not installed, get your act together
+# ... err I mean use: install.packages("Sleuth3")
+library(Sleuth3)
+```
+
+## Today's Dataset {.smaller}
+* `ex1028` (El Nino and Hurricanes)
+* **Description**: Data set with the numbers of Atlantic Basin tropical storms and hurricanes for each year from 1950–1997. The variable storm index is an index of overall intensity of hurricane season. Also listed are whether the year was a cold, warm or neutral El Nino year and a variable indicating whether West Africa was wet or dry that year.
+* 48 observations
+* 7 variables:
+  * `Year`: year
+  * `ElNino`: a factor with levels "cold", "neutral" and "warm"
+  * `Temperature`: numeric variable with values -1 if ElNino is "cold", 0 if "neutral" and 1 if "warm"
+  * `WestAfrica`: numeric variable indicating whether West Africa was wet (1) or dry (0)
+  * `Storms`: number of storms
+  * `Hurricanes`: number of hurricanes
+  * `StormIndex`: index of overall intensity of hurricane season
+
+## Exploring Our Dataset {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+dim(case0102)
+```
+
+## Exploring Our Dataset {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+head(ex1028)
+```
+
+## Exploring Our Dataset {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+str(ex1028)
+```
+
+## Exploring Our Dataset {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+summary(ex1028)
+```
+
+## Exploring Our Dataset {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# The 75th percentile of the number of storms: 
+quantile(ex1028[["Storms"]], 0.75)
+```
+
+## Exploring Our Dataset {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# quantile() can take a vector, for instance
+quantile(ex1028[["Storms"]], c(0.25, 0.50, 0.75))
+```
+
+## `apply()` Function {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: FALSE
+apply(X, MARGIN, FUN, ...)
+```
+
+## `apply()` Function {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Oof, what happened?
+apply(ex1028, 2, mean)
+```
+
+## `apply()` Function {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Recall
+head(ex1028)
+```
+
+## `apply()` Function {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Let's just not use those columns
+head(ex1028[, -(1:4)])
+```
+
+## `apply()` Function {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Ta-da
+apply(ex1028[, -(1:4)], 2, mean)
+```
+
+## `apply()` Function {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# In reality, I would never use apply to find the mean of each 
+# variable because colMeans() is much faster
+colMeans(ex1028[, -(1:4)])
+```
+
+## `apply()` Function {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# We can slap in any function here and pass its arguments like so
+apply(ex1028[, -(1:4)], 2, quantile, 0.9)
+```
+
+## `apply()` Function {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Even custom functions
+apply(ex1028[, -(1:4)], 2, function(x) max(x) - min(x))
+```
+
+## Homework Example {auto-animate="true" auto-animate-easing="ease-in-out"}
+* Let's assume we are drawing from the population distribution Gamma(shape = 10, scale = 3)
+* Sample size $n = 15$
+* We want to simulate
+$$
+P\left(15 < \text{Median}(X) < 20\right)
+$$
+
+
+## Homework Example {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+nsim <- 10000    # How many simulations should we run?
+```
+
+## Homework Example {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+nsim <- 10000    # How many simulations should we run?
+n <- 15          # Our sample size
+```
+
+## Homework Example {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+nsim <- 10000                    # How many simulations should we run?
+n <- 15                          # Our sample size
+median_vec <- rep(0, nsim)       # Creating our object to store our sample medians
+median_vec
+```
+
+## Homework Example {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: FALSE
+nsim <- 10000                    # How many simulations should we run?
+n <- 15                          # Our sample size
+median_vec <- rep(0, nsim)       # Creating our object to store our sample medians
+for (i in 1:nsim) {              # We of course want to automate the process of drawing samples
+  
+}
+```
+
+## Homework Example {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: FALSE
+nsim <- 10000                    # How many simulations should we run?
+n <- 15                          # Our sample size
+median_vec <- rep(0, nsim)       # Creating our object to store our sample medians
+for (i in 1:nsim) {              # We of course want to automate the process of drawing samples
+  samp <- rgamma(n, shape = 10, scale = 2)
+}
+```
+
+## Homework Example {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: FALSE
+nsim <- 10000
+n <- 15
+median_vec <- rep(0, nsim)
+for (i in 1:nsim) {
+  samp <- rgamma(n, shape = 10, scale = 2)
+  median_vec[i] <- median(samp)            # For each sample, calculate the median and store
+}
+```
+
+## Homework Example {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+nsim <- 10000
+n <- 15
+median_vec <- rep(0, nsim)
+for (i in 1:nsim) {
+  samp <- rgamma(n, shape = 10, scale = 2)
+  median_vec[i] <- median(samp)
+}
+mean(median_vec > 15 & median_vec < 20) # Our resulting probability
+```
+
+## Homework Example {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: FALSE
+#| code-line-numbers: "9"
+nsim <- 10000
+n <- 15
+median_vec <- rep(0, nsim)
+for (i in 1:nsim) {
+  samp <- rgamma(n, shape = 10, scale = 2)
+  median_vec[i] <- median(samp)
+}
+mean(median_vec > 15 & median_vec < 20)
+mean(15 < median_vec < 20) # Notice this code will NOT work
+```
+
+## Homework Example {auto-animate="true" auto-animate-easing="ease-in-out"}
+* Thus we see that $P\left(15 < \text{Median}(X) < 20\right) \approx$ `r mean(median_vec > 15 & median_vec < 20)`
+* This is very similar the problems in Homework 1 Question 4
+  * These are the big tips and tricks folks!
+* I suppose I can show some plotting too
+
+## Homework Example {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+hist(median_vec,
+     breaks = 30,
+     col = "skyblue",
+     border = "white",
+     main = "Sampling Distribution of Sample Medians", 
+     xlab = "Sample Median",
+     ylab = "Frequency")
+```
+
+## Homework Example {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+library(ggplot2)
+# The ggplot2 equivalent
+ggplot(data.frame(median_vec), aes(x = median_vec)) +
+  geom_histogram(bins = 30,
+                 fill = "skyblue",
+                 color = "white") +
+  labs(title = "Sampling Distribution of Sample Medians",
+       x = "Sample Median",
+       y = "Frequency") +
+  theme_minimal()
+```
+
+## Summary Plots {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Set up the graphing window to produce 4 plots in a $2 \times 2$ grid
+par(mfrow = c(2, 2)) 
+```
+
+## Summary Plots {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Some boxplot actions
+boxplot(ex1028[["Storms"]] ~ ex1028[["ElNino"]], 
+        ylab = "Number of Storms")
+```
+
+## Summary Plots {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: slide
+# Boxplots for all numeric variables
+par(mfrow = c(2, 2))
+boxplot(ex1028[["Storms"]] ~ ex1028[["ElNino"]], 
+        ylab = "Number of Storms")
+boxplot(ex1028[["Hurricanes"]] ~ ex1028[["ElNino"]], 
+        ylab = "Number of Hurricanes")
+boxplot(ex1028[["StormIndex"]] ~ ex1028[["ElNino"]], 
+        ylab = "StormIndex")
+```
+
+## Summary Plots {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# If we want to split our dataset into multiple depending on ElNino status
+coldYears <- ex1028[ex1028[["ElNino"]] == "cold", -(1:4)]
+```
+
+## Summary Plots {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# If we want to split our dataset into multiple depending on ElNino status
+coldYears <- ex1028[ex1028[["ElNino"]] == "cold", -(1:4)]
+neutralYears <- ex1028[ex1028[["ElNino"]] == "neutral", -(1:4)]
+warmYears <- ex1028[ex1028[["ElNino"]] == "warm", -(1:4)]
+```
+
+## Summary Plots {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: slide
+# For each sub-dataset we can plot number of storms and hurricanes
+par(mfrow = c(2, 3))            # Sets graphing window to be 2 rows by 3 columns
+hist(coldYears[["Storms"]], 
+     main = "Cold Years Storms", 
+     xlab = "Number of Storms")
+hist(neutralYears[["Storms"]], 
+     main = "Neutral Years Storms", 
+     xlab = "Number of Storms")
+hist(warmYears[["Storms"]], 
+     main = "Warm Years Storms", 
+     xlab = "Number of Storms")
+hist(coldYears[["Hurricanes"]], 
+     main = "Cold Years Hurricanes", 
+     xlab = "Number of Hurricanes")
+hist(neutralYears[["Hurricanes"]], 
+     main = "Neutral Years Hurricanes", 
+     xlab = "Number of Hurricanes")
+hist(warmYears[["Hurricanes"]], 
+     main = "Warm Years Hurricanes", 
+     xlab = "Number of Hurricanes")
+```
+
+## Summary Plots {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: slide
+# Not adding color to your plots is criminal
+par(mfrow = c(2, 3))
+hist(coldYears[["Storms"]],
+     col = "lightblue",
+     main = "Cold Years Storms",
+     xlab = "Number of Storms")
+hist(neutralYears[["Storms"]],
+     col = "lightgreen",
+     main = "Neutral Years Storms", 
+     xlab = "Number of Storms")
+hist(warmYears[["Storms"]], 
+     col = "orange",
+     main = "Warm Years Storms", 
+     xlab = "Number of Storms")
+hist(coldYears[["Hurricanes"]],
+     col = "lightblue",
+     main = "Cold Years Hurricanes",
+     xlab = "Number of Hurricanes")
+hist(neutralYears[["Hurricanes"]],
+     col = "lightgreen",
+     main = "Neutral Years Hurricanes", 
+     xlab = "Number of Hurricanes")
+hist(warmYears[["Hurricanes"]],
+     col = "orange",
+     main = "Warm Years Hurricanes", 
+     xlab = "Number of Hurricanes")
+```
+
+## [Central Limit Theorem (CLT) Approximations]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+Let $X_1, X_2, \ldots, X_n$ be an i.i.d. sample from some population distribution $F$ with mean $\mu$ and finite variance $\sigma^2 < \infty$.  
+Then, as the sample size $n \to \infty$,
+$$
+\frac{\sqrt{n}(\bar{X}_n - \mu)}{\sigma} \xrightarrow{d} N(0, 1)
+$$
+
+## [Central Limit Theorem (CLT) Approximations]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Sample mean of number of storms
+mean(coldYears[["Storms"]])
+```
+
+## [Central Limit Theorem (CLT) Approximations]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+Suppose, we want to calculate (approximate)
+$$
+P\left(\bar{X} \le `r mean(coldYears[["Storms"]])`\right)
+$$
+
+## [Central Limit Theorem (CLT) Approximations]{.r-fit-text} {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+We typically standardize like so:
+
+::: {.fragment}
+$$
+\begin{align*}
+P\left(\bar{X} \le `r mean(coldYears[["Storms"]])`\right) & = P\left(\frac{\bar{X} - \mu}{\frac{\sigma}{\sqrt{n}}} \le \frac{`r mean(coldYears[["Storms"]])` - \mu}{\frac{\sigma}{\sqrt{n}}}\right) \\[0.25cm]
+& = P\left(Z \le \frac{\sqrt{n}\left(`r mean(coldYears[["Storms"]])` - \mu\right)}{\sigma}\right) \\[0.25cm]
+& = \Phi\left(\frac{\sqrt{n}\left(`r mean(coldYears[["Storms"]])` - \mu\right)}{\sigma}\right)
+\end{align*}
+$$
+:::
+
+* We are given $\mu = 13$ and $\sigma^{2} = 10$
+
+::: {.fragment}
+$$
+\begin{align*}
+P\left(\bar{X} \le `r mean(coldYears[["Storms"]])`\right)
+& = \Phi\left(\frac{\sqrt{n}\left(`r mean(coldYears[["Storms"]])` - 13\right)}{\sqrt{10}}\right)
+\end{align*}
+$$
+:::
+
+* Our sample size $n$ can be found using `length(coldYears[["Storms"]])` = `r length(coldYears[["Storms"]])`, thus
+
+::: {.fragment}
+$$
+\begin{align*}
+P\left(\bar{X} \le `r mean(coldYears[["Storms"]])`\right)
+& = \Phi\left(\frac{\sqrt{`r length(coldYears[["Storms"]])`}\left(`r mean(coldYears[["Storms"]])` - 13\right)}{\sqrt{10}}\right) \\[0.25cm]
+& = \Phi\left(\frac{`r sqrt(length(coldYears[["Storms"]])) * (mean(coldYears[["Storms"]]) - 13)`}{`r sqrt(10)`}\right) \\[0.25cm]
+& = \Phi\left(`r (sqrt(length(coldYears[["Storms"]])) * (mean(coldYears[["Storms"]]) - 13)) / sqrt(10)`\right) \\[0.25cm]
+& = `r pnorm((sqrt(length(coldYears[["Storms"]])) * (mean(coldYears[["Storms"]]) - 13)) / sqrt(10))`
+\end{align*}
+$$
+:::
+
+## [Central Limit Theorem (CLT) Approximations]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Since we no longer have to use $z$-tables (we have R!) 
+# we don't need to go through all these steps
+pnorm(mean(coldYears[["Storms"]]), 13, sqrt(10 / length(coldYears[["Storms"]])))
+```
+
+## [Central Limit Theorem (CLT) Approximations]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# If population mean is 12 instead
+pnorm(mean(coldYears[["Storms"]]), 12, sqrt(10 / length(coldYears[["Storms"]])))
+```
+
+## [Central Limit Theorem (CLT) Approximations]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Let's pretend this is our population
+coldYears[["Storms"]]
+```
+
+## [Central Limit Theorem (CLT) Approximations]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# We can draw samples of size 5
+set.seed(1)
+newSamp <- sample(coldYears[["Storms"]], 5, replace = TRUE)
+newSamp
+```
+
+## [Central Limit Theorem (CLT) Approximations]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| code-line-numbers: "5"
+# We can draw samples of size 5
+set.seed(1)
+newSamp <- sample(coldYears[["Storms"]], 5, replace = TRUE)
+newSamp
+mean(newSamp) # Calculating the mean
+```
+
+## [Central Limit Theorem (CLT) Approximations]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: FALSE
+# Of course, running this code manually over and over is tiring so:
+nsim <- 10000
+stormSampMeans <- rep(0, nsim) # Create empty vector to store results
+```
+
+## [Central Limit Theorem (CLT) Approximations]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: FALSE
+# Of course, running this code manually over and over is tiring so:
+nsim <- 10000
+stormSampMeans <- rep(0, nsim) # Create empty vector to store results
+for (i in 1:nsim) {
+  newSamp <- sample(coldYears[["Storms"]], 5, replace = TRUE)
+}
+
+```
+
+## [Central Limit Theorem (CLT) Approximations]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: FALSE
+# Of course, running this code manually over and over is tiring so:
+nsim <- 10000
+stormSampMeans <- rep(0, nsim)
+for (i in 1:nsim) {
+  newSamp <- sample(coldYears[["Storms"]], 5, replace = TRUE)
+  stormSampMeans[i] <- mean(newSamp) # We of course need to store these results
+}
+```
+
+## [Central Limit Theorem (CLT) Approximations]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+# Of course, running this code manually over and over is tiring so:
+nsim <- 10000
+stormSampMeans <- rep(0, nsim) # Create empty vector to store results
+for (i in 1:nsim) {
+  newSamp <- sample(coldYears[["Storms"]], 5, replace = TRUE)
+  stormSampMeans[i] <- mean(newSamp)
+}
+sum(stormSampMeans < 10) / nsim
+```
+
+## [Central Limit Theorem (CLT) Approximations]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: FALSE
+# Of course, running this code manually over and over is tiring so:
+nsim <- 10000
+stormSampMeans <- rep(0, nsim) # Create empty vector to store results
+for (i in 1:nsim) {
+  newSamp <- sample(coldYears[["Storms"]], 5, replace = TRUE)
+  stormSampMeans[i] <- mean(newSamp)
+}
+sum(stormSampMeans < 10) / nsim
+mean(stormSampMeans < 10) # Same thing
+```
+
+## [Central Limit Theorem (CLT) Approximations]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+# Population mean
+(pop_mean <- mean(coldYears[["Storms"]]))
+```
+
+## [Central Limit Theorem (CLT) Approximations]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+# Population mean
+(pop_mean <- mean(coldYears[["Storms"]]))
+
+# Population variance
+(pop_var <- var(coldYears[["Storms"]]))
+```
+
+## [Central Limit Theorem (CLT) Approximations]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+# True population mean
+pop_mean <- mean(coldYears[["Storms"]])
+
+# True population variance
+pop_var <- var(coldYears[["Storms"]])
+
+# CLT
+pnorm(10, mean = pop_mean, sd = sqrt(pop_var / 5))
+```

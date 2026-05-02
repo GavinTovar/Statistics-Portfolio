@@ -1,0 +1,348 @@
+---
+title: "(ST 412/512) Lab 9 <br> Serial Correlation"
+format:
+  revealjs:
+    incremental: true
+    scrollable: true
+    theme: dracula
+    transition: slide
+    transition-speed: slow
+    auto-animate: true
+    chalkboard: true
+    code-line-numbers: true
+    css: (ST 512) StyleSheets.css
+    plugins:
+      - reveal.js/plugin/zoom-js/zoom.js
+      - reveal.js/plugin/highlight/highlight.js
+---
+
+## Welcome Back
+* Any questions before we get started?
+* Office Hours: Thursday 10:00am - 11:00am
+
+## Loading Data and Packages {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: FALSE
+case1502 <- read.csv("case1502.csv", header = TRUE) 
+```
+
+## Loading Data and Packages {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+library(Sleuth3) # Contains case1502 dataset
+```
+
+## Checkin' Out Data {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+head(case1502, 10) # Print first 10 observations
+```
+
+## Checkin' Out Data {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: slide
+plot(case1502$Year, case1502$Temperature,
+  main = "Annual temperature anomalies from 1850 to 2010",
+  xlab = "Year",
+  ylab = "Temperature in C",
+  col = "blue",
+  pch = 20,
+  type = "b"
+)
+abline(h = 0, lty = "dashed")
+```
+
+## Checkin' Out Data {auto-animate="true" auto-animate-easing="ease-in-out"}
+$$
+\mu\left\{Y \mid \text{year}\right\} = \beta_{0} + \beta_{1}\text{year} + \beta_{2}\text{year}^{2}
+$$
+
+```{r}
+#| echo: TRUE
+# One might argue a curved trend in the scatter plot
+mod.raw <- lm(Temperature ~ Year + I(Year^2), data = case1502)
+summary(mod.raw)
+```
+
+## Checkin' Out Data {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: slide
+# Checking out the resulting residuals
+plot(case1502$Year, mod.raw$res,
+  col = "black",
+  pch = 20,
+  type = "b",
+  ylab = "Residuals",
+  xlab = "Years"
+)
+abline(h = 0, lty = "dashed")
+```
+
+## Serial Correlation {auto-animate="true" auto-animate-easing="ease-in-out"}
+- From the residual plot, one might argue that we see the points move above or below the center line in **chunks**. In other words:
+  - When the residuals are **positive**, they tend to remain positive for a while.
+  - When the residuals are **negative**, they tend to remain negative for a while.
+- This behavior breaks the **random pattern** that we expect from residuals and suggests the **presence of serial correlation** in the data.
+
+## Serial Correlation {auto-animate="true" auto-animate-easing="ease-in-out"}
+**Serial correlation** occurs when observations in a time series are influenced by their **recent past**.
+
+- For example:
+  - **First-order serial correlation** occurs when the observation at time $t$ depends on the observation at time $t-1$. If this occurs, it violates the **assumption of independence**.
+
+## Checking Serial Correlation {auto-animate="true" auto-animate-easing="ease-in-out"}
+How can we check whether this is happening? One approach is to examine the **correlation between consecutive residuals**.
+
+- We can do this by constructing a **scatterplot of lagged residuals**:
+  - Residuals for years **1851–2010**
+  - vs residuals for years **1850–2009**
+
+## Checking Serial Correlation {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: slide
+plot(mod.raw$res[1:160], mod.raw$res[2:161],
+     main = "Scatterplot of residuals at lag 1",
+     xlab = "Residuals for years 1851–2010",
+     ylab = "Residuals for years 1850–2009")
+
+abline(lm(mod.raw$res[2:161] ~ mod.raw$res[1:160]))  # Add regression line
+
+cor(mod.raw$res[1:160], mod.raw$res[2:161]) # This correlation is known as r1
+```
+
+## [Why Is Serial Correlation a Problem?]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+Failing to properly characterize the correlation structure can affect our estimate of variability in the process.
+
+- Consequences include:
+  - Incorrect standard errors
+  - Unreliable P-values
+  - Potentially misleading statistical inference
+  
+## Positive Serial Correlation {auto-animate="true" auto-animate-easing="ease-in-out"}
+- When observations are positively correlated, consecutive observations tend to attract each other.
+
+- As a result, we may observe less variability in the response, simply due to the correlation structure.
+
+- When serial correlation is positive the usual standard error is too small, thus it needs to be inflated
+
+## Positive Serial Correlation {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: slide
+# Generate 100 observations with first-order serial correlation 0.9
+ts.sim1 <- arima.sim(list(order = c(1,0,0), ar = 0.9), n = 100)
+
+plot(c(1:100), ts.sim1,
+     col = "blue", pch = 20, type = "b",
+     main = "Positive serial correlation",
+     xlab = "Time", ylab = "Y")
+```
+
+## Negative Serial Correlation {auto-animate="true" auto-animate-easing="ease-in-out"}
+- When observations are negatively correlated, consecutive observations tend to repel each other.
+
+- This leads to greater variability in the response, again due to the correlation structure.
+
+- When serial correlation is negative the usual standard error is too large, thus it needs to be reduced
+
+## Negative Serial Correlation {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: slide
+# Generate 100 observations with first-order serial correlation -0.9
+ts.sim2 <- arima.sim(list(order = c(1,0,0), ar = -0.9), n = 100)
+
+plot(c(1:100), ts.sim2,
+     col = "blue", pch = 20, type = "b",
+     main = "Negative serial correlation",
+     xlab = "Time", ylab = "Y")
+```
+
+## The Autoregressive Model {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+Because our observations are measured at **equally spaced points in time** (one observation per year in this example), we denote the series as:
+
+$$
+\{Y_t\}
+$$
+
+Using this notation:
+
+- $Y_1$ corresponds to the observation at time $t=1$ (year **1850**).
+- $Y_2$ corresponds to the observation at time $t=2$ (year **1851**).
+- And so on.
+
+## [First-Order Autoregressive Model (AR(1))]{.r-fit-text} {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+
+Suppose that:
+
+- We have a time series $\{Y_t\}$ observed at equally spaced times.
+- The **long-run mean** of the series is $\nu$.
+
+Then the **first-order autoregressive model**, AR(1), is defined as
+
+$$
+\mu\{(Y_t-\nu)\mid Y_1,Y_2,\dots,Y_{t-1}\}=\alpha(Y_{t-1}-\nu)
+$$
+
+In words:
+
+> The mean of the deviation $Y_t-\nu$ depends on the previous observation $Y_{t-1}$.
+
+---
+
+## [First-Order Autoregressive Model (AR(1))]{.r-fit-text} {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+If we are to assume that the data follow an AR(1) model:
+
+:::fragment
+$$
+\mathbb{E}[Y_t - \nu \mid Y_1, \dots, Y_{t-1}] = \alpha (Y_{t-1} - \nu)
+$$
+:::
+
+* The first serial correlation coefficient, $\alpha$, is also called the **lag-1 autocorrelation**.
+  * $\alpha$ is also known as the population first serial correlation coefficient thus it may be estimated by the sample first serial correlation coefficient denoted $\hat{\alpha} = r_{1}$.  
+* It measures the correlation between $Y_t$ and itself at a separation of one time step.
+* The pooled estimate of $\alpha$ is then given by:
+
+  $$
+  r_{1} = \hat{\alpha} = \frac{\sum_{t=2}^{T} (Y_t - \bar{Y}) (Y_{t-1} - \bar{Y})}{\sum_{t=1}^{T} (Y_t - \bar{Y})^2}.
+  $$
+  * We don't need to do any of these calculations by hand though since we have already done `cor(mod.raw$res[1:160], mod.raw$res[2:161])` = `r cor(mod.raw$res[1:160], mod.raw$res[2:161])` giving us $r_{1}$
+
+## Why Is This Model Useful? {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+
+- If the **AR(1)** model adequately describes the correlation structure, we can **filter the series** to obtain a new regression model where the **errors are independent**.
+- This allows us to:
+  - Preserve the **same regression coefficients**
+  - Remove **serial correlation from the residuals**, "fixing" our standard errors
+
+---
+
+## Filtering the Series {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+
+Consider the transformations:
+
+$$
+V_t = Y_t - \alpha Y_{t-1}
+$$
+
+$$
+U_t = X_t - \alpha X_{t-1}
+$$
+
+After this transformation we obtain
+
+$$
+\mu\{V_t \mid U_t\} = \gamma_0 + \beta_1 U_t
+$$
+
+which is a **linear regression model with the same slope** as the original model, but with **independent errors**.
+
+---
+
+## Extension to Multiple Regression {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+
+This idea extends naturally to **multiple linear regression**.
+
+We estimate the serial correlation coefficient $\alpha$ using the correlation between consecutive residuals.
+
+From the previous analysis we obtained:
+
+$$
+r_1 = 0.5943
+$$
+
+The filtered variables become:
+
+$$
+V_t = Y_t - r_1 Y_{t-1}
+$$
+
+$$
+U_{1t} = Year_t - r_1 Year_{t-1}
+$$
+
+$$
+U_{2t} = Year_t^2 - r_1 Year_{t-1}^2
+$$
+
+---
+
+## Filtering the Variables in R {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+r1 <- cor(mod.raw$res[1:160], mod.raw$res[2:161]) # Same as before
+```
+
+## Filtering the Variables in R {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+r1 <- cor(mod.raw$res[1:160], mod.raw$res[2:161]) # Same as before
+
+# Create new squared variable
+case1502$Year2 <- case1502$Year^2
+
+# Sample size
+n <- nrow(case1502) # 161
+```
+
+## Filtering the Variables in R {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Calculating "new" / filtered response
+v  <- case1502$Temperature[2:n] - r1 * case1502$Temperature[1:(n - 1)]
+
+# Calculating "new" / filtered explanatory variables
+u1 <- case1502$Year[2:n] - r1 * case1502$Year[1:(n - 1)]    # Filtered Year
+u2 <- case1502$Year2[2:n] - r1 * case1502$Year2[1:(n - 1)]  # Filtered Year^2
+```
+
+## Fit the Filtered Model {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+We now fit a regression model using the filtered variables.
+```{r}
+#| echo: TRUE
+mod.filt <- lm(v ~ u1 + u2)
+summary(mod.filt)
+```
+
+## Residuals After Filtering {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+
+We again examine the correlation between lagged residuals.
+
+```{r}
+#| echo: TRUE
+#| output-location: slide
+plot(mod.filt$res[1:159], mod.filt$res[2:160],
+     main = "Scatterplot of residuals at lag 1",
+     xlab = "Residuals for years 1851–2010",
+     ylab = "Residuals for years 1850–2009")
+
+abline(lm(mod.filt$res[2:160] ~ mod.filt$res[1:159]))
+```
+
+## Residuals After Filtering {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+cor(mod.filt$res[1:159], mod.filt$res[2:160]) # Essentially no correlation now!
+```
+
+## Residuals After Filtering{auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: slide
+plot(case1502$Year[2:161], mod.filt$res,
+  col = "black",
+  pch = 20,
+  type = "b",
+  ylab = "Residuals",
+  xlab = "Years"
+)
+
+abline(h = 0, lty = "dashed")
+```
+
+

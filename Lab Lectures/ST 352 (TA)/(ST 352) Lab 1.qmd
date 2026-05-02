@@ -1,0 +1,291 @@
+---
+title: "(ST 352) Lab 1 - Single Quantitative Variable Inference"
+format:
+  revealjs:
+    incremental: TRUE
+    scrollable: TRUE
+    theme: dark
+    transition: slide
+    chalkboard: TRUE
+---
+
+## Objectives {transition="zoom" transition-speed="slow"}
+- Review exploratory tools for a quantitative variable
+- Use R to perform a hypothesis test and construct a confidence interval for a mean using the one-sample t-methods
+
+## Today's Example {transition="zoom" transition-speed="slow"}
+The American Heart Association recommends that adults get an average of 30 minutes of moderate-intensity exercise 5 days a week AND participate in moderate to high intensity muscle-strengthening activities at least 2 days per week. Assuming the moderate to high intensity muscle-strengthening exercises take an average of 30 minutes per day, let's say that adults should exercise more than 30 minutes per day every day.
+
+## Question of Interest {transition="zoom" transition-speed="slow"}
+- **Question:** Do college students exercise more than 30 minutes per day, on average?
+- **Sample Data:** A sample of 34 OSU students from the ST 352 class several years ago was taken. Their daily amount of exercise (in minutes) is recorded in the `exercise` data set posted on Canvas
+
+## [Some Usual Preliminary Steps]{.r-fit-text} {transition="zoom" transition-speed="slow"}
+- Step 1: Identify the variable of interest and population
+- Step 2: Assess whether the sample is representative of the population
+- Step 3: Understand why a particular example is an estimation example or hypothesis test example
+- Step 4: Define null and alternative hypotheses
+
+## Defining Hypothesis
+- $H_{0}: \mu = 30$
+- $H_{A}: \mu > 30$
+  - Where $\mu$ is the average daily exercise (in minutes) for college students
+
+## Data Importation {transition="zoom" transition-speed="slow"}
+```{mermaid}
+flowchart TD
+A{RStudio} -->|Recommended| B{R Script}
+B -->|"Environment Panel (Top Right Panel)"| C1[Import Dataset Button]
+--> C2("From Text (base)...") 
+--> C3(Wa-La)
+B --> D1["File Button (Top Left)"] 
+--> D2(Import Dataset) 
+--> D3("From Text (base)...") 
+--> D4(Ta-Da)
+B -->|Directly Coding it| E1[Set Working Directory] 
+--> E2("'read.csv' function") 
+--> E3(Woo-Hoo)
+```
+
+## Loading in Data
+```{r}
+#| echo: TRUE
+#| results: hide
+exercise <- read.csv("C:/Users/Ghcto/OneDrive/Desktop/School/Spring 2024/ST 352 (TA)/Lab 1/exercise.txt", sep="")
+```
+
+:::aside
+If you haven't already, install the 'mosaic' packages
+:::
+
+## Viewing Data {auto-animate=true}
+```{r}
+#| echo: TRUE
+head(exercise)
+```
+
+## Viewing Data {auto-animate=true}
+```{r}
+#| echo: TRUE
+exercise
+```
+
+## Histogram {auto-animate=true}
+```{r}
+#| echo: TRUE
+hist(exercise$time)
+```
+
+## Histogram {auto-animate=true}
+```{r}
+#| echo: TRUE
+hist(exercise$time,
+     main = "Histogram of Exercise Time")
+```
+
+## Histogram {auto-animate=true}
+```{r}
+#| echo: TRUE
+hist(exercise$time,
+     main = "Histogram of Exercise Time",
+     xlab = "Time (Minutes)")
+```
+
+## Histogram {auto-animate=true}
+```{r}
+#| echo: TRUE
+hist(exercise$time,
+     main = "Histogram of Exercise Time",
+     xlab = "Time (Minutes)",
+     col = "pink")
+```
+
+## Normal Probability Plot {auto-animate=true}
+```{r}
+#| echo: TRUE
+qqnorm(exercise$time)
+```
+
+## Normal Probability Plot {auto-animate=true}
+```{r}
+#| echo: TRUE
+qqnorm(exercise$time)
+qqline(exercise$time)
+```
+
+## Normal Probability Plot {auto-animate=true}
+```{r}
+#| echo: TRUE
+qqnorm(exercise$time,
+       main = "Normal Probability Plot",
+       pch = 19)
+qqline(exercise$time)
+```
+
+## Normal Probability Plot {auto-animate=true}
+```{r}
+#| echo: TRUE
+qqnorm(exercise$time,
+       main = "Normal Probability Plot",
+       pch = 19,
+       cex = 1.2)
+qqline(exercise$time)
+```
+
+## Normal Probability Plot {auto-animate=true}
+```{r}
+#| echo: TRUE
+# One can always spice it up with some color
+qqnorm(exercise$time,
+       main = "Normal Probability Plot",
+       pch = 19,
+       cex = 1.2,
+       col = rainbow(nrow(exercise)))
+qqline(exercise$time)
+```
+
+## Normal Probability Plot {auto-animate=true}
+```{r}
+#| echo: FALSE
+# One can always spice it up with some color
+qqnorm(exercise$time,
+       main = "Normal Probability Plot",
+       pch = 19,
+       cex = 1.2,
+       col = rainbow(nrow(exercise)))
+qqline(exercise$time)
+```
+
+## Descriptive Statistics {auto-animate=true}
+```{r}
+#| echo: TRUE
+library(mosaic) # library() and require() are essentially the same
+```
+
+## Descriptive Statistics {auto-animate=true}
+```{r}
+#| echo: TRUE
+favstats(exercise$time)
+```
+
+## Descriptive Statistics {auto-animate=true}
+```{r}
+#| echo: TRUE
+# Alternative code
+# No package needed
+```
+
+## Descriptive Statistics {auto-animate=true}
+```{r}
+#| echo: TRUE
+# Alternative code
+summary(exercise$time)
+```
+
+## Descriptive Statistics {auto-animate=true}
+```{r}
+#| echo: TRUE
+# Alternative code
+summary(exercise$time)
+length(exercise$time)
+```
+
+## Descriptive Statistics {auto-animate=true}
+```{r}
+#| echo: TRUE
+# Alternative code
+summary(exercise$time)
+length(exercise$time)
+sd(exercise$time)
+```
+
+## Descriptive Statistics {auto-animate=true .smaller}
+:::: {.columns}
+
+::: {.column width="50%"}
+```{r}
+#| echo: TRUE
+favstats(exercise$time)
+```
+:::
+
+::: {.column width="50%"}
+```{r}
+#| echo: TRUE
+summary(exercise$time)
+length(exercise$time)
+sd(exercise$time)
+```
+:::
+
+::::
+
+## Table Example {.smaller}
+```{r}
+library(knitr)
+kable(favstats(exercise$time), 
+      format = "pipe",
+      col.names = c("Min.", "Q1", "Median", "Q3", "Max.", "Mean", "Std.Dev.", "Sample Size (n)", "Missing"),
+      digits = 3,
+      align = "c",
+      label = "Table 1",
+      caption = "Example of Summary Statistic Table")
+```
+
+## Hypothesis Test
+**Reminder:**
+
+- $H_{0}: \mu = 30$
+- $H_{A}: \mu > 30$
+  - Where $\mu$ is the average daily exercise (in minutes) for college students
+
+## Hypothesis Test {auto-animate=true}
+```{r}
+#| echo: TRUE
+#| output: FALSE
+t.test(exercise$time)
+```
+
+## Hypothesis Test {auto-animate=true}
+```{r}
+#| echo: TRUE
+#| output: FALSE
+t.test(exercise$time, alternative = "greater")
+```
+
+## Hypothesis Test {auto-animate=true}
+```{r}
+#| echo: TRUE
+t.test(exercise$time, alternative = "greater", mu = 30)
+```
+
+## Confidence Interval {auto-animate=true}
+```{r}
+#| echo: TRUE
+t.test(exercise$time, alternative = "greater", mu = 30)
+```
+
+:::aside
+Notice this has the confidence interval, but it is not two sided, hence the $\infty$ upper bound
+:::
+
+## Confidence Interval {auto-animate=true}
+```{r}
+#| echo: TRUE
+# Option 1
+t.test(exercise$time, alternative = "two.sided", mu = 30)
+```
+
+## Confidence Interval {auto-animate=true}
+```{r}
+#| echo: TRUE
+# Option 2
+confint(t.test(exercise$time, conf.level = 0.95))
+```
+
+## Confidence Interval {auto-animate=true}
+```{r}
+#| echo: TRUE
+# Option 3
+t.test(exercise$time, alternative = "two.sided", mu = 30)$conf.int
+```

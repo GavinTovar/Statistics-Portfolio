@@ -1,0 +1,419 @@
+---
+title: "(ST 412/512) Lab 2 <br> Multiple Linear Regression (MLR) in R!"
+format:
+  revealjs:
+    incremental: true
+    scrollable: true
+    theme: dracula
+    transition: slide
+    transition-speed: slow
+    auto-animate: true
+    chalkboard: true
+    code-line-numbers: true
+    css: styles.css
+    plugins:
+      - reveal.js/plugin/zoom-js/zoom.js
+      - reveal.js/plugin/highlight/highlight.js
+---
+
+```{r}
+#| echo: FALSE
+polymers <- read.csv("polymers.csv", header = TRUE)
+```
+
+## Welcome Back
+* Any questions before we get started?
+* Office Hours
+  * Thursday 10:00am - 11:00am
+
+## Last Episode... {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: FALSE
+#| eval: TRUE
+# Scatterplot of observations for polymer 1. 
+# Note xlim and ylim is fixing the scale of the plot
+plot(polymers$ph[1:6], polymers$solids[1:6],
+  type = "p",
+  pch = paste(1),
+  col = "blue",
+  xlim = c(min(polymers$ph), max(polymers$ph)),
+  ylim = c(min(polymers$solids), max(polymers$solids)),
+  main = "Solids vs pH by polymers",
+  xlab = "pH",
+  ylab = "Amount of Solids"
+)
+# Add regression line for polymer 1
+abline(lm(polymers$solids[1:6] ~ polymers$ph[1:6]), col = "blue")
+
+# Add points corresponding to polymer 2
+points(polymers$ph[7:12], polymers$solids[7:12],
+       type = "p",
+       pch = paste(2),
+       col = "red")
+# Add regression line for polymer 2
+abline(lm(polymers$solids[7:12] ~ polymers$ph[7:12]), col = "red") 
+
+# Add points corresponding to polymer 3
+points(polymers$ph[13:18], polymers$solids[13:18],
+  type = "p",
+  pch = paste(3),
+  col = "darkgreen"
+)
+
+# Add regression line for polymer 3
+abline(lm(polymers$solids[13:18] ~ polymers$ph[13:18]), col = "darkgreen")
+```
+
+## Last Episode... {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+# Assuming parallel lines (same slopes)
+mod <- lm(solids ~ ph + as.factor(polymer), data = polymers)
+summary(mod)
+```
+
+## Last Episode... {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+# Separate slopes / saturated model
+mod2 <- lm(solids ~ ph + as.factor(polymer) + ph * as.factor(polymer), data = polymers)
+summary(mod2)
+```
+
+## [Dataset Summary: Effects of Light on Meadowfoam Flowering]{.r-fit-text}
+* This dataset comes from a controlled growth chamber study investigating how light conditions influence flowering in **meadowfoam**, a small plant native to moist meadows of the US Pacific Northwest. 
+* The broader goal of the research was to improve meadowfoam production to make it a profitable crop.
+
+## Dataset Details {.smaller}
+
+- **Dataset name:** `case0901` (Effects of Light on Meadowfoam Flowering)
+- **Number of observations:** 24
+- **Number of variables:** 3
+
+::: {.fragment}
+
+| Variable   | Description |
+|-----------|-------------|
+| `Flowers` | Average number of flowers per meadowfoam plant |
+| `Time`    | Timing of light treatment onset (1 = Late, 2 = Early) |
+| `Intensity` | Light intensity (μmol/m²/sec) |
+
+:::
+
+## Study Design {.smaller}
+
+Researchers examined the effects of two light-related factors:
+
+1. **Light Intensity**
+   - 6 levels: 150, 300, 450, 600, 750, and 950 μmol/m²/sec
+
+2. **Timing of Light Treatment Onset**
+   - 2 levels:
+     - `1` = Late (at PFI)
+     - `2` = Early (24 days before PFI)
+
+::: {.fragment}
+**PFI (Photoperiodic Floral Induction)** refers to the point at which the photoperiod was increased from 8 to 16 hours per day to induce flowering.
+:::
+
+## Loading Data and Packages {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+case0901 <- read.csv("case0901.csv", header = TRUE)
+```
+
+## Loading Data and Packages {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Loading packages (optional)
+library(Sleuth3) # Actually contains case0901 dataset and much more
+library(ggplot2)
+```
+
+## Data's Structure {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Observing the structure of our dataframe
+str(case0901)
+```
+
+## Data's Structure {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+case0901
+```
+
+## Brief Overview of MLR {.smaller}
+* If we are to treat `Intensity` as a continuous random variable, our model equation looks like
+
+::: {.fragment}
+
+$$
+  \mu\left(Y \mid \mathbf{X}\right) = \beta_{0} + \beta_{1}X_{1} + \beta_{2}X_{2}
+$$
+
+:::
+
+::: {.fragment}
+
+$$
+  \mu\left(\text{Flower} \mid \text{Intensity, Time}\right) = \beta_{0} + \beta_{1}\text{Intensity} + \beta_{2}\text{EarlyStart}
+$$
+
+:::
+
+::: {.fragment}
+
+$$
+  \mu\left(\text{Flower} \mid \text{Intensity, Time}\right) = \beta_{0} + \beta_{1}\text{Intensity} + \beta_{2}\mathbf{I}\left\{\text{EarlyStart} == 1\right\}
+$$
+
+:::
+
+## Factors?! {auto-animate="true" auto-animate-easing="ease-in-out"}
+* When we looked at the structure of the data, we see that R reading all the variables as quantitative variables. 
+* However, we know that the variable Time is a factor (or categorical variable), where “1” represents the timing and “2” represents the timing
+
+::: {.fragment}
+```{r}
+#| echo: TRUE
+case0901$Time
+```
+:::
+
+## Factors?! {auto-animate="true" auto-animate-easing="ease-in-out"}
+* In order to check how many different “groups” or levels we have for this variable, we need to tell R to read it as a factor
+
+## Factors?! {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+factor(case0901$Time)         # Represent ``Time'' as a factor variable
+levels(factor(case0901$Time)) # How many levels are in this factor?
+```
+
+## Factors?! {auto-animate="true" auto-animate-easing="ease-in-out"}
+* Why are factors so useful? When we tell R to put a factor into a regression, it automatically generates the indicator variables required for us. 
+* We could construct our own indicator variable for the early group and then added it to the regression
+
+## Factors?! {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# So factor() does this automatically
+case0901$Early <- as.numeric(case0901$Time == "2")
+case0901$Early
+```
+
+::: {.fragment}
+We observe than now the 1’s (at PFI) are replaced by 0’s and the 2’s (before PFI) are replaced by 1’s. When we add this indicator variable to our regression models we obtain.
+:::
+
+## Factors?! {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+summary(lm(Flowers ~ Intensity + Early, data = case0901))
+```
+
+## Factors?! {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# But we could have just added the Time column (as a factor) directly to the regression formula
+summary(lm(Flowers ~ Intensity + factor(Time), data = case0901))
+```
+
+## Factors?! {auto-animate="true" auto-animate-easing="ease-in-out"}
+Note that the output is exactly the same. The **Early** row corresponds to the indicator that `Time == "2"`.
+
+There are two useful things to know how to do with factors:
+
+1. Create a factor from a numeric variable  
+2. Reorder the levels of a factor
+
+## Factors?! {auto-animate="true" auto-animate-easing="ease-in-out"}
+Creating a factor is easy—simply use the `factor()` function. For example, we can create a new variable, `intensity_f`, which is a factor version of `Intensity`.
+
+::: {.fragment}
+```{r}
+#| echo: TRUE
+case0901$Intensity_F <- factor(case0901$Intensity)
+str(case0901$Intensity_F)
+```
+:::
+
+## Factors?! {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+levels(case0901$Intensity_F)
+```
+
+## Factors?! {auto-animate="true" auto-animate-easing="ease-in-out"}
+By default, the levels are put in alphanumerical order. Sometimes this is what you want, sometimes it isn’t. You can completely specify the order, by using the “levels” argument when you create the variable
+
+```{r}
+#| echo: TRUE
+case0901$Intensity_F2 <- factor(case0901$Intensity, levels = c("750", "300", "450", 
+                                                               "150", "600", "900"))
+levels(case0901$Intensity_F2)
+```
+
+## Factors?! {auto-animate="true" auto-animate-easing="ease-in-out"}
+You can assign a new baseline level with the `relevel()` function.
+
+```{r}
+#| echo: TRUE
+case0901$Intensity_F3 <- relevel(case0901$Intensity_F, ref = "300")
+levels(case0901$Intensity_F3)
+```
+
+## Factors in MLR {auto-animate="true" auto-animate-easing="ease-in-out"}
+
+:::: {.columns}
+
+::: {.column width="50%"}
+
+```{r}
+#| echo: FALSE
+Data <- case0901
+Data
+```
+
+:::
+
+::: {.column width="50%"}
+
+```{r}
+#| echo: FALSE
+HideData <- Data
+HideData$Time <- factor(Data$Time)
+model.matrix(Flowers ~ Time + Intensity, data = HideData)
+```
+
+:::
+
+::::
+
+
+## Factors in MLR {auto-animate="true" auto-animate-easing="ease-in-out" .smaller }
+::: {.fragment}
+
+\begin{align*}
+  \mu\left(\text{Flower} \mid \text{Intensity, Time}\right) & = \beta_{0} + \beta_{1}\text{EarlyStart} + \beta_{2}\text{Intensity300}  \\
+  & \quad + \beta_{3}\text{Intensity450} + \beta_{4}\text{Intensity600} \\
+  & \quad + \beta_{5}\text{Intensity750} + \beta_{6}\text{Intensity900}
+\end{align*}
+
+:::
+
+:::{.column-page}
+
+```{r}
+#| echo: FALSE
+options(width = 100)
+HideData$Intensity <- factor(Data$Intensity)
+model.matrix(Flowers ~ Time + Intensity, data = HideData)
+```
+
+:::
+
+## Factors in MLR {.smaller}
+* Since we are working with an intercept, there will be a reference group assigned to one of the levels in a factor variable
+  * If the levels are character variables (strings) then the reference group is chosen by whichever comes first alphabetically
+  * If the levels are numbers then the lowest number is the reference group (as in our example)
+  * Level order can also be specified in the `factor()` or `relevel()` functions
+* If we fail to change numeric levels to factors then R will treat them as continuous variables and different results will ensue
+
+## Fitting a MLR {auto-animate="true" auto-animate-easing="ease-in-out" .smaller}
+As we have already seen, `lm(...)` is the most common function for fitting regression models in R. We’ve already used it when fitting simple linear regression models. Take the previous code as an example:
+```{r}
+#| echo: TRUE
+lm(Flowers ~ Intensity + factor(Time), data = case0901)
+```
+
+## Fitting a MLR {auto-animate="true" auto-animate-easing="ease-in-out" .smaller}
+```{r}
+#| echo: TRUE
+# More lines of code, but more explicit
+fit_1 <- lm(Flowers ~ factor(Intensity) + factor(Time), data = case0901)
+summary(fit_1)
+```
+
+
+## Fitting a MLR {auto-animate="true" auto-animate-easing="ease-in-out" .smaller}
+The model is fitting:
+\begin{align*}
+  \mu\left(\text{Flower} \mid \text{Intensity, Time}\right) & = \beta_{0} + \beta_{1}\text{EarlyStart} + \beta_{2}\text{Intensity300}  \\
+  & \quad + \beta_{3}\text{Intensity450} + \beta_{4}\text{Intensity600} \\
+  & \quad + \beta_{5}\text{Intensity750} + \beta_{6}\text{Intensity900}
+\end{align*}
+
+## Fitting a MLR {auto-animate="true" auto-animate-easing="ease-in-out" .smaller}
+```{r}
+#| echo: TRUE
+fit_2 <- lm(Flowers ~ relevel(factor(Intensity), ref = "600") + factor(Time), data = case0901)
+summary(fit_2)
+```
+
+## Fitting a MLR {auto-animate="true" auto-animate-easing="ease-in-out" .smaller}
+```{r}
+#| echo: TRUE
+# More lines of code, but more explicit
+case0901$Intensity_new <- relevel(factor(case0901$Intensity), ref = "600")
+fit_3 <- lm(Flowers ~ Intensity_new + Time, data = case0901)
+summary(fit_3)
+```
+
+## Interactions {auto-animate="true" auto-animate-easing="ease-in-out" .smaller}
+```{r}
+#| echo: TRUE
+# Adding interactions
+fit_int <- lm(Flowers ~ Intensity + Time + Time:Intensity, data = case0901)
+summary(fit_int)
+```
+
+## Interactions {auto-animate="true" auto-animate-easing="ease-in-out" .smaller}
+```{r}
+#| echo: TRUE
+# Similar syntax which will create interaction and lower order terms
+fit_int <- lm(Flowers ~ Time*Intensity, data = case0901)
+summary(fit_int)
+```
+
+## Interactions {auto-animate="true" auto-animate-easing="ease-in-out" .smaller}
+Both fit the following model:
+\begin{align*}
+  \mu\left(\text{Flower} \mid \text{Intensity, Time}\right)
+  & = \beta_{0} + \beta_{1}\text{Intensity} + \beta_{2}\text{Early} \\
+  & \quad + \beta_{3}\left(\text{Intensity} \times \text{Early}\right)
+\end{align*}
+
+## Interactions {auto-animate="true" auto-animate-easing="ease-in-out" .smaller}
+If we want to fit the model:
+\begin{align*}
+  \mu\left(\text{Flower} \mid \text{Intensity, Time}\right)
+  & = \beta_{0} + \beta_{1}\text{Intensity} + \beta_{2}\text{Intensity}^{2}
+\end{align*}
+
+::: {.fragment}
+```{r}
+#| echo: TRUE
+# lm(Flowers ~ Intensity + Intensity^2, data = case0901)) # If we try this line in R it won't work
+# ^ represents the interation order not what we want in this case
+lm(Flowers ~ Intensity + I(Intensity^2), data = case0901) # But this line works
+```
+:::
+
+## Interactions {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# If we prefer to precalculate the expression we can define a new variable
+case0901$Intensity2 <- case0901$Intensity^2
+lm(Flowers ~ Intensity + Intensity2, data = case0901)
+```
+
+## Interactions {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+summary(lm(Flowers ~ Intensity + Intensity2, data = case0901))
+```

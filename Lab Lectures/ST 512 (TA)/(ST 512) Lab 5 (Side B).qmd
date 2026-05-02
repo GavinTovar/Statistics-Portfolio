@@ -1,0 +1,544 @@
+---
+title: "(ST 412/512) Lab 5 <br> Simulations"
+format:
+  revealjs:
+    incremental: true
+    scrollable: true
+    theme: dracula
+    transition: slide
+    transition-speed: slow
+    auto-animate: true
+    chalkboard: true
+    code-line-numbers: true
+    css: (ST 512) StyleSheets.css
+    plugins:
+      - reveal.js/plugin/zoom-js/zoom.js
+      - reveal.js/plugin/highlight/highlight.js
+---
+
+## Welcome Back
+* Any questions before we get started?
+* Office Hours: Thursday 10:00am - 11:00am
+* An interesting lab today...
+  * Understanding this stuff give you a lot of power to explore hypothesis test behavior
+
+## Simulation {.smaller}
+- One of the advantages of having computing power and statistical software is that we can run simulation experiments to evaluate the performance of our models, assess the robustness and limitations of different procedures, or simply deepen our understanding of key concepts.
+
+- In what follows, we will consider two simple examples and set up simulation scenarios to illustrate the concepts of confidence intervals and uncertainty in linear regression.
+
+- Before doing so, we introduce an important tool that is very useful when conducting simulation exercises. For instance, suppose we want to generate five observations from a Normal distribution. That is:
+
+::: {.fragment}
+$$
+X_{1}, X_{2}, X_{3}, X_{4}, X_{5} \overset{\text{iid}}{\sim} N\left(0, 1\right)
+$$
+:::
+
+## Generating Data {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# This function is generating 5 random observations 
+# from a Normal distribution with mean 0 and standard deviation 1
+rnorm(5, 0, 1)
+```
+
+## Generating Data {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Notice when we run the function again, we get 5 new observations
+rnorm(5, 0, 1)
+```
+
+## Generating Data {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# If we want the same "random" numbers each time we run our program we can set a seed
+set.seed(123) # The number here is whatever you want
+rnorm(5, 0, 1)
+```
+
+## Generating Data {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Same numbers here:
+set.seed(123)
+rnorm(5, 0, 1)
+```
+
+## `set.seed()` {auto-animate="true" auto-animate-easing="ease-in-out"}
+`set.seed()` picks a starting point on a random path. After that, you just follow the same ‘random’ steps every time.
+
+```{mermaid}
+flowchart LR
+    A["set.seed(123) (Start point)"] --> B
+    B(("Step 1"))
+    B --> C(("Step 2"))
+    C --> D(("Step 3"))
+    D --> E(("Step 4"))
+    E --> F(("Step 5"))
+```
+
+## Simulating Confidence Intervals {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+* Recall from **ST 411/511** how to construct confidence intervals for the population mean. 
+* Suppose we observe $n$ draws from a $N(\mu, 1)$, where $\mu$ is unknown.  
+* A $(1-\alpha)\times 100\%$ confidence interval for $\mu$, based on our observations, is:
+
+::: {.fragment}
+$$
+\bar{x} \pm z_{\alpha/2}\frac{\sigma}{\sqrt{n}}
+$$
+:::
+
+* We will conduct a short simulation experiment to help us understand the concept of **“confidence level.”**
+
+## Simulating Confidence Intervals {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+mu <- 1 # Population mean (unknown)
+sigma <- 1 # Population standard deviation (known)
+n.sample <- 10 # Sample size in one run of the experiment (i.e. number of observations we have)
+```
+
+## Simulating Confidence Intervals {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+mu <- 1 # Population mean (unknown)
+sigma <- 1 # Population standard deviation (known)
+n.sample <- 10 # Sample size in one run of the experiment (i.e. number of observations we have)
+N.rep <- 1000 # Number of times we will repeat the experiment 
+alpha <- 0.05
+```
+
+## Simulating Confidence Intervals {auto-animate="true" auto-animate-easing="ease-in-out"}
+We know:
+
+$$
+\bar{X} \sim N\left(\mu, \frac{\sigma^{2}}{n}\right)
+$$
+the exact distribution of the sample mean
+
+## Simulating Confidence Intervals {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Sample means generated from sampling distribution
+x.bar <- rnorm(N.rep, mean = mu, sd = sigma / sqrt(n.sample)) 
+head(x.bar)
+```
+
+## Simulating Confidence Intervals {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+z <- qnorm(alpha / 2, mean = 0, sd = 1, lower.tail = FALSE) # z-value for confidence intervals
+```
+
+## Simulating Confidence Intervals {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+z <- qnorm(alpha / 2, mean = 0, sd = 1, lower.tail = FALSE) # z-value for confidence intervals
+low.bound <- (x.bar - z * sigma / sqrt(n.sample)) # Interval lower bound
+up.bound <- (x.bar + z * sigma / sqrt(n.sample)) # Interval upper bound
+```
+
+## Simulating Confidence Intervals {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+z <- qnorm(alpha / 2, mean = 0, sd = 1, lower.tail = FALSE) # z-value for confidence intervals
+low.bound <- (x.bar - z * sigma / sqrt(n.sample)) # Interval lower bound
+up.bound <- (x.bar + z * sigma / sqrt(n.sample)) # Interval upper bound
+CI <- data.frame(low.bound, up.bound) # Data frame to see the intervals in columns
+head(CI)
+```
+
+## Simulating Confidence Intervals {auto-animate="true" auto-animate-easing="ease-in-out"}
+* Finally, we check how many of these intervals contain the true value of $\mu$.  
+
+* Since in our simulation we set $\mu = 1$, this is easy to verify.  
+
+* We should find that approximately $(1-\alpha)\times 100\%$ of the constructed intervals contain the true value of $\mu$.
+
+
+## Simulating Confidence Intervals {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Check if resulting interval contains the true parameter
+contains <- (mu >= low.bound & mu <= up.bound)
+```
+
+## Simulating Confidence Intervals {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Check if resulting interval contains the true parameter
+contains <- (mu >= low.bound & mu <= up.bound)
+
+# Observed proportion of intervals that cover the true value of the parameter
+sum(contains) / N.rep 
+```
+
+## Simulating Linear Regression {auto-animate="true" auto-animate-easing="ease-in-out"}
+We now run a similar experiment for linear regression. We will: 
+
+1. Generate data from a true model, and  
+2. Fit a linear regression line to that data.
+
+## Simulating Linear Regression {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+$$
+Y_{i} = 5 + 0.50X_{i1} + \epsilon_{i}, \qquad X_{i1} \overset{\text{iid}}{\sim} \text{Unif}\left(15, 25\right), \qquad \epsilon_{i} \overset{\text{iid}}{\sim} N\left(0, 2\right)
+$$
+
+## Simulating Linear Regression {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+ # This is the explanatory variable
+X1 <- runif(12, 15, 25)
+
+# This is the response variable following the true model with intercept 5 and slope 0.5
+Y <- 5 + 0.5 * X1 + rnorm(length(X1), 0, 2)
+```
+
+## Simulating Linear Regression {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+ # This is the explanatory variable
+X1 <- runif(12, 15, 25)
+
+# This is the response variable following the true model with intercept 5 and slope 0.5.
+Y <- 5 + 0.5 * X1 + rnorm(length(X1), 0, 2)
+
+fit <- lm(Y ~ X1) # Here we are fitting the model to the generated data
+summary(fit) # Are the estimated coefficients any close to the true values?
+```
+
+## Simulating Linear Regression {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: slide
+plot(X1, Y,
+  type = "p",
+  pch = 20,
+  col = "blue",
+  xlim = c(0, 25),
+  ylim = c(0, 25),
+  xlab = "X",
+  ylab = "Y",
+  main = ""
+)
+abline(fit, col = "blue", lwd = 1.5) # Fitted line
+abline(5, 0.5, col = "red", lwd = 1.5) # Actual regression line
+```
+
+## Simulating Linear Regression {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# We will construct intervals at each one of these points so we can plot them later 
+# as a "confidence band" surrounding the fitted line
+newx1 <- seq(0, 25, by = 0.05)
+conf_interval <- predict(fit,
+  newdata = data.frame(X1 = newx1),
+  interval = "confidence",
+  level = 0.95
+)
+```
+
+## Simulating Linear Regression {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# We will construct intervals at each one of these points so we can plot them later 
+# as a "confidence band" surrounding the fitted line
+newx1 <- seq(0, 25, by = 0.05)
+conf_interval <- predict(fit,
+  newdata = data.frame(X1 = newx1),
+  interval = "confidence",
+  level = 0.95
+)
+head(conf_interval)
+```
+
+## Simulating Linear Regression {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: slide
+plot(X1, Y,
+  type = "p",
+  pch = 20,
+  col = "blue",
+  xlim = c(0, 25),
+  ylim = c(0, 25),
+  xlab = "X",
+  ylab = "Y",
+  main = ""
+)
+abline(fit, col = "blue", lwd = 1.5)
+abline(5, 0.5, col = "red", lwd = 1.5)
+```
+
+## Simulating Linear Regression {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: slide
+plot(X1, Y,
+  type = "p",
+  pch = 20,
+  col = "blue",
+  xlim = c(0, 25),
+  ylim = c(0, 25),
+  xlab = "X",
+  ylab = "Y",
+  main = ""
+)
+abline(fit, col = "blue", lwd = 1.5)
+abline(5, 0.5, col = "red", lwd = 1.5)
+lines(newx1, conf_interval[, 2], col = "blue", lty = 2) # This will plot the lower band
+lines(newx1, conf_interval[, 3], col = "blue", lty = 2) # This will plot the upper band
+```
+
+## Simulating Linear Regression {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+pred_interval <- predict(fit,
+  newdata = data.frame(X1 = newx1),
+  interval = "prediction",
+  level = 0.95
+)
+head(pred_interval)
+```
+
+## Simulating Linear Regression {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: slide
+plot(X1, Y,
+  type = "p",
+  pch = 20,
+  col = "blue",
+  xlim = c(0, 25),
+  ylim = c(0, 25),
+  xlab = "X",
+  ylab = "Y",
+  main = ""
+)
+abline(fit, col = "blue", lwd = 1.5)
+abline(5, 0.5, col = "red", lwd = 1.5)
+lines(newx1, conf_interval[, 2], col = "blue", lty = 2)
+lines(newx1, conf_interval[, 3], col = "blue", lty = 2)
+```
+
+## Simulating Linear Regression {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: slide
+plot(X1, Y,
+  type = "p",
+  pch = 20,
+  col = "blue",
+  xlim = c(0, 25),
+  ylim = c(0, 25),
+  xlab = "X",
+  ylab = "Y",
+  main = ""
+)
+abline(fit, col = "blue", lwd = 1.5)
+abline(5, 0.5, col = "red", lwd = 1.5)
+lines(newx1, conf_interval[, 2], col = "blue", lty = 2)
+lines(newx1, conf_interval[, 3], col = "blue", lty = 2)
+lines(newx1,
+      pred_interval[, 2],
+      col = "darkgreen",
+      lty = 2)
+lines(newx1,
+      pred_interval[, 3],
+      col = "darkgreen",
+      lty = 2)
+```
+
+## Simulating Linear Regression {auto-animate="true" auto-animate-easing="ease-in-out"}
+* We can create confidence intervals for our slope coefficient $\beta_{1}$ in our linear regression
+
+::: {.fragment}
+```{r}
+#| echo: TRUE
+# Set up the simulation parameters
+M <- 1000
+n.sample <- 12
+sigma <-  2
+pvalue <- vector("numeric", M)
+beta1 <- vector ("numeric", M)
+coverage <- vector("logical", M)
+alpha <- 0.05
+```
+:::
+
+## [Simulating Linear Regression - Simulation Station]{.r-fit-text} {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+### Reviewing One Simulation
+# Generate data
+X <- runif(n.sample, 15, 25)
+Y <- 5 + 0.5 * X + rnorm(length(X), 0, sigma)
+
+# t-quantile
+t <- qt(alpha / 2, n.sample - 1, lower.tail = FALSE)
+
+# Fit Model
+model <- lm(Y ~ X)
+
+# Extract estimated coefficient and corresponding p-value
+summary(model)$coeff[2, 1]
+summary(model)$coeff[2, 4]
+
+# Check if resulting interval contains the true parameter
+0.5 >= summary(model)$coeff[2, 1] - t * summary(model)$coeff[2, 2] &
+  0.5 <= summary(model)$coeff[2, 1] + t * summary(model)$coeff[2, 2]
+```
+
+## [Simulating Linear Regression - Simulation Station]{.r-fit-text} {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: FALSE
+# Simulation Code (Doing the previous many many many times )
+for (i in 1:M) {
+  # Generate data
+  X <- runif(n.sample, 15, 25)
+  Y <- 5 + 0.5 * X + rnorm(length(X), 0, sigma)
+}
+```
+
+## [Simulating Linear Regression - Simulation Station]{.r-fit-text} {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: FALSE
+# Simulation Code
+for (i in 1:M) {
+  # Generate data
+  X <- runif(n.sample, 15, 25)
+  Y <- 5 + 0.5 * X + rnorm(length(X), 0, sigma)
+  
+  # t-quantile
+  t <- qt(alpha / 2, n.sample - 1, lower.tail = FALSE)
+}
+```
+
+## [Simulating Linear Regression - Simulation Station]{.r-fit-text} {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: FALSE
+# Simulation Code
+for (i in 1:M) {
+  # Generate data
+  X <- runif(n.sample, 15, 25)
+  Y <- 5 + 0.5 * X + rnorm(length(X), 0, sigma)
+  
+  # t-quantile
+  t <- qt(alpha / 2, n.sample - 1, lower.tail = FALSE)
+  
+  # Fit Model
+  model <- lm(Y ~ X)
+}
+```
+
+## [Simulating Linear Regression - Simulation Station]{.r-fit-text} {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: FALSE
+# Simulation Code
+for (i in 1:M) {
+  # Generate data
+  X <- runif(n.sample, 15, 25)
+  Y <- 5 + 0.5 * X + rnorm(length(X), 0, sigma)
+  
+  # t-quantile
+  t <- qt(alpha / 2, n.sample - 1, lower.tail = FALSE)
+  
+  # Fit Model
+  model <- lm(Y ~ X)
+  
+  # Extract estimated coefficient and corresponding p-value
+  beta1[i] <- summary(model)$coeff[2, 1] 
+  pvalue[i] <- summary(model)$coeff[2, 4] 
+}
+```
+
+## [Simulating Linear Regression - Simulation Station]{.r-fit-text} {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: FALSE
+# Simulation Code
+for (i in 1:M) {
+  # Generate data
+  X <- runif(n.sample, 15, 25)
+  Y <- 5 + 0.5 * X + rnorm(length(X), 0, sigma)
+  
+  # t-quantile
+  t <- qt(alpha / 2, n.sample - 1, lower.tail = FALSE)
+  
+  # Fit Model
+  model <- lm(Y ~ X)
+  
+  # Extract estimated coefficient and corresponding p-value
+  beta1[i] <- summary(model)$coeff[2, 1] 
+  pvalue[i] <- summary(model)$coeff[2, 4] 
+  
+  # Check if resulting interval contains the true parameter
+  coverage[i] <- (0.5 >= summary(model)$coeff[2, 1] - t * summary(model)$coeff[2, 2] &
+      0.5 <= summary(model)$coeff[2, 1] + t * summary(model)$coeff[2, 2])
+}
+```
+
+## [Simulating Linear Regression - Simulation Station]{.r-fit-text} {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Simulation Code
+for (i in 1:M) {
+  # Generate data
+  X <- runif(n.sample, 15, 25)
+  Y <- 5 + 0.5 * X + rnorm(length(X), 0, sigma)
+  
+  # t-quantile
+  t <- qt(alpha / 2, n.sample - 1, lower.tail = FALSE)
+  
+  # Fit Model
+  model <- lm(Y ~ X)
+  
+  # Extract estimated coefficient and corresponding p-value
+  beta1[i] <- summary(model)$coeff[2, 1] 
+  pvalue[i] <- summary(model)$coeff[2, 4] 
+  
+  # Check if resulting interval contains the true parameter
+  coverage[i] <- (0.5 >= summary(model)$coeff[2, 1] - t * summary(model)$coeff[2, 2] &
+      0.5 <= summary(model)$coeff[2, 1] + t * summary(model)$coeff[2, 2])
+}
+# Well... How do we look at our results?!
+```
+
+## [Simulating Linear Regression - Simulation Station]{.r-fit-text} {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+
+Once we have completed the simulations, we can assess the performance of our procedures:
+
+- What is the histogram of the estimated coefficients telling you?  
+- What do you think of the observed coverage of the confidence intervals?  
+- What do you think of the proportion of times you fail to reject the hypothesis $H_0:\beta_1 = 0$?
+
+
+## [Simulating Linear Regression - Simulation Station]{.r-fit-text} {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Construct histogram
+hist(beta1, col = "lawngreen")
+```
+
+## [Simulating Linear Regression - Simulation Station]{r-fit-text} {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Observed proportion of intervals that cover the true value of the parameter
+sum(coverage) / M 
+```
+
+## [Simulating Linear Regression - Simulation Station]{.r-fit-text} {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Check if p-value is not "significant"
+fail.reject <- (pvalue > alpha)
+
+# Observed proportion of rejections
+sum(fail.reject) / M 
+```

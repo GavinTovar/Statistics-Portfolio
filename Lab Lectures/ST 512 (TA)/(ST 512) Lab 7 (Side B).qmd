@@ -1,0 +1,489 @@
+---
+title: "(ST 412/512) <br> Model selection"
+format:
+  revealjs:
+    incremental: true
+    scrollable: true
+    theme: dracula
+    transition: slide
+    transition-speed: slow
+    auto-animate: true
+    chalkboard: true
+    code-line-numbers: true
+    css: (ST 512) StyleSheets.css
+    plugins:
+      - reveal.js/plugin/zoom-js/zoom.js
+      - reveal.js/plugin/highlight/highlight.js
+---
+
+## Welcome Back
+* Any questions before we get started?
+* Office Hours: Thursday 10:00am - 11:00am
+* Today we speak of my conceptual nemesis
+
+## Lab Objectives
+* Perform best subsets variable selection using $AIC$, $BIC$, $C_{p}$, and adjusted $R^{2}$
+  * Using the `leap` package for sequential model selection
+* Make a $C_{p}$ plot
+* Use stepwise regression to select variables
+* Calculate variance inflation factors
+
+## Loading Data and Packages {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: FALSE
+case1201 <- read.csv("case1201.csv", header = TRUE)
+```
+
+## Loading Data and Packages {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+library(Sleuth3)
+library(ggplot2)
+library(leaps) # regsubsets()
+library(car) # vif()
+```
+
+## Dataset {.xxs auto-animate="true" auto-animate-easing="ease-in-out"}
+* `case1201` (State Average SAT Scores)
+  * Data on the average SAT scores for US states in 1982 and possible associated factors.
+  * 50 observations (rows)
+  * 8 variables (columns)
+    * `State`: US state
+    * `SAT`: state averages of the total SAT (verbal + quantitative) scores
+    * `Takers`: the percentage of the total eligible students (high school seniors) in the state who took the exam
+    * `Income`: the median income of families of test–takers (in hundreds of dollars)
+    * `Years`: the average number of years that the test–takers had formal studies in social sciences, natural sciences and humanities
+    * `Public`: the percentage of the test–takers who attended public secondary schools
+    * `Expend`: he total state expenditure on secondary schools (in hundreds of dollars per student)
+    * `Rank`: the median percentile ranking of the test–takers within their secondary school classes
+
+## Loading Data and Packages {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+case1201
+```
+
+## Visualizing Data {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: slide
+# Create a scatterplot matrix without State names
+pairs(case1201[, -1], col = "blue")
+```
+
+## Visualizing Data {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: slide
+# Taking a closer look at the scatterplot for SAT vs Takers
+# Check possible curvature in data
+plot(case1201$Takers, case1201$SAT, 
+     pch = 20, 
+     col = "blue")
+```
+
+## Visualizing Data {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# The lab notes want to perform a log transformation due to the 
+# nonlinear relationship
+case1201$lTakers <- log(case1201$Takers)
+```
+
+## Visualizing Data {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: slide
+# Seeing now
+plot(case1201$lTakers, case1201$SAT, 
+     pch = 20, 
+     col = "blue")
+```
+
+## Visualizing Data {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: slide
+# Create a scatterplot matrix without State names
+pairs(case1201[, -1], col = "blue")
+```
+
+## Visualizing Data {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: slide
+# One might claim there are potential influential
+# points when looking at Public and SAT
+plot(case1201$Public, case1201$SAT, 
+     pch = 20, 
+     col = "blue")
+```
+
+## Visualizing Data {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+case1201$State[case1201$Public < 50] # Identify state with low Public 
+```
+
+## Visualizing Data {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: slide
+# One might claim there are potential influential
+# points when looking at Expend and SAT
+plot(case1201$Expend, case1201$SAT, 
+     pch = 20, 
+     col = "blue")
+```
+
+## Visualizing Data {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+case1201$State[case1201$Expend > 40] # Identify state with high Expend 
+```
+
+## Model Formulation {.text-xxs auto-animate="true" auto-animate-easing="ease-in-out"}
+$$
+\mu\left(\text{SAT} \mid \text{predictors}\right)
+= \beta_0 
++ \beta_1 \log(\text{Takers}) 
++ \beta_2 \text{Income} 
++ \beta_3 \text{Years} 
++ \beta_4 \text{Public} 
++ \beta_5 \text{Expend} 
++ \beta_6 \text{Rank}
+$$
+
+## Model Formulation {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Start with tentative model (all variables)
+mod1 <- lm(SAT ~ lTakers + Income + Years + Public + Expend + Rank, data = case1201)
+summary(mod1)
+```
+
+## Model Formulation {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: slide
+# Check residuals
+plot(mod1$fit, mod1$res,
+  type = "p",
+  pch = 20,
+  col = "blue",
+  main = "Residual vs fitted values",
+  xlab = "Fitted values",
+  ylab = "Residuals"
+)
+abline(h = 0, lty = "dashed") 
+```
+
+## Case Influence Stats {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: slide
+# Standardized residuals
+Obs <- seq(1:50)
+plot(Obs, rstandard(mod1),
+  ylab = "Standardized residuals",
+  xlab = "Observations",
+  ylim = c(-4, 4)
+)
+abline(h = 0, lty = "dashed") # We include line at 0 for reference
+abline(h = 2, lty = "dashed", col = "red") # We include this value for reference
+abline(h = -2, lty = "dashed", col = "red") # We include this value for reference
+```
+
+## Case Influence Stats {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+case1201$State[which(abs((rstandard(mod1))) > 2)] # Identify states that  greater than 2
+```
+
+## Case Influence Stats {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+case1201$State[which(abs((rstandard(mod1))) > 3)] # Identify states that  greater than 3
+```
+
+## Case Influence Stats {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: slide
+# Leverage 2p'/n = 2(7)/50 = 0.28
+plot(Obs, hatvalues(mod1), 
+     ylab = "Leverage", 
+     xlab = "Observations") # Plot leverage against the observations
+abline(h = 0.28, 
+       lty = "dashed", 
+       col = "red") # We include this value for reference
+```
+
+## Case Influence Stats {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+case1201$State[which(hatvalues(mod1)>0.28)] # Identify observations greater than 0.28
+```
+
+## Case Influence Stats {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+case1201$State[which(hatvalues(mod1)>0.50)] # Identify observations greater than 0.50
+```
+
+## Case Influence Stats {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: slide
+# Cook’s Distance
+plot(Obs, cooks.distance(mod1), 
+     ylab = "Cook distance", 
+     xlab = "Observations")
+abline(h = 1, 
+       lty = "dashed", 
+       col = "red") # We include this value for reference
+```
+
+## Case Influence Stats {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+case1201$State[which(cooks.distance(mod1) > 1)] # Identify states with distance greater than 1
+```
+
+## Refitting {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Re-fit the model, removing "Alaska"
+mod2 <- update(mod1, . ~ . , data = case1201, subset = (State != "Alaska"))
+summary(mod2)
+```
+
+## Refitting {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: slide
+# Re-fit the model, removing "Alaska"
+plot(mod2$fit, mod2$res,
+  type = "p",
+  pch = 20,
+  col = "blue",
+  main = "Residual vs fitted values",
+  xlab = "Fitted values",
+  ylab = "Residuals"
+)
+abline(h = 0, lty = "dashed") 
+```
+
+## Case Influence Stats {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: slide
+# Standardized residuals
+Obs <- seq(1:49)
+plot(Obs, rstandard(mod2),
+  ylab = "Standardized residuals",
+  xlab = "Observations",
+  ylim = c(-4, 4)
+)
+abline(h = 0, lty = "dashed") # We include line at 0 for reference
+abline(h = 2, lty = "dashed", col = "red") # We include this value for reference
+abline(h = -2, lty = "dashed", col = "red") # We include this value for reference
+```
+
+## Case Influence Stats {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+case1201$State[which(abs((rstandard(mod2))) > 2)] # Identify states with distance greater than 2
+```
+
+## Case Influence Stats {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: slide
+# Leverage 2p'/n = 2(7)/50 = 0.29
+plot(Obs, hatvalues(mod2), 
+     ylab = "Leverage",
+     xlab = "Observations") # Plot leverage against the observations
+abline(h = 0.29, 
+       lty = "dashed",
+       col = "red") # We include this value for reference
+```
+
+## Case Influence Stats {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+case1201$State[which(hatvalues(mod2) > 0.29)] # Identify observations greater than 0.28
+```
+
+## Case Influence Stats {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: slide
+# Cook’s Distance
+plot(Obs, cooks.distance(mod2), 
+     ylab = "Cook distance", 
+     xlab = "Observations")
+abline(h = 1, 
+       lty = "dashed", 
+       col = "red") # We include this value for reference
+```
+
+## Case Influence Stats {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+case1201$State[which(cooks.distance(mod2) > 1)] # Identify states with distance greater than 1
+```
+
+## Model Selection {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Adjusting for variables 
+mod3 <- lm(SAT ~ lTakers + Rank, data = subset(case1201, State != "Alaska"))
+```
+
+## Model Selection {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Adjusting for variables 
+mod3 <- lm(SAT ~ lTakers + Rank, data = subset(case1201, State != "Alaska"))
+best_SAT <- order(mod3$res, decreasing = TRUE)
+```
+
+## Model Selection {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Adjusting for variables 
+mod3 <- lm(SAT ~ lTakers + Rank, data = subset(case1201, State != "Alaska"))
+best_SAT <- order(mod3$res, decreasing = TRUE)
+case1201$State[best_SAT]
+```
+
+## Best-Subsets Variable Selection {.text-xs auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+SAT_best <- regsubsets(SAT ~ Expend + lTakers + Income + Years + Public + Rank, data = case1201, nbest = 7)
+```
+
+* What this code is doing
+  * The first argument specifies the largest model you are willing to consider. Here, I specify my response is `SAT`, and the possible terms all other terms in the dataset, which is what the `~ .` notation implies.
+  * The dataset is excluding Alaska which was done earlier.
+  * `nbest` specifies how many models should be returned for each size; I want the best seven models.  
+  * `method` states the methods for finding the best models:  
+    * `"exhaustive"` considers all models (not a sequential procedure!). 
+      * `"exhaustive"` is default.
+    * Other options are `"forward"` and `"backward"` (these are sequential procedures).  
+  * Another useful argument is `nvmax`, the largest size model you want to consider.  
+    * By default, it is set at 8, so here we don’t need to change it.
+    
+## Best-Subsets Variable Selection {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Contents can be printed out as is
+all <- regsubsets(SAT ~ Expend + lTakers + Income + Years + Public + Rank, 
+                  data = subset(case1201, State != "Alaska"), 
+                  nbest = 7, 
+                  method = "exhaustive")
+```
+
+## Best-Subsets Variable Selection {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Or using summary we can obtain more information
+summary(all)
+```
+
+## Best-Subsets Variable Selection {auto-animate="true" auto-animate-easing="ease-in-out"}
+* What the summary output tells us is the ranking for each sized model
+  * I believe by default adjusted $R^{2}$ is used to rank the models within group sizes 
+
+## Best-Subsets Variable Selection {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: slide
+# This object can even be plotted
+plot(all)
+```
+
+## Best-Subsets Variable Selection {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+library(ggplot2) 
+library(plyr)
+
+# Code bellow will allow us to pull out some other useful information from these output
+fortify.regsubsets <- function(model, data, ...) {
+  require(plyr)
+  stopifnot(model$intercept)
+  models <- summary(model)$which
+  rownames(models) <- NULL
+  model_stats <- as.data.frame(summary(model)[c("bic", "cp", "rss", "rsq", "adjr2")])
+  dfs <- lapply(coef(model, 1:nrow(models)), function(x)
+    as.data.frame(t(x)))
+  model_coefs <- plyr::rbind.fill(dfs)
+  model_coefs[is.na(model_coefs)] <- 0
+  model_stats <- cbind(model_stats, model_coefs)
+  # terms_short <- abbreviate(colnames(models))
+  terms_short <- colnames(models)
+  model_stats$model_words <- aaply(models, 1, function(row)
+    paste(terms_short[row], collapse = "+"))
+  model_stats$size <- rowSums(summary(model)$which)
+  model_stats
+}
+
+get_model_coefs <- function(model) {
+  models <- summary(model)$which
+  dfs <- lapply(coef(model, 1:nrow(models)), function(x)
+    as.data.frame(t(x)))
+  model_coefs <- plyr::rbind.fill(dfs)
+  model_coefs[is.na(model_coefs)] <- 0
+  model_coefs
+}
+```
+
+## Best-Subsets Variable Selection {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Extract the information from the regsubset(.) above using fortify(.)
+models <- fortify(all)
+head(models)
+```
+
+## Some Plots {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: slide
+plot(models$size, models$cp)
+abline(0, 1) # Notice the scale
+```
+
+## Some Plots {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: slide
+plot(models$size, models$cp, ylim = c(1, 10))
+abline(0, 1) # Change the scale
+```
+
+## Some Plots {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: slide
+# BIC plot
+qplot(size, bic, data = models)
+```
+
+## Some Plots {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Identify the model with the lowest Cp
+models[models$cp == min(models$cp), ]
+```
+
+## Some Plots {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Fit model
+mod_lowestCp <- lm(SAT ~ Expend + lTakers + Years + Rank, data = subset(case1201, State != "Alaska"))
+summary(mod_lowestCp)
+```

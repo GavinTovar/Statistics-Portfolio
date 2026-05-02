@@ -1,0 +1,400 @@
+---
+title: "(ST 411/511) Lab 4 - Tons of Terrific? Tests!"
+format:
+  revealjs:
+    incremental: TRUE
+    scrollable: TRUE
+    theme: dark
+    transition: slide
+    transition-speed: slow
+    auto-animate: TRUE
+    chalkboard: TRUE
+---
+## Homework 2 - Question 1(b)(iv)
+- To describe the scope of inference, the following 2 components are needed
+  - Causality
+    - To assess causality we are looking to see if the *treatments have randomly assigned* (or subjects randomly assigned to treatments)
+  - Inference to a larger population
+    - We are seeing if we have a *random sample* from the population of interest, if not we can only make inference on the sample collected
+
+## Homework 2 - Question 2
+- Question (a): Describe what is meant by the sampling distribution of the sample variance
+- Question (b): Displayed a standard normal distribution and asked "Could this distribution be the sampling distribution of the sample variance, when sampling from some population? Why or why not?
+- Shiny Time!
+
+## Objectives {transition="zoom" transition-speed="slow"}
+- Do a Welch’s t-test
+- Perform a Wilcoxon rank-sum test
+- Perform a sign test
+
+## Loading packages {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+library(Sleuth3)
+library(ggplot2)
+```
+
+## Dataset
+- `case0201` (Finch Beak Data)
+  - 178 observations
+  - 2 variables
+    - `Year`: Year the finch was caught, 1976 or 1978
+    - `Depth`: Beak depth of the finch (mm)
+    
+## Dataset {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+case0201
+```
+    
+## Welch's $t$-test {auto-animate="true" auto-animate-easing="ease-in-out"}
+- The Welch's $t$-test (also known as the unequal variance two-sample $t$-test) is performed when the equal variance assumption is not reasonable
+
+:::aside
+In practice, this test should be performed over the equal-variance version unless you are very certain the population variances are equal
+:::
+
+## Welch's $t$-test {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+# Default is unequal variance (not assuming equal variance)
+t.test(Depth ~ Year, data = case0201)
+```
+
+:::aside
+In practice, this test should be performed over the equal-variance version unless you are very certain the population variances are equal
+:::
+
+## Welch's $t$-test {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+t.test(Depth ~ Year, data = case0201, var.equal = FALSE,
+       alternative = "two.sided")
+```
+
+:::aside
+In practice, this test should be performed over the equal-variance version unless you are very certain the population variances are equal
+:::
+
+## [Comparing the two two-sample t-tests side-by-side]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+:::: {.columns}
+
+::: {.column width="50%"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+#| scroll: FALSE
+t.test(Depth ~ Year, data = case0201, var.equal = TRUE,
+       alternative = "two.sided")
+```
+:::
+
+::: {.column width="50%"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+#| scroll: FALSE
+t.test(Depth ~ Year, data = case0201, var.equal = FALSE,
+       alternative = "two.sided")
+```
+:::
+
+::::
+
+## [Behind the Scenes of 't.test' function (Unequal Variance)]{.r-fit-text} {auto-animate=true}
+**Test Statistic:**
+$$
+\begin{aligned}
+t_{U}(\mu_{0}) & = \dfrac{(\bar{X} - \bar{Y}) - \mu_{0}}{\sqrt{\dfrac{s^{2}_{X}}{m} + \dfrac{s^{2}_{Y}}{n}}} \\[0.25cm]
+\end{aligned}
+$$
+
+:::aside
+$\bar{X}$ and $\bar{Y}$ are sample mean estimations for $\mu_{X}$ and $\mu_{Y}$ respectively
+:::
+
+## [Behind the Scenes of 't.test' function (Unequal Variance)]{.r-fit-text} {auto-animate=true}
+**Test Statistic:**
+$$
+\begin{aligned}
+t_{U}(0) = \dfrac{(\bar{X} - \bar{Y})}{\sqrt{\dfrac{s^{2}_{X}}{m} + \dfrac{s^{2}_{Y}}{n}}}
+\end{aligned}
+$$
+
+## [Behind the Scenes of 't.test' function (Unequal Variance)]{.r-fit-text} {transition="slide" transition-speed="slow"}
+**Welch-Satterthwaite Approximation**: to the null distribution of $t(\mu_{0})$
+$$
+\nu = \dfrac{\left(\dfrac{s^{2}_{X}}{m} + \dfrac{s^{2}_{Y}}{n}\right)^{2}}{\dfrac{s^{4}_{X}}{m^{2}(m-1)} + \dfrac{s^{4}_{Y}}{n^{2}(n-1)}}
+$$
+Note: $\min(m-1, n-1) \le \nu \le m+n-2$
+
+:::aside
+Note: $\nu$ are the degrees of freedom
+:::
+
+## [Behind the Scenes of 't.test' function (Unequal Variance)]{.r-fit-text} {transition="slide" transition-speed="slow"}
+**Confidence Interval:**
+$$
+(\bar{X} - \bar{Y}) \pm t_{(\nu)(1-\frac{\alpha}{2})}\sqrt{\dfrac{s^{2}_{X}}{m} + \dfrac{s^{2}_{Y}}{n}}
+$$
+
+:::aside
+Remember, unless specified otherwise, R will make group 1 the one that comes alphabetically first
+:::
+
+## [Behind the Scenes of 't.test' function (Equal Variance)]{.r-fit-text} {transition="slide" transition-speed="slow"}
+$$
+t_{E}(\mu_{0}) = \dfrac{(\bar{X} - \bar{Y}) - \mu_{0}}{\sqrt{\dfrac{s_{p}^{2}}{m} + \dfrac{s_{p}^{2}}{n}}} = \dfrac{(\bar{X} - \bar{Y}) - \mu_{0}}{\sqrt{s_{p}^{2}\left(\dfrac{1}{m} + \dfrac{1}{n}\right)}}
+$$
+
+## [Behind the Scenes of 't.test' function (Equal Variance)]{.r-fit-text} {transition="slide" transition-speed="slow"}
+$$
+\begin{align*}
+s_{p}^{2} & = \dfrac{\sum\limits_{i=1}^{m}(X_{i} - \bar{X})^{2} + \sum\limits_{i=1}^{n}(Y_{i} - \bar{Y})^{2}}{(m - 1) + (n - 1)} \\[0.25cm]
+& = \dfrac{(m-1)s^{2}_{X} + (n-1)s^{2}_{Y}}{(m+n-2)}
+\end{align*}
+$$
+
+:::aside
+We use the pooled methods if we assume the two groups have equal variance (equal standard deviations)
+:::
+
+## [Behind the Scenes of 't.test' function (Equal Variance)]{.r-fit-text} {transition="slide" transition-speed="slow"}
+$$
+(\bar{X} - \bar{Y}) \pm t_{(m+n-2)(1-\frac{\alpha}{2})}\sqrt{s_{p}^{2}\left(\dfrac{1}{m} + \dfrac{1}{n}\right)}
+$$
+
+:::aside
+Notice the degrees of freedom = $m + n - 2$
+:::
+
+## [Behind the Scenes of 't.test' function (Summary)]{.r-fit-text} {transition="slide" transition-speed="slow"}
+
+- **Unequal Variance (un-pooled)**
+  - No assumption of equal variance
+  - Degrees of freedom calculated with complicated formula (R will do this for you)
+  - `var.equal = FALSE` (R's default)
+- **Equal Variance (pooled)**
+  - Assumption of equal variance
+  - Degrees of freedom: $m + n - 2$ 
+    - = Group 1 sample size + Group 2 sample size - 2
+  - `var.equal = TRUE`
+  
+## Wilcoxon Rank-Sum Test
+- The two-sample version of the Wilcoxon Signed-Rank Test
+- A non-parametric test
+  - Meaning that a parametric assumption is not necessary (no normality assumption needed)
+- Known as a permutation test
+  - Creation of a null distribution using re-sampling techniques on observed data
+  
+## Dataset
+- `case0402` (Cognitive Load)
+  - 28 observations
+  - 3 variables
+    - `Time`: the time (in seconds) that the student worked on the problem
+    - `Treatment`: factor variable with two levels ("Modified" and "Conventional")
+    - `Censored`: 1 if the individual did not complete the problem in 5 minutes, 0 if they did
+
+## Dataset {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+case0402
+```
+
+## Rank Transformation {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+case0402$Time
+```
+
+## Rank Transformation {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+rank(case0402$Time)
+```
+
+## Rank Transformation {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Side by side
+# We can see that values that are tied - the corresponding rank is averaged
+cbind(case0402$Time, rank(case0402$Time))
+```
+
+## Rank Transformation {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# A bit easier to see the averaging of tied ranks when ordered
+cbind(sort(case0402$Time), sort(rank(case0402$Time)))
+```
+
+## Side-by-Side Boxplot {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+# Where is the conventional upper whisker?
+qplot(Treatment, Time, data = case0402, geom = "boxplot")
+```
+
+## Facet Histograms {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+qplot(Time, data = case0402, geom = "histogram") +
+  facet_grid(Treatment ~ .)
+```
+
+## Facet Histograms {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+qplot(Time, data = case0402, geom = "histogram") +
+  facet_grid(. ~ Treatment)
+```
+
+## Facet Histograms {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+qplot(Time, data = case0402, geom = "histogram") +
+  facet_grid(Treatment ~ Censored)
+```
+
+## Facet Histograms {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: slide
+# Custom histogram 
+ggplot(case0402, aes(x = Time, fill = Treatment)) +
+  geom_histogram(color = "black", bins = 30, alpha = 0.7) +  # Custom bin count and transparency
+  scale_fill_brewer(palette = "Set2") +  # Use a color palette
+  facet_grid(Treatment ~ .) +  # Facet by Treatment
+  labs(title = "Facet Histograms by Treatment", 
+       x = "Time", 
+       y = "Frequency") +
+  theme_minimal(base_size = 15) +  # Clean, minimal theme
+  theme(
+    axis.ticks.y = element_line(),  # Revert to default y-axis ticks
+    axis.ticks.length.y = unit(0.15, "cm"),  # Default length for y-axis ticks
+    axis.text.y = element_text(size = 10, color = "black"),  # Default size and color for y-axis labels
+    strip.text = element_text(size = 14, face = "bold"),  # Bold facet labels
+    plot.title = element_text(hjust = 0.5)  # Center plot title
+  )
+```
+
+## Wilcoxon Rank-Sum Test
+$$
+H_{0}: \delta = 0 \quad\quad\quad H_{1}: \delta > 0 
+$$
+
+- **Research Question:** 
+  - Whether the "Modified" group had lower times than the "Conventional" group
+- Notice I use $\delta$ notation here because we're not actually comparing mean times like $\mu$ often denotes
+
+## Wilcoxon Rank-Sum Test {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+wilcox.test(Time ~ Treatment, data = case0402, alternative = "greater",
+            exact = FALSE, correct = FALSE)
+```
+
+## Wilcoxon Rank-Sum Test {auto-animate="true" auto-animate-easing="ease-in-out"}
+- `exact = FALSE`: indicates that the normal approximation is being used
+  - When setting to TRUE indicating the want of an exact $p$-value can fail due to permutation being too computationally intensively or if any ties
+- `correct = FALSE`: indicates that a continuity correction is not wanted (in the normal approximation to $p$-value)
+
+## Wilcoxon Rank-Sum Test
+$$
+H_{0}: \delta = 0 \quad\quad\quad H_{1}: \delta < 0 
+$$
+
+## Wilcoxon Rank-Sum Test {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+# If we wanted to change which group is denoted at "Group 1"
+with(case0402, wilcox.test(x = Time[Treatment == "Modified"],
+                          y = Time[Treatment == "Conventional"],
+                          alternative = "less", correct = FALSE, exact = FALSE))
+```
+
+## [Wilcoxon Rank-Sum Test (Assumptions)]{.r-fit-text}
+- If one assumes the only difference between populations is an additive shift then it can test whether that shift is 0
+
+## [Wilcoxon Rank-Sum Test (Assumptions)]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: FALSE
+sim.data <- data.frame(x = rnorm(100000, mean = 0, sd = 1))
+ggplot(data = sim.data) + 
+  geom_histogram(mapping = aes(x = x), fill = "#cc77f7", color = "black", binwidth = 0.05, alpha = 0.50) +
+  geom_histogram(mapping = aes(x = x + 2), fill = "#8af777", color = "black", binwidth = 0.05, alpha = 0.50) +
+  labs(title = "Only Difference Between Distributions is an Additive Shift",
+       x = "Values",
+       y = "Frequency",
+       caption = expression(paste("Shift difference equal to ", delta, " equal to 2 in this example"))) +
+  theme_bw()
+```
+
+## [Wilcoxon Rank-Sum Test (Confidence Interval)]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+wilcox.test(Time ~ Treatment, data = case0402, exact = FALSE, correct = FALSE,
+            conf.int = TRUE)
+```
+
+## Sign Test
+- A test of  medians (or any other percentile)
+  - Under the null hypothesis, the distribution is binomial
+  - If we have a null $H_{0}: M = 0$, we can perform a two-sample binomial test with $p_{0}=0.50$
+- **Research Question:** Is the left hippocampus volume larger in the unaffected twin than in the affected twin?
+
+## Sign Test {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+head(case0202)
+```
+
+## Sign Test {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Back at it again calculating differences
+diffs <- with(case0202, Unaffected-Affected)
+```
+
+## Sign Test {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Back at it again calculating differences
+diffs <- with(case0202, Unaffected-Affected)
+diffs
+```
+
+## Sign Test {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+length(diffs)
+```
+
+## Sign Test {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+which(diffs > 0) # How many pairs?
+```
+
+## Sign Test {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+length(which(diffs > 0)) # How many of these are greater than 0?
+```
+
+## Sign Test {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Performs exact test
+binom.test(x = 14, n = 15, p = 0.5, alternative = "greater") 
+```
+

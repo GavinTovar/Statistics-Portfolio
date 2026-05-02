@@ -1,0 +1,1248 @@
+---
+title: "Regression Estimation"
+format:
+  revealjs:
+    incremental: TRUE
+    scrollable: TRUE
+    theme: dracula
+    transition: slide
+    transition-speed: slow
+    auto-animate: TRUE
+    chalkboard: TRUE
+    plugins:
+      - reveal.js/plugin/zoom-js/zoom.js
+      - reveal.js/plugin/highlight/highlight.js
+---
+
+<style>
+.slightlysmaller {
+  font-size: 0.85em;   /* Slightly smaller than normal */
+}
+
+.evensmaller {
+  font-size: 0.666em;   /* Slightly smaller than normal */
+}
+
+.bigger {
+  font-size: 1.15em;   /* Slightly bigger than normal */
+}
+
+.biggest {
+  font-size: 1.3em;    /* Larger, if needed */
+}
+
+.footnote {
+  position: absolute;
+  bottom: 1em;
+  font-size: 0.8em;
+  color: #555;
+}
+</style>
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(knitr)
+library(kableExtra)
+```
+
+## What's On The Menu Today? {.smaller}
+* Ratio Estimation Recap
+  * What the heck happened two days ago?
+* Regression Estimation
+  * Brand new material!?!
+* My Beef With The Book
+  * Aside from putting the reader to sleep in 10 minutes or less
+* R Example
+  * Super exciting!
+* Homework Example
+  * Now you're awake!
+* Summary and Comparison of Estimators
+  * Note sheet material?!?
+
+## Warning
+* The following slides are for educational purposes only!
+* I personally don't condone any of this material for practical use...
+
+<div class="footnote fragment" style="position: absolute; bottom: 1em; font-size: 0.8em;">
+   This is getting ahead of any questions like *"In practice would you..."*
+</div>
+
+## First Up {.slightlysmaller}
+* Suppose there is a statistician, an engineer and a python or something, all on a deserted island
+* They run into some canned goods or whatnot
+* The engineer pitches some complicated idea of opening the can
+  * The statistician reject the proposal
+  * I forgot what the python is doing...
+* How do they open the cans?
+  * The statistician recommends just assuming a can opener...
+
+<div class="footnote fragment" style="position: absolute; bottom: 1em; font-size: 0.8em;">
+   There is a dual purpose to this joke, one to present a masterclass comedy routine given to me and second to point out there is a lot of assumptions in the upcoming material
+</div>
+
+
+## Poor Joke Memory
+![Sarah's Comedy Gold!](can_opener.png){width=100% height=100%}
+
+## Ratio Estimation Recap
+When we have auxiliary information, it may be preferable to use a *biased* but more precise estimator.
+
+- Assume:
+  - $y_i$ and $x_i$ are obtained for every unit in the sample
+  - $\bar{x}_\mathcal{U}$ (or $t_x$ ) is also known
+  - Auxiliary variable $x$ and response $y$ highly correlated and relationship is **proportional** (linear, line passes through origin)
+
+## Summary - Ratio Estimation {.smaller}
+Assuming the data were collected via a SRS and it is appropriate to use a ratio estimator:
+
+Parameter | Point Estimate | Variance of Estimator
+- | - | -
+Ratio |$\hat{B}=\frac{\bar{y}}{\bar{x}}$|$\hat{V}(\hat{B})=\left(1-\frac{n}{N}\right)\frac{s_e^2}{n\bar{x}^2}$
+Mean |$\hat{\bar{y}}_r = \hat{B}\bar{x}_\mathcal{U} = \hat{B}\mu_{X}$|$\hat{V}(\hat{\bar{y}}_r) = \left(1-\frac{n}{N}\right)\left(\frac{\bar{x}_\mathcal{U}}{\bar{x}}\right)^2\frac{s_e^2}{n}$
+Total |$\hat{t}_{yr} = \hat{B}t_x$|$\hat{V}(\hat{t}_{yr}) = \left(1-\frac{n}{N}\right)\left(\frac{t_x}{\bar{x}}\right)^2\frac{s_e^2}{n}$
+
+where$s_e^2$is the sample variance of the residuals $e_i = y_{i} - \hat{B}x_{i}$.
+
+## [Regression Estimate Versus Ratio Esimtation]{.r-fit-text}
+* Ratio estimation is said to do well when the data are fit by a straight line through the origin.
+* Regression estimation is an extension of this concept by incorporating an intercept term such that our line isn't restricted to having to go through $(0, 0)$.
+
+## [When Would One Use Regression Estimation?]{.r-fit-text}
+* Similar to when people suggest ratio estimation:
+  * Regression estimation is used when we have an auxiliary variable $x$ that is correlated with the variable of interest $y$ .
+  * By leveraging this relationship, we can obtain a more precise estimate of the population mean $\bar{y}_U$ ($\mu_{Y}$).
+  
+## [The Humble Beginnings of Regression Estimation]{.r-fit-text}
+Suppose we get some data that looks to have a linear relationship
+
+```{r}
+#| echo: FALSE
+#| eval: TRUE
+# Set seed for reproducibility
+set.seed(123)
+
+# Generate X from a normal distribution
+x <- rnorm(100, mean = 50, sd = 10)
+
+# Generate Y with correlation ~0.8 with X
+# y = a*x + noise, adjust noise to control correlation
+y <- 0.75 * x + rnorm(100, mean = 0, sd = 5)
+
+# Put into a data frame
+df <- data.frame(x = x, y = y)
+
+# Plot
+ggplot(df, aes(x = x, y = y)) +
+  geom_point() +
+  labs(title = "Some Data",
+       x = "X",
+       y = "Y") +
+  theme_bw() +
+  theme(panel.border = element_rect(color = "black", fill = NA, size = 1))
+```
+
+## [The Humble Beginnings of Regression Estimation]{.r-fit-text}
+Whenever people see data like this... they want to slap a line on it, like so:
+
+```{r}
+#| echo: FALSE
+#| eval: TRUE
+# Plot
+ggplot(df, aes(x = x, y = y)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE, color = "#47f58f") +
+  labs(title = "Some Data - now with a line!",
+       x = "X",
+       y = "Y") +
+  theme_bw() +
+  theme(panel.border = element_rect(color = "black", fill = NA, size = 1))
+```
+
+## [The Humble Beginnings of Regression Estimation]{.r-fit-text} {.slightlysmaller}
+* We (the book, real people use $\beta$) notate this linear relationship with
+
+::: {.fragment}
+$$
+y = B_{0} + B_{1}x
+$$
+:::
+
+* where our estimates are
+
+::: {.fragment}
+$$
+\hat{B}_{1} = \frac{\sum\limits_{i \in \mathcal{S}}(x_{i} - \bar{x})(y_{i} - \bar{y})}{\sum\limits_{i \in \mathcal{S}}(x_{i} - \bar{x})^{2}} = \frac{rs_{y}}{s_{x}}
+$$
+:::
+
+::: {.fragment}
+$$
+\hat{B}_{0} = \bar{y} - \hat{B}_{1}\bar{x}
+$$
+:::
+
+
+## The Regression Estimator {.slightlysmaller}
+* Suppose the population mean of the auxiliary variable $\bar{x}_U$ is known.  
+* Then the regression estimator for the population mean of $y$ is:
+
+::: {.fragment}
+$$
+\hat{\bar{y}}_{\text{reg}} = \hat{B}_0 + \hat{B}_1 \bar{x}_U = \bar{y} + \hat{B}_1 (\bar{x}_U - \bar{x})
+$$
+:::
+
+- the predicted value from our regression fit, where
+  - $\bar{y}$: sample mean of $y$ 
+  - $\bar{x}$: sample mean of $x$ 
+  - $\hat{B}_0, \hat{B}_1$: estimated regression coefficients
+
+## Intuition Behind the Adjustment {.slightlysmaller}
+- If $\bar{x} < \bar{x}_U$ and $x$ and $y$ are **positively correlated**, then $\bar{y}$ is likely **underestimating** the true population mean $\bar{y}_U$.
+- The regression estimator adjusts for this by adding:
+
+::: {.fragment}
+$$
+\hat{B}_1 (\bar{x}_U - \bar{x})
+$$
+:::
+
+- This correction improves accuracy and potentially reduces variance.
+- A similar logic can be applied when $\bar{x} > \bar{x}_{U}$ and / or when we have negative correlation
+
+## Intuition Behind the Adjustment {.smaller}
+| Scenario | Relation of Means            | Correlation | Effect on Sample Mean $\bar{y}$         | Adjustment using $\hat{B}_1(\bar{x}_U - \bar{x})$|
+|----------|-------------------------------|-------------|---------------------------------------------|-----------------------------------------------------|
+| 1        |$\bar{x} < \bar{x}_U$      | Positive    |$\bar{y}$ underestimates $\bar{y}_U$  | Add (positive adjustment)                          |
+| 2        |$\bar{x} > \bar{x}_U$      | Positive    |$\bar{y}$ overestimates $\bar{y}_U$   | Subtract (negative adjustment)                     |
+| 3        |$\bar{x} < \bar{x}_U$      | Negative    |$\bar{y}$ overestimates $\bar{y}_U$   | Subtract (negative adjustment)                     |
+| 4        |$\bar{x} > \bar{x}_U$      | Negative    |$\bar{y}$ underestimates $\bar{y}_U$  | Add (positive adjustment)                          |
+
+
+## [When is Regression Estimation Said To Be Useful?]{.r-fit-text}
+- When we have **supplemental information** about the population (e.g., known $\bar{x}_U$).
+- When the auxiliary variable $x$ is **strongly correlated** with $y$.
+- When we want to **increase the precision** of the estimator beyond what is possible using only the sample mean.
+  - When this trade off between precision and bias is deemed acceptable
+
+
+## Bias of the Regression Estimator {.slightlysmaller}
+- Just like the ratio estimator, the regression estimator is **biased**.
+- The bias arises due to the dependence between the estimated slope $\hat{B}_1$ and the sample mean $\bar{x}$.
+
+::: {.fragment}
+$$
+\begin{align*}
+\text{Bias}(\hat{\bar{y}}_\text{reg}) &= E[\hat{\bar{y}}_\text{reg}-\bar{y}_\mathcal{U}]= - \text{Cov}(\hat{B}_1, \bar{x})
+\end{align*}
+$$
+:::
+
+- If the population correlation between $x$ and $y$ is **1 (perfectly linear)**, then this bias equals **0**.
+- This why we want our $x$ and $y$ to be highly correlated -- to reduce bias.
+
+## MSE of the Regression Estimator
+* The book shows two approximate MSE formulas, one is:
+- The approximate mean squared error (MSE) of the regression estimator is:
+
+::: {.fragment}
+$$
+\text{MSE}(\hat{\bar{y}}_\text{reg}) \approx 
+\left(1-\frac{n}{N}\right)\frac{1}{n} S_y^2 (1 - R^2)
+$$
+:::
+
+- $S_y^2$ = population variance of $y$ 
+- $R$ = correlation between $x$ and $y$
+
+## When is MSE Small?
+$$
+\text{MSE}(\hat{\bar{y}}_\text{reg}) \approx 
+\left(1-\frac{n}{N}\right)\frac{1}{n} S_y^2 (1 - R^2)
+$$
+
+* MSE decreases when:
+  - $n$ is large (divisor)
+  - The sampling fraction $n/N$ is large (less to correct for given finite population)  
+  - $S_y$ is small (variance is reduced)
+  - The correlation $R$ is close to **+1 or −1** (reduces bias)
+
+
+## [Variance of the Regression Estimator]{.r-fit-text} {.smaller}
+The other MSE representation is, if we assume the bias is negligible^[The book (not me) is the one making up these assumptions], then:
+
+::: {.fragment}
+$$
+\begin{align*}
+\text{MSE}(\hat{\bar{y}}_\text{reg}) & \approx V(\bar{d}) = V\left[\frac{1}{n} \sum_{i \in \mathcal{S}} \underbrace{(y_i - (B_0 + B_1 x_i))}_{d_i} \right] \\[0.20cm]
+& = \left(1-\frac{n}{N}\right)\frac{S_d^2}{n} 
+\end{align*}
+$$
+:::
+
+- Here, $d_i$ represents the **residuals from the true population regression line** (we assume such a true linear relationship exists).
+
+## [Residuals and Estimation in Practice]{.r-fit-text} {.evensmaller}
+- True residuals (unknown in practice):
+
+::: {.fragment}
+$$
+d_i = y_i - (B_0 + B_1 x_i)
+$$
+:::
+
+- Estimated residuals using sample regression:
+
+::: {.fragment}
+$$
+e_i = y_i - (\hat{B}_0 + \hat{B}_1 x_i)
+$$
+:::
+
+- Sample variance of residuals:
+
+::: {.fragment}
+$$
+s_e^2 = \frac{1}{n - 2} \sum_{i \in \mathcal{S}} (e_i - \bar{e})^2
+= \frac{1}{n - 2} \sum_{i \in \mathcal{S}} e_i^2
+$$
+:::
+
+* Why $n - 2$?
+
+<div class="footnote fragment" style="position: absolute; bottom: 1em; font-size: 0.8em;">
+   Some astute observers might notice that this is *different from the textbook*... More on this later...
+</div>
+
+
+## [Estimated Variance of the Regression Estimator]{.r-fit-text}
+
+$$
+\hat{V}(\hat{\bar{y}}_\text{reg}) \approx
+\left(1 - \frac{n}{N} \right) \frac{s_e^2}{n}
+$$
+
+Where:
+
+- $s_e^2$ = sample residual variance  (shown on last slide)
+- $\left(1 - \frac{n}{N}\right)$ = finite population correction (FPC)
+
+## Standard Error {.slightlysmaller}
+- As usual, the **standard error** is the square root of the variance:
+
+::: {.fragment}
+$$
+\hat{V}(\hat{\bar{y}}_\text{reg}) =
+\left(1 - \frac{n}{N} \right) \frac{s_e^2}{n} \quad\Rightarrow\quad \text{SE}(\hat{\bar{y}}_\text{reg}) =
+\sqrt{\left(1 - \frac{n}{N} \right)\frac{s_e^2}{n}}
+$$
+:::
+
+## Beef With Book {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: FALSE
+# Seed for reproducibility
+set.seed(123)
+
+# Simulation Setup
+nsim <- 10000
+bookSEs <- vector("numeric", length = nsim) 
+realSEs <- vector("numeric", length = nsim)
+```
+
+## Beef With Book {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: FALSE
+# Seed for reproducibility
+set.seed(123)
+
+# Simulation Setup
+nsim <- 10000
+bookSEs <- vector("numeric", length = nsim) 
+realSEs <- vector("numeric", length = nsim)
+
+# Generate some population data (same data we saw before)
+N <- 1000
+n <- 30
+popX <- rnorm(N, mean = 8, sd = 3)
+popEpsilon <- rnorm(N, mean = 0, sd = 3)
+popY <- 0.75 * popX + popEpsilon
+data_mat <- cbind(popY, popX)
+```
+
+## Beef With Book {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: FALSE
+# Seed for reproducibility
+set.seed(123)
+
+# Simulation Setup
+nsim <- 10000
+bookSEs <- vector("numeric", length = nsim) 
+realSEs <- vector("numeric", length = nsim)
+
+# Generate some population data (same data we saw before)
+N <- 1000
+n <- 30
+popX <- rnorm(N, mean = 8, sd = 3)
+popEpsilon <- rnorm(N, mean = 0, sd = 3)
+popY <- 0.75 * popX + popEpsilon
+data_mat <- cbind(popY, popX)
+
+for (i in 1:nsim) {
+  # Draw some samples from our finite population without replacement
+  idx <- sample(N, n, replace = FALSE)
+  x <- popX[idx]
+  y <- popY[idx]
+}
+
+```
+
+## Beef With Book {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: FALSE
+# Seed for reproducibility
+set.seed(123)
+
+# Simulation Setup
+nsim <- 10000
+bookSEs <- vector("numeric", length = nsim) 
+realSEs <- vector("numeric", length = nsim)
+
+# Generate some population data (same data we saw before)
+N <- 1000
+n <- 30
+popX <- rnorm(N, mean = 8, sd = 3)
+popEpsilon <- rnorm(N, mean = 0, sd = 3)
+popY <- 0.75 * popX + popEpsilon
+data_mat <- cbind(popY, popX)
+
+for (i in 1:nsim) {
+  # Draw some samples from our finite population without replacement
+  idx <- sample(N, n, replace = FALSE)
+  x <- popX[idx]
+  y <- popY[idx]
+  
+  # Calculate coefficients
+  B1 <- sum((x - mean(x)) * (y - mean(y))) / sum((x - mean(x))^2)
+  B0 <- mean(y) - B1 * mean(x)
+}
+
+```
+
+## Beef With Book {.evensmaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: FALSE
+# Generate some population data (same data we saw before)
+N <- 1000
+n <- 30
+popX <- rnorm(N, mean = 8, sd = 3)
+popEpsilon <- rnorm(N, mean = 0, sd = 3)
+popY <- 0.75 * popX + popEpsilon
+data_mat <- cbind(popY, popX)
+
+for (i in 1:nsim) {
+  # Draw some samples from our finite population without replacement
+  idx <- sample(N, n, replace = FALSE)
+  x <- popX[idx]
+  y <- popY[idx]
+  
+  # Calculate coefficients
+  B1 <- sum((x - mean(x)) * (y - mean(y))) / sum((x - mean(x))^2)
+  B0 <- mean(y) - B1 * mean(x)
+  
+  # Calculate residual
+  e <- y - (B0 + B1 * x)
+}
+
+```
+
+## Beef With Book {.evensmaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: FALSE
+# Generate some population data (same data we saw before)
+N <- 1000
+n <- 30
+popX <- rnorm(N, mean = 8, sd = 3)
+popEpsilon <- rnorm(N, mean = 0, sd = 3)
+popY <- 0.75 * popX + popEpsilon
+data_mat <- cbind(popY, popX)
+
+for (i in 1:nsim) {
+  # Draw some samples from our finite population without replacement
+  idx <- sample(N, n, replace = FALSE)
+  x <- popX[idx]
+  y <- popY[idx]
+  
+  # Calculate coefficients
+  B1 <- sum((x - mean(x)) * (y - mean(y))) / sum((x - mean(x))^2)
+  B0 <- mean(y) - B1 * mean(x)
+  
+  # Calculate residual
+  e <- y - (B0 + B1 * x)
+  
+  # Sample variance for residuals
+  bookSEs[i] <- 1 / (n - 1) * sum((e - mean(e))^2) # = 1 / (n - 1) * sum(e^2)
+  realSEs[i] <- 1 / (n - 2) * sum((e - mean(e))^2) # = 1 / (n - 2) * sum(e^2)
+}
+
+```
+
+## Beef With Book {.evensmaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: FALSE
+#| eval: TRUE
+# Seed for reproducibility
+set.seed(123)
+
+# Simulation Setup
+nsim <- 10000
+bookSEs <- vector("numeric", length = nsim)
+realSEs <- vector("numeric", length = nsim)
+
+# Generate some population data (same data we saw before)
+N <- 1000
+n <- 30
+popX <- rnorm(N, mean = 8, sd = 3)
+popEpsilon <- rnorm(N, mean = 0, sd = 3)
+popY <- 0.75 * popX + popEpsilon
+data_mat <- cbind(popY, popX)
+```
+
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+for (i in 1:nsim) {
+  # Draw some samples from our finite population without replacement
+  idx <- sample(N, n, replace = FALSE)
+  x <- popX[idx]
+  y <- popY[idx]
+  
+  # Calculate coefficients
+  B1 <- sum((x - mean(x)) * (y - mean(y))) / sum((x - mean(x))^2)
+  B0 <- mean(y) - B1 * mean(x)
+  
+  # Calculate residual
+  e <- y - (B0 + B1 * x)
+  
+  # Sample variance for residuals
+  bookSEs[i] <- 1 / (n - 1) * sum((e - mean(e))^2) # = 1 / (n - 1) * sum(e^2)
+  realSEs[i] <- 1 / (n - 2) * sum((e - mean(e))^2) # = 1 / (n - 2) * sum(e^2)
+}
+
+# Recall the true variance is
+var(popEpsilon)
+
+# Compared to the estimates:
+mean(bookSEs)
+mean(realSEs)
+```
+
+## Beef With Book {.evensmaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: FALSE
+#| code-line-numbers: "11"
+# Seed for reproducibility
+set.seed(123)
+
+# Simulation Setup
+nsim <- 10000
+bookSEs <- vector("numeric", length = nsim) 
+realSEs <- vector("numeric", length = nsim)
+
+# Generate some population data (same data we saw before)
+N <- 1000
+n <- 100
+popX <- rnorm(N, mean = 8, sd = 3)
+popEpsilon <- rnorm(N, mean = 0, sd = 3)
+popY <- 0.75 * popX + popEpsilon
+data_mat <- cbind(popY, popX)
+
+for (i in 1:nsim) {
+  # Draw some samples from our finite population without replacement
+  idx <- sample(N, n, replace = FALSE)
+  x <- popX[idx]
+  y <- popY[idx]
+  
+  # Calculate coefficients
+  B1 <- sum((x - mean(x)) * (y - mean(y))) / sum((x - mean(x))^2)
+  B0 <- mean(y) - B1 * mean(x)
+  
+  # Calculate residual
+  e <- y - (B0 + B1 * x)
+  
+  # Sample variance for residuals
+  bookSEs[i] <- 1 / (n - 1) * sum((e - mean(e))^2) # = 1 / (n - 1) * sum(e^2)
+  realSEs[i] <- 1 / (n - 2) * sum((e - mean(e))^2) # = 1 / (n - 2) * sum(e^2)
+}
+
+# Recall the true variance is
+var(popEpsilon)
+
+# Compared to the estimates:
+mean(bookSEs)
+mean(realSEs)
+```
+
+## Beef With Book {.evensmaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: FALSE
+#| eval: TRUE
+# Seed for reproducibility
+set.seed(123)
+
+# Simulation Setup
+nsim <- 10000
+bookSEs <- vector("numeric", length = nsim)
+realSEs <- vector("numeric", length = nsim)
+
+# Generate some population data (same data we saw before)
+N <- 1000
+n <- 1000
+popX <- rnorm(N, mean = 8, sd = 3)
+popEpsilon <- rnorm(N, mean = 0, sd = 3)
+popY <- 0.75 * popX + popEpsilon
+data_mat <- cbind(popY, popX)
+```
+
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+for (i in 1:nsim) {
+  # Draw some samples from our finite population without replacement
+  idx <- sample(N, n, replace = FALSE)
+  x <- popX[idx]
+  y <- popY[idx]
+  
+  # Calculate coefficients
+  B1 <- sum((x - mean(x)) * (y - mean(y))) / sum((x - mean(x))^2)
+  B0 <- mean(y) - B1 * mean(x)
+  
+  # Calculate residual
+  e <- y - (B0 + B1 * x)
+  
+  # Sample variance for residuals
+  bookSEs[i] <- 1 / (n - 1) * sum((e - mean(e))^2) # = 1 / (n - 1) * sum(e^2)
+  realSEs[i] <- 1 / (n - 2) * sum((e - mean(e))^2) # = 1 / (n - 2) * sum(e^2)
+}
+
+# Recall the true variance is
+var(popEpsilon)
+
+# Compared to the estimates:
+mean(bookSEs)
+mean(realSEs)
+```
+
+## Beef With Book {.slightlysmaller auto-animate="true" auto-animate-easing="ease-in-out"}
+* The book even mentions: ``In small samples, we may alternatively calculate $s^{2}_{e}$ using the MSE from a regression analysis:
+
+:::{.fragment}
+$$
+s_e^2 = \frac{1}{n - 2} \sum_{i \in \mathcal{S}} e_i^2
+$$
+This adjusts the estimator for the degrees of freedom in the regression.''
+:::
+
+* We should always be using this formulation for regression estimation
+
+# Break Time!
+
+## R Example {.slightlysmaller auto-animate="true" auto-animate-easing="ease-in-out"}
+* Suppose we simulate tree measurements for a sample of 50 trees from a population of size $N = 5000$. We generate:
+- **Diameter (inches)** from a normal distribution,
+- **Tree volume** using a linear model:
+
+:::{.fragment}
+$$
+  \text{Volume} = 35 + 3.5 \times \text{Diameter} + \varepsilon, \quad \varepsilon \sim N(0, 15^2)
+$$
+:::
+
+:::{.fragment}
+We assume the **population sum of diameters** is known:  
+$$
+t_x = 70{,}000
+$$
+:::
+
+## R Example - Data Generation {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+set.seed(100)
+# Updated sample & population sizes
+n <- 50
+N <- 5000
+tx <- 70000   # known population total of diameters
+
+# Generate population data
+diameter <- rnorm(N, mean = 14, sd = 3)
+diameterTot <- sum(diameter)
+diameter <- diameter / diameterTot * tx
+
+epsilon <- rnorm(N, mean = 0, sd = 15)
+volume <- 35 + 3.5 * diameter + epsilon
+treePop <- data.frame(diameter, volume)
+
+# Draw sample
+tree <- treePop[sample(1:N, n, replace = F), ]
+```
+
+
+## R Example - Data Generation {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+#| output-location: slide
+# Plot
+ggplot(tree, aes(x = diameter, y = volume)) +
+  geom_point(col = "lawngreen", size = 2) +
+  coord_cartesian(xlim = c(0, max(tree$diameter)),
+                  ylim = c(0, max(tree$volume))) +
+  labs(title = "Some Trees!",
+       x = "Diameter",
+       y = "Volume") +
+  theme_bw() +
+  theme(panel.border = element_rect(color = "black", fill = NA, size = 1))
+```
+
+## R Example - Goal {auto-animate="true" auto-animate-easing="ease-in-out"}
+* Say we want to estimate the total volume for all trees in the forest using
+  - Naive estimation (no auxiliary variable)
+  - Ratio estimation using diameter as auxiliary variable
+  - Regression estimation using diameter as auxiliary variable
+  
+## Quick Side Note {.evensmaller auto-animate="true" auto-animate-easing="ease-in-out"}
+* We've been discussing estimating $\bar{y}_{U}$, not $t_{y}$. Keep in mind
+
+:::{.fragment}
+$$
+  \bar{y}_{U} = N \cdot t_{y}
+$$
+:::
+
+* thus for our ratio estimation variance calculations:
+
+:::{.fragment}
+$$
+\begin{align*}
+  &\widehat{\operatorname{Var}}\left(\hat{\bar{y}}_{\text{r}}\right) = \left(1 - \frac{n}{N}\right)\left(\frac{\mu_{X}}{\bar{x}}\right)^{2}\left(\frac{s_{e}^{2}}{n}\right) \\[0.20cm]
+  \quad&\Rightarrow\quad \widehat{\operatorname{Var}}\left(\hat{t}_{y_{\text{r}}}\right) = N^{2}\left(1 - \frac{n}{N}\right)\left(\frac{\mu_{X}}{\bar{x}}\right)^{2}\left(\frac{s_{e}^{2}}{n}\right) \\[0.25cm]
+  \quad&\Rightarrow\quad \widehat{\operatorname{Var}}\left(\hat{t}_{y_{\text{r}}}\right) = \left(1 - \frac{n}{N}\right)\left(\frac{t_{x}}{\bar{x}}\right)^{2}\left(\frac{s_{e}^{2}}{n}\right) \\[0.25cm]
+\end{align*}
+$$
+:::
+
+* This will be important for the last question on Homework 4
+
+
+## R Example - Naive Estimation  {auto-animate="true" auto-animate-easing="ease-in-out"}
+$$
+\hat{t}_{y_{\text{naive}}} = \bar{y} \cdot N
+$$
+
+:::{.fragment}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+ty.naive <- mean(tree$volume) * N
+ty.naive
+```
+:::
+
+## R Example - Naive Estimation  {auto-animate="true" auto-animate-easing="ease-in-out"}
+$$
+\begin{align*}
+&\widehat{\operatorname{Var}}\left(\hat{t}_{y_{\text{naive}}}\right) = N^{2}\left(1 - \frac{n}{N}\right)^{2}\left(\frac{s^{2}_{y}}{n}\right) \\[0.20cm] 
+\quad&\Rightarrow\quad \operatorname{SE}\left(\hat{t}_{y_{\text{naive}}}\right) = \sqrt{N^{2}\left(1 - \frac{n}{N}\right)^{2}\left(\frac{s^{2}_{y}}{n}\right)}
+\end{align*}
+$$
+
+:::{.fragment}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+v.naive <- N^2 * (1 - n / N) * var(tree$volume) / n
+sqrt(v.naive)
+```
+:::
+
+## R Example - Ratio Estimation  {auto-animate="true" auto-animate-easing="ease-in-out"}
+$$
+\hat{t}_{y_{\text{ratio}}} = \frac{\bar{y}}{\bar{x}}t_{x} = \hat{B}t_{x}
+$$
+
+:::{.fragment}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+# Slope for ratio estimator
+B.hat <- mean(tree$volume) / mean(tree$diameter)
+
+# Ratio estimate of total volume
+ty.ratio <- B.hat * tx
+ty.ratio
+```
+:::
+
+
+## R Example - Ratio Estimation  {auto-animate="true" auto-animate-easing="ease-in-out"}
+$$
+s_e^2 = \frac{1}{n - 1} \sum_{i \in S} \left( y_i - \hat{B}x_{i} - (\bar{y} - \hat{B}\bar{x})\right)^2 = \frac{1}{n - 1} \sum_{i \in S} (e_{i} - \bar{e})^2
+$$
+
+:::{.fragment}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+# Residuals
+ei.rat <- tree$volume - B.hat * tree$diameter
+# Estimated error variance
+se2.rat <- sum((ei.rat - mean(ei.rat))^2) / (n - 1)
+se2.rat
+```
+:::
+
+## R Example - Ratio Estimation  {auto-animate="true" auto-animate-easing="ease-in-out"}
+$$
+\widehat{\operatorname{Var}}\left(\hat{t}_{y_{\text{ratio}}}\right) = N^{2}\left(1 - \frac{n}{N}\right)\left(\frac{\mu_{X}}{\bar{x}}\right)^{2}\left(\frac{s_{e}^{2}}{n}\right)
+$$
+
+:::{.fragment}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+v.rat <- N^2 * (1 - n / N) * (tx / N / mean(tree$diameter))^2 * se2.rat / n
+sqrt(v.rat)
+```
+:::
+
+## R Example - Ratio Estimation  {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+#| output-location: slide
+# Plot ratio line
+ggplot(tree, aes(x = diameter, y = volume)) +
+  geom_point(col = "lawngreen", size = 2) +
+  geom_abline(slope = B.hat, intercept = 0, color = "red") +
+  coord_cartesian(xlim = c(0, max(tree$diameter)),
+                  ylim = c(0, max(tree$volume))) +
+  labs(title = "Some Trees!",
+       x = "Diameter",
+       y = "Volume") +
+  theme_bw() +
+  theme(panel.border = element_rect(color = "black", fill = NA, size = 1))
+```
+
+
+## R Example - Regression Estimation {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+Fit the regression model
+
+:::{.fragment}
+$$
+    y = B_{0} + B_{1}x + \varepsilon \quad\Rightarrow\quad \hat{\bar{y}}_{\text{reg}} = \hat{B}_{0} + \hat{B}_{1}\mu_{X}
+$$
+:::
+
+
+:::{.fragment}    
+calculating $\hat{B}_{1}$ and $\hat{B}_{0}$:
+$$
+  \begin{align*}
+        \hat{B}_{1} & = \frac{\sum\limits_{i \in \mathcal{S}}(x_{i} - \bar{x})(y_{i} - \bar{y})}{\sum\limits_{i \in \mathcal{S}}(x_{i} - \bar{x})^{2}} \\[0.25cm]
+        \hat{B}_{0} & = \bar{y} - \hat{B}_{1}\bar{x}
+    \end{align*}
+$$
+:::
+
+:::{.fragment}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+# Estimate slope (B1 hat) using regression formula
+num <- sum((tree$diameter - mean(tree$diameter)) * (tree$volume - mean(tree$volume)))
+dem <- sum((tree$diameter - mean(tree$diameter))^2)
+B1.hat <- num / dem
+B1.hat
+
+# Estimate intercept (B0 hat)
+B0.hat <- mean(tree$volume) - B1.hat * mean(tree$diameter)
+B0.hat
+```
+:::
+
+## R Example - Regression Estimation {.slightlysmaller auto-animate="true" auto-animate-easing="ease-in-out"}
+We could have of course had R fit this regression and calculate the coefficients for us
+
+:::{.fragment}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+#| output-location: fragment
+summary(lm(volume ~ diameter, data = trees))
+```
+:::
+
+
+## R Example - Regression Estimation  {auto-animate="true" auto-animate-easing="ease-in-out"}
+Thus our regression estimate for the total is
+$$
+    \hat{t}_{y_{\text{reg}}} = N\left(\hat{\bar{y}}_{\text{reg}}\right) = N\left(\hat{B}_{0} + \hat{B}_{1}\mu_{X}\right)
+$$
+
+
+:::{.fragment}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+# Estimate of total
+ty.reg <- N * (B0.hat + B1.hat * (tx / N))
+ty.reg
+```
+:::
+
+
+## R Example - Regression Estimation {.slightlysmaller auto-animate="true" auto-animate-easing="ease-in-out"}
+The estimated error variance is:
+$$
+  \begin{align*}
+        s_{res}^2 & = \frac{1}{n - 2} \sum_{i \in S} \left(y_{i} - \left(\hat{B}_{0} + \hat{B}_{1}x_{i}\right)\right)^{2} \\[0.20cm]
+        & = \frac{1}{n - 2} \sum_{i \in S} e_{i}^{2} 
+  \end{align*}
+$$
+
+:::{.fragment}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+# Estimate residuals
+ei.reg <- tree$volume - (B0.hat + B1.hat * tree$diameter)
+# Estimated error variance
+se2.reg <- sum(ei.reg^2) / (n - 2)
+se2.reg
+```
+:::
+
+
+## R Example - Regression Estimation {auto-animate="true" auto-animate-easing="ease-in-out"}
+The estimated variance is:
+$$
+\begin{align*}
+        \operatorname{Var}(\widehat{t}_{\text{reg}}) =  N^{2}\left(1 - \frac{n}{N}\right)\left(\frac{s_{res}^{2}}{n}\right)
+  \end{align*}
+$$
+
+:::{.fragment}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+v.reg <- N^2 * (1 - n / N) * se2.reg / n
+sqrt(v.reg)
+```
+:::
+
+## R Example - Regression Estimation  {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+#| output-location: slide
+# Plot ratio line
+ggplot(tree, aes(x = diameter, y = volume)) +
+  geom_point(col = "lawngreen", size = 2) +
+  geom_abline(slope = B.hat, intercept = 0, color = "red") +
+  geom_abline(slope = B1.hat, intercept = B0.hat, color = "blue") +
+  coord_cartesian(xlim = c(0, max(tree$diameter)),
+                  ylim = c(0, max(tree$volume))) +
+  labs(title = "Some Trees!",
+       x = "Diameter",
+       y = "Volume") +
+  theme_bw() +
+  theme(panel.border = element_rect(color = "black", fill = NA, size = 1))
+```
+
+## R Example - Comparing Estimators  {auto-animate="true" auto-animate-easing="ease-in-out"}
+The true population value:
+$$
+t_{y} = `r sum(volume)`
+$$
+
+```{r}
+#| echo: FALSE
+#| eval: TRUE
+# Create a comparison table
+comparison_table <- data.frame(
+  Estimator = c("Naive", "Ratio", "Regression"),
+  Estimate = c(ty.naive, ty.ratio, ty.reg),
+  Std_Error = c(sqrt(v.naive), sqrt(v.rat), sqrt(v.reg))
+)
+
+kable(comparison_table, digits = 3, caption = "Comparison of Estimators") %>%
+  kable_styling(full_width = FALSE, position = "center")
+```
+
+## [Homework Example - Problem 1 - Lohr 4.8.3]{.r-fit-text} {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+Foresters want to estimate the average age of trees in a stand. Determining age is cumbersome, because one needs to count the tree rings on a core taken from the tree. In general, though, the older the tree, the larger the diameter, and diameter is easy to measure. The foresters measure the diameter of all 1132 trees and find that the population mean equals 10.3. They then randomly select 20 trees for age measurement.
+
+| Tree # | Diameter (x) | Age (y) | Tree # | Diameter (x) | Age (y) |
+|--------|---------------|---------|--------|---------------|---------|
+| 1      | 12.0          | 125     | 11     | 5.7           | 61      |
+| 2      | 11.4          | 119     | 12     | 8.0           | 80      |
+| 3      | 7.9           | 83      | 13     | 10.3          | 114     |
+| 4      | 9.0           | 85      | 14     | 12.0          | 147     |
+| 5      | 10.5          | 99      | 15     | 9.2           | 122     |
+| 6      | 7.9           | 117     | 16     | 8.5           | 106     |
+| 7      | 7.3           | 69      | 17     | 7.0           | 82      |
+| 8      | 10.2          | 133     | 18     | 10.7          | 88      |
+| 9      | 11.7          | 154     | 19     | 9.3           | 97      |
+| 10     | 11.3          | 168     | 20     | 8.2           | 99      |
+
+
+## [Homework Example - Problem 1 - Lohr 4.8.3]{.r-fit-text} {.slightlysmaller auto-animate="true" auto-animate-easing="ease-in-out"}
+Setting up the problem in R:
+
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+x <- c(12, 11.4, 7.9, 9, 10.5, 7.9, 7.3, 10.2, 11.7, 11.3, 5.7, 8, 10.3, 12, 9.2, 8.5, 7, 10.7, 9.3, 8.2)
+y <- c(125, 119, 83, 85, 99, 117, 69, 133, 154, 168, 61, 80, 114, 147, 122, 106, 82, 88, 97, 99)
+treedata <- data.frame(x, y)
+n <- 20
+N <- 1132
+muX <- 10.3
+```
+
+
+## [Homework Example - Problem 1 - Part (b)]{.r-fit-text} {.slightlysmaller auto-animate="true" auto-animate-easing="ease-in-out"}
+Estimate the population mean age of trees in the stand using ratio estimation and give an approximate standard error for your estimate.
+
+* The ratio estimate of the population mean is:
+
+:::{.fragment}
+$$
+    \hat{\bar{y}}_{\text{ratio}} = \frac{\bar{y}}{\bar{x}} \mu_{X} 
+$$
+:::
+
+:::{.fragment}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+ybar <- mean(y)
+xbar <- mean(x)
+ybar_ratio <- (ybar / xbar) * muX
+ybar_ratio
+```
+:::
+
+## [Homework Example - Problem 1 - Part (b)]{.r-fit-text} {.slightlysmaller auto-animate="true" auto-animate-easing="ease-in-out"}
+Estimate the population mean age of trees in the stand using ratio estimation and give an approximate standard error for your estimate.
+
+* The estimated error variance is:
+
+:::{.fragment}
+$$
+   s_e^2 = \frac{1}{n - 1} \sum_{i \in S} \left( y_i - \hat{B}x_{i} - (\bar{y} - \hat{B}\bar{x})\right)^2 = \frac{1}{n - 1} \sum_{i \in S} (e_{i} - \bar{e})^2
+$$
+:::
+
+:::{.fragment}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+ei_rat <- y - (ybar / xbar) * x
+se2_rat <- sum((ei_rat - mean(ei_rat))^2) / (n - 1)
+se2_rat
+```
+:::
+
+## [Homework Example - Problem 1 - Part (b)]{.r-fit-text} {.slightlysmaller auto-animate="true" auto-animate-easing="ease-in-out"}
+Estimate the population mean age of trees in the stand using ratio estimation and give an approximate standard error for your estimate.
+
+* Lastly, the estimated variance is:
+
+:::{.fragment}
+$$
+   \widehat{\operatorname{Var}}\left(\hat{\bar{y}}_{\text{ratio}}\right) = \left(1 - \frac{n}{N}\right)\left(\frac{\mu_{X}}{\bar{x}}\right)^{2}\left(\frac{s_{e}^{2}}{n}\right)
+$$
+:::
+
+:::{.fragment}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+var_ratio <- (1 - n / 1132) * (muX / xbar)^2 * (se2_rat / n)
+se_ratio <- sqrt(var_ratio)
+se_ratio
+```
+:::
+
+## [Homework Example - Problem 1 - Part (c)]{.r-fit-text} {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+Repeat (b) using regression estimation.
+
+* Fit the regression model
+
+:::{.fragment}
+$$
+y = B_{0} + B_{1}x + \varepsilon \quad\Rightarrow\quad \hat{\bar{y}}_{\text{reg}} = \hat{B}_{0} + \hat{B}_{1}\mu_{X}
+$$
+:::
+
+:::{.fragment}
+calculating $\hat{B}_{1}$ and $\hat{B}_{0}$:
+$$
+\begin{align*}
+\hat{B}_{1} & = \frac{\sum\limits_{i \in \mathcal{S}}(x_{i} - \bar{x})(y_{i} - \bar{y})}{\sum\limits_{i \in \mathcal{S}}(x_{i} - \bar{x})^{2}} \\[0.25cm]
+        \hat{B}_{0} & = \bar{y} - \hat{B}_{1}\bar{x} 
+\end{align*}
+$$
+:::
+
+:::{.fragment}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+b1_hat <- sum((x - mean(x)) * (y - mean(y)))
+b1_hat <- cov(x, y) / var(x)                  # Same thing
+b0_hat <- mean(y) - b1_hat * mean(x)
+```
+:::
+
+## [Homework Example - Problem 1 - Part (c)]{.r-fit-text} {.slightlysmaller auto-animate="true" auto-animate-easing="ease-in-out"}
+Repeat (b) using regression estimation.
+
+* Thus our regression estimate is
+
+:::{.fragment}
+$$
+\hat{\bar{y}}_{\text{reg}} = \hat{B}_{0} + \hat{B}_{1}\mu_{X}
+$$
+:::
+
+:::{.fragment}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+ybar_reg <- b0_hat + b1_hat * muX
+ybar_reg
+```
+:::
+
+## [Homework Example - Problem 1 - Part (c)]{.r-fit-text} {.slightlysmaller auto-animate="true" auto-animate-easing="ease-in-out"}
+Repeat (b) using regression estimation.
+
+* The estimated error variance is:
+
+:::{.fragment}
+$$
+s_{res}^2 = \frac{1}{n - 2} \sum_{i \in S} \left(y_{i} - \left(\hat{B}_{0} + \hat{B}_{1}x_{i}\right)\right)^{2} = \frac{1}{n - 2} \sum_{i \in S} e_{i}^{2} 
+$$
+:::
+
+:::{.fragment}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+ei_reg <- y - (b0_hat + b1_hat * x)
+se2_reg <- sum(ei_reg^2) / (n - 2)
+se2_reg
+```
+:::
+
+## [Homework Example - Problem 1 - Part (c)]{.r-fit-text} {.slightlysmaller auto-animate="true" auto-animate-easing="ease-in-out"}
+Repeat (b) using regression estimation.
+
+* Lastly our variance estimate
+
+:::{.fragment}
+$$
+\operatorname{Var}(\widehat{\overline{y}}_{\text{reg}}) = \left(1 - \frac{n}{N}\right)\frac{s_{\text{res}}^2}{n}
+$$
+:::
+
+:::{.fragment}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+var_reg <- (1 - n / N) * (se2_reg / n)
+se_reg <- sqrt(var_reg)
+se_reg
+```
+:::
+
+## [Homework Example - Problem 1]{.r-fit-text} {.slightlysmaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: FALSE
+#| eval: TRUE
+results <- data.frame(
+  Method = c("Ratio", "Regression"),
+  Mean_Est = c(ybar_ratio, ybar_reg),
+  SE = c(se_ratio, se_reg)
+  )
+knitr::kable(results, digits = 3)
+```
+
+## [Formula Summary Time (Mean Estimation)]{.r-fit-text} {.slightlysmaller auto-animate="true" auto-animate-easing="ease-in-out"}
+Lot of formulas have been thrown around, let's put them in a single place.
+
+### **SRS (Naive) Estimation**
+- **Point Estimate**  
+ $\bar{y}$
+
+- **Variance / Standard Error**  
+ $\widehat{\operatorname{Var}}(\hat{\bar{y}}_{\text{naive}}) = \left(1 - \frac{n}{N}\right)^{2} \left(\frac{s^{2}_{y}}{n}\right)$
+
+---
+
+### **Ratio Estimation**
+- **Point Estimate**  
+ $\hat{\bar{y}}_{\text{ratio}} = \frac{\bar{y}}{\bar{x}} \bar{x}_{U} = \hat{B}\bar{x}_{U}$
+
+- **Variance / Standard Error**  
+ $\widehat{\operatorname{Var}}(\hat{\bar{y}}_{\text{ratio}}) = \left(1 - \frac{n}{N}\right)\left(\frac{\bar{x}_{U}}{\bar{x}}\right)^{2}\left(\frac{s_{e}^{2}}{n}\right)$
+
+- **Residual Variance ($s_e^2$)**  
+
+:::{.fragment}
+$$
+\begin{align*}
+          s_e^2 & = \frac{1}{n - 1} \sum_{i \in S} \left( y_i - \hat{B}x_{i} - (\bar{y} - \hat{B}\bar{x})\right)^2 \\[0.20cm]
+          & = \frac{1}{n - 1} \sum_{i \in S} (e_{i} - \bar{e})^2
+  \end{align*}
+$$
+:::
+
+---
+
+### **Regression Estimation**
+- **Coefficients**  
+ $\hat{B}_{1} = \frac{\sum_{i \in S}(x_{i} - \bar{x})(y_{i} - \bar{y})}{\sum_{i \in S}(x_{i} - \bar{x})^{2}}$ 
+ $\hat{B}_{0} = \bar{y} - \hat{B}_{1}\bar{x}$
+
+- **Point Estimate**  
+ $\hat{\bar{y}}_{\text{reg}} = \hat{B}_{0} + \hat{B}_{1}\bar{x}_{U}$
+
+- **Variance / Standard Error**  
+ $\operatorname{Var}(\widehat{\bar{y}}_{\text{reg}}) = \left(1 - \frac{n}{N}\right)\left(\frac{s_{e}^{2}}{n}\right)$
+
+- **Residual Variance ($s_{res}^2$)**
+
+:::{.fragment}
+$$
+  \begin{align*}
+        s_{res}^2 & = \frac{1}{n - 2} \sum_{i \in S} \left(y_{i} - \left(\hat{B}_{0} + \hat{B}_{1}x_{i}\right)\right)^{2} \\[0.20cm]
+        & = \frac{1}{n - 2} \sum_{i \in S} e_{i}^{2} 
+  \end{align*}
+$$
+:::
+
+

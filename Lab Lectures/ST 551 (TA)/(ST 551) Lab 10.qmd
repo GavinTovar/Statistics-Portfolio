@@ -1,0 +1,859 @@
+---
+title: "(ST 551) Lab 10 <br> Tons of Totally Tubular Tests"
+format:
+  revealjs:
+    incremental: TRUE
+    scrollable: TRUE
+    theme: dracula
+    transition: slide
+    transition-speed: slow
+    auto-animate: TRUE
+    chalkboard: TRUE
+    code-line-numbers: TRUE
+    plugins:
+      - reveal.js/plugin/zoom-js/zoom.js
+      - reveal.js/plugin/highlight/highlight.js
+---
+
+<style>
+.slightlysmaller {
+  font-size: 0.85em;   /* Slightly smaller than normal */
+}
+
+.evensmaller {
+  font-size: 0.666em;   /* Slightly smaller than normal */
+}
+
+.bigger {
+  font-size: 1.15em;   /* Slightly bigger than normal */
+}
+
+.biggest {
+  font-size: 1.3em;    /* Larger, if needed */
+}
+
+.footnote {
+  position: absolute;
+  bottom: 1em;
+  font-size: 0.8em;
+  color: #555;
+}
+</style>
+
+## Last Lab of Term!
+* Questions, Comments, Concerns?
+* Today's Tests
+  * Mood's Test
+  * Levene's Test
+  * Two-Sample Kolmogorov–Smirnov Test
+  * Permutation Test
+* Let's get cookin'
+
+## Mood’s Test: Setting
+
+Setting:
+$$
+\begin{align*}
+X_{1}, X_{2}, \ldots, X_{n_X} &\overset{iid}{\sim} F_X \\[0.25cm]
+Y_{1}, Y_{2}, \ldots, Y_{n_Y} &\overset{iid}{\sim} F_Y
+\end{align*}
+$$
+
+::: {.fragment}
+Where $F_X$ and $F_Y$ are two (possibly different) arbitrary population distributions.
+:::
+
+
+## Mood’s Test: Parameters of Interest {.smaller}
+
+- Population medians $m_X$ and $m_Y$
+
+::: {.fragment}
+$$
+m_X = F_X^{-1}\!\left(\frac{1}{2}\right), 
+\qquad 
+m_Y = F_Y^{-1}\!\left(\frac{1}{2}\right)
+$$
+:::
+
+::: {.fragment}
+These satisfy:  
+$$
+P(X \le m_X) = P(X \ge m_X), \qquad 
+P(Y \le m_Y) = P(Y \ge m_Y)
+$$
+:::
+
+
+## Mood’s Test: Null Hypothesis
+
+::: {.fragment}
+$$
+H_0: m_X = m_Y
+$$
+:::
+
+
+## Mood’s Test: Estimator {.smaller}
+
+If $m_X = m_Y = m$ (as is the case under $H_{0}$), our best estimate of the common median is the **combined sample median**:
+
+::: {.fragment}
+$$
+\hat{m} = \text{median}\{X_1, \ldots, X_{n_X}, Y_1, \ldots, Y_{n_Y}\}
+$$
+:::
+
+
+## [Sampling Distribution of the Sample Median]{.r-fit-text} {.smaller}
+For iid data $X_1, \ldots, X_n$ with density $f(x)$, the sample median, $\hat{m}$, is asymptotically normal:
+
+::: {.fragment}
+$$
+\hat{m} \;\dot\sim\; N\!\left(m,\, \frac{1}{4n \cdot \left[f(m)\right]^2}\right)
+$$
+:::
+
+
+## Mood’s Test Procedure {.smaller}
+
+1) Find combined sample median $\hat{m}$
+2) Test that the true population proportion of $X$ observations greater than $\hat{m}$ is equal to the true population proportion of $Y$ observations greater than $\hat{m}$
+
+- It's often helpful (when you're performing this test yourself) to create a table similar to the following:
+
+::: {.fragment}
+$$
+\begin{array}{|c|c|c|c|}
+\hline
+ & \# > \hat{m} & \# \le \hat{m} & \text{Total} \\[0.25cm]
+\hline
+X \text{ Sample} & s_X & n_X - s_X & n_X \\[0.25cm]
+\hline
+Y \text{ Sample} & s_Y & n_Y - s_Y & n_Y \\[0.25cm]
+\hline
+\end{array}
+$$
+:::
+
+::: {.fragment}
+This table summarizes the data so we can perform any test of association, independence, or homogeneity:
+:::
+
+## Mood’s Test Procedure {.smaller}
+Since we have that table we could perform the usual contingency table tests:
+
+- Fisher’s exact test
+- Log-Odds Ratio
+- Pearson’s Chi-Squared
+
+::: {.fragment}
+Though often it's easiest to just use the two-sample binomial proportions **z-test** (equivalent to Pearson chi-squared) as alluded to before
+:::
+
+## Mood’s Test Procedure {.evensmaller}
+From our table:
+$$
+\begin{array}{|c|c|c|c|}
+\hline
+ & \# > \hat{m} & \# \le \hat{m} & \text{Total} \\[0.25cm]
+\hline
+X \text{ Sample} & s_X & n_X - s_X & n_X \\[0.25cm]
+\hline
+Y \text{ Sample} & s_Y & n_Y - s_Y & n_Y \\[0.25cm]
+\hline
+\end{array}
+$$
+
+::: {.fragment}
+The $z$-test statistic is:
+$$
+z = 
+\frac{\hat{p}_X - \hat{p}_Y}
+{\sqrt{\hat{p}_c(1-\hat{p}_c)\left(\frac{1}{n_X} + \frac{1}{n_Y}\right)}}
+$$
+where
+:::
+
+- $\hat{p}_{X} = \frac{s_{X}}{n_{X}}, \qquad \hat{p}_{Y} = \frac{s_{Y}}{n_{Y}}$
+- $\hat{p}_{C} = \frac{s_{X} + s_{Y}}{n_{X} + n_{Y}} = \frac{s_{X} + s_{Y}}{N}$
+
+## Mood’s Test Example {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+# Load library needed for dataset
+library(Sleuth3)
+```
+
+## Mood’s Test Example {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+# Separate Group A and Group B:
+groupA <- ex0125$Zinc[ex0125$Group == 'A']
+groupB <- ex0125$Zinc[ex0125$Group == 'B']
+```
+
+## Mood’s Test Example {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+# Compute the combined median
+medComb <- median(ex0125[["Zinc"]])
+```
+
+## Mood’s Test Example {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+# Construct the 2x2 table counting observations above/below the median:
+tabZinc <- rbind(c(sum(groupA > medComb), sum(groupA <= medComb)), 
+                 c(sum(groupB > medComb), sum(groupB <= medComb)))
+tabZinc
+```
+
+## Mood’s Test Example {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+# With our table we can then just use a Chi-squared test:
+chisq.test(tabZinc)
+```
+
+## Levene’s Test Setting
+Setting:
+$$
+\begin{align*}
+\text{Population 1: } & X_{1}, X_{2}, \ldots, X_{m} \\[0.25cm]
+\text{Population 2: } & Y_{1}, Y_{2}, \ldots, Y_{n}
+\end{align*}
+$$
+
+::: {.fragment}
+We're interested in testing:
+$$
+\begin{align*}
+H_{0}: \sigma^{2}_{X} = \sigma^{2}_{Y}
+\end{align*}
+$$
+:::
+
+## Levene’s Test Implementations {.evensmaller}
+The variations of this test arise from the different ways we construct new variables that measure how far each observation is from a chosen measure of central tendency.
+
+- **Step 1:** Choose how we are going to measure distance:
+  - Option A: Absolute difference from sample median
+
+::: {.fragment}
+$$
+U_i = |X_i - \text{med}(X)| \qquad 
+V_i = |Y_i - \text{med}(Y)|
+$$
+:::
+
+  - Option B: Squared difference from sample median
+
+::: {.fragment}
+$$
+U_i = (X_i - \text{med}(X))^2 \qquad 
+V_i = (Y_i - \text{med}(Y))^2
+$$
+:::
+
+
+  - Option C: Absolute difference from sample mean
+
+::: {.fragment}
+$$
+U_i = |X_i - \bar{X}| \qquad 
+V_i = |Y_i - \bar{Y}|
+$$
+:::
+
+  - Option D: Squared difference from sample mean
+
+::: {.fragment}
+$$
+U_i = (X_i - \bar{X})^2 \qquad 
+V_i = (Y_i - \bar{Y})^2
+$$
+:::
+
+- **Step 2:** Perform a two-sample $t$-test to test the hypothesis that the population mean of the $U_{i}$ is the same as the population mean of $V_{i}$, that is, we're testing:
+
+::: {.fragment}
+$$
+H_{0}: \mu_{U} = \mu_{V}
+$$
+:::
+
+## Levene’s Test Interpretation
+- Interpretation depends on how differences are measured.
+- **Only Option D** can be interpreted as testing a difference in **population variances**.
+
+## Levene’s Test Assumptions
+- Independence within and between samples  
+- Reasonably large sample sizes so that t-test assumptions hold for $U_i$ and $V_i$  
+- If equal-variance t-test is used, we assume $U_i$ and $V_i$ have equal variances
+
+## Levene’s Test Uses
+- When do we use this?
+  - To answer direct questions about differences in variance/spread  
+  - To decide which two-sample t-test to use (**should not do this**)  
+    - Not recommended: low power for detecting variance differences  
+    - Prefer **Welch’s t-test** unless certain variances are equal
+
+## Levene’s Test Example {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+# Compute the squared deviations of each observation from their respective sample means
+uVals <- (groupA - mean(groupA))^2
+vVals <- (groupB - mean(groupB))^2
+```
+
+## Levene’s Test Example {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+# Perform t-test
+t.test(uVals, vVals)
+```
+
+## Levene’s Test Example {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+# R of course has built in functions
+library(car)
+```
+
+## Levene’s Test Example {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+# Syntax Version 1
+leveneTest(y = ex0125$Zinc, group = ex0125$Group)
+```
+
+## Levene’s Test Example {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+# Syntax Version 2
+leveneTest(Zinc ~ Group, data = ex0125)
+```
+
+## Levene’s Test Example {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+# Does absolute median distance by default
+uVals <- abs(groupA - median(groupA))
+vVals <- abs(groupB - median(groupB))
+```
+
+## Levene’s Test Example {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+# We see the same results `by hand'
+t.test(uVals, vVals, var.equal = TRUE)
+```
+
+## Levene’s Test Example {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+# Absolute mean distance version
+leveneTest(Zinc ~ Group, data = ex0125, center = mean)
+```
+
+## Levene’s Test Example {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+# Absolute mean distance version
+uVals <- abs(groupA - mean(groupA))
+vVals <- abs(groupB - mean(groupB))
+t.test(uVals, vVals, var.equal = TRUE)
+```
+
+
+
+## [Two-Sample Kolmogorov–Smirnov Test: Setting]{.r-fit-text}
+
+$$
+\begin{align*}
+X_{1}, X_{2}, \ldots, X_{n_X} &\overset{iid}{\sim} F_X \\[0.25cm]
+Y_{1}, Y_{2}, \ldots, Y_{n_Y} &\overset{iid}{\sim} F_Y
+\end{align*}
+$$
+
+::: {.fragment}
+Where $F_X$ and $F_Y$ are two (possibly different) arbitrary population distributions.
+:::
+
+## [Two-Sample Kolmogorov–Smirnov Test: Hypotheses]{.r-fit-text}
+
+::: {.fragment}
+$$
+H_0: F_X = F_Y, \qquad\qquad H_A: F_X \ne F_Y
+$$
+:::
+
+
+## KS Test Statistic {.smaller}
+
+::: {.fragment}
+The test statistic is the maximum vertical distance between the empirical CDFs:
+$$
+D = \sup_x \left| \hat{F}_X(x) - \hat{F}_Y(x) \right|
+$$
+:::
+
+::: {.fragment}
+Where the empirical CDFs are:
+$$
+\hat{F}_X(x) = \frac{1}{n_X}\sum_{i=1}^{n_X} \mathbf{1}\{X_i \le x\},
+\qquad
+\hat{F}_Y(x) = \frac{1}{n_Y}\sum_{i=1}^{n_Y} \mathbf{1}\{Y_i \le x\}
+$$
+:::
+
+## [Two-Sample Kolmogorov–Smirnov Test: Example]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+# So much code we have to write...
+ks.test(groupA, groupB)
+```
+
+## Permutation Tests: Setting
+
+$$
+\begin{align*}
+X_{1}, X_{2}, \ldots, X_{n_X} &\overset{iid}{\sim} F_X \\[0.25cm]
+Y_{1}, Y_{2}, \ldots, Y_{n_Y} &\overset{iid}{\sim} F_Y
+\end{align*}
+$$
+
+::: {.fragment}
+Where $F_X$ and $F_Y$ are two (possibly different) arbitrary population distributions.
+:::
+
+
+## Permutation Tests: Basic Idea {.smaller}
+
+(1) **Choose a test statistic** $W$ that measures the type of difference of interest (e.g., difference in sample means, $t$-statistic, ratio of sample variances, difference in medians, etc.)
+
+(2) **Permute group labels** across all observations and recompute the test statistic.
+
+(3) **Repeat many times** to obtain the permutation distribution of $W$.
+
+(4) **Compute the p-value** by comparing the observed statistic to its permutation distribution.
+
+## Permutation Tests: Performance {.smaller}
+How does this test perform? Well...
+
+- It depends (my favorite answer!)
+  - The effectiveness of a permutation test depends on the test statistic chosen, but the test can be sensitive to differences beyond what the statistic measures. 
+  - Permutation tests rely on exchangeability—the assumption that both samples come from identical distributions, not merely distributions with equal test statistics of interest.
+  
+## Permutation Tests: Simulations {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+# Generate some data
+n1 <- 5
+n2 <- 10
+```
+
+## Permutation Tests: Simulations {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+# Generate some data
+n1 <- 5
+n2 <- 10
+
+sampA <- rnorm(n1, 0, 1)
+sampB <- rnorm(n2, 0, 10)
+```
+
+## Permutation Tests: Simulations {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+# Generate some data
+n1 <- 5
+n2 <- 10
+
+sampA <- rnorm(n1, 0, 1)
+sampB <- rnorm(n2, 0, 10)
+sampA
+sampB
+```
+
+## Permutation Tests: Simulations {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+n1 <- 5
+n2 <- 10
+sampA <- rnorm(n1, 0, 1)
+sampB <- rnorm(n2, 0, 10)
+
+# Calculate observed test statistic
+testStat <- mean(sampA) - mean(sampB)
+```
+
+## Permutation Tests: Simulations {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+n1 <- 5
+n2 <- 10
+sampA <- rnorm(n1, 0, 1)
+sampB <- rnorm(n2, 0, 10)
+
+# Calculate observed test statistic
+testStat <- mean(sampA) - mean(sampB)
+testStat
+```
+
+## Permutation Tests: Simulations {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+# Combining the two samples into one vector:
+sampComb <- c(sampA, sampB)
+sampComb
+```
+
+## Permutation Tests: Simulations {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+# Select a random set of n1 indices (positions) to be the new sample A
+permAind <- sample(1:(n1 + n2), n1, replace = FALSE)
+permAind
+```
+
+## Permutation Tests: Simulations {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+# Index to obtain new sample
+sampA.perm <- sampComb[permAind]
+sampA.perm
+```
+
+## Permutation Tests: Simulations {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+# Complement of indices A are sample B
+sampB.perm <- sampComb[-permAind]
+sampB.perm
+```
+
+## Permutation Tests: Simulations {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+# Compute permuted test statistic
+permStat <- mean(sampA.perm) - mean(sampB.perm)
+permStat
+```
+
+## Permutation Tests: Simulations {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: FALSE
+# Do this many times
+nPerm <- 1000
+permStats <- rep(0, nPerm)
+```
+
+## Permutation Tests: Simulations {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: FALSE
+# Do this many times
+nPerm <- 1000
+permStats <- rep(0, nPerm)
+for (j in 1:nPerm) {
+  permAind <- sample(1:(n1 + n2), n1, replace = FALSE)
+  sampA.perm <- sampComb[permAind]
+  sampB.perm <- sampComb[-permAind]
+}
+```
+
+## Permutation Tests: Simulations {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: FALSE
+# Do this many times
+nPerm <- 1000
+permStats <- rep(0, nPerm)
+for (j in 1:nPerm) {
+  permAind <- sample(1:(n1 + n2), n1, replace = FALSE)
+  sampA.perm <- sampComb[permAind]
+  sampB.perm <- sampComb[-permAind]
+  permStats[j] <- mean(sampA.perm) - mean(sampB.perm)
+}
+```
+
+## Permutation Tests: Simulations {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+# Do this many times
+nPerm <- 1000
+permStats <- rep(0, nPerm)
+for (j in 1:nPerm) {
+  permAind <- sample(1:(n1 + n2), n1, replace = FALSE)
+  sampA.perm <- sampComb[permAind]
+  sampB.perm <- sampComb[-permAind]
+  permStats[j] <- mean(sampA.perm) - mean(sampB.perm)
+}
+perm.pval <- 2 * min(mean(testStat >= permStats), mean(testStat <= permStats))
+perm.pval
+```
+
+## Permutation Tests: Simulations {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+#| output-location: slide
+# Easiest to visualize this p-value
+hist(permStats, 
+     breaks = 30, 
+     col = "#ce72fc", 
+     main = "Histogram of Permuted Test Statistics",
+     xlab = "Permuted Statistics")
+abline(v = testStat, col = "#72fca9", lwd = 3)
+```
+
+## Permutation Tests: Simulations {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: FALSE
+# Can assess the performance by performing the previous code with many datasets
+nSim <- 1000
+nPerm <- 500
+n1 <- 40
+n2 <- 20
+pvals.perm <- rep(0, nSim)
+```
+
+## Permutation Tests: Simulations {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: FALSE
+# Can assess the performance by performing the previous code with many datasets
+nSim <- 1000
+nPerm <- 500
+n1 <- 40
+n2 <- 20
+pvals.perm <- rep(0, nSim)
+
+for (i in 1:nSim) {
+  sampA <- rnorm(n1, 0, 1)
+  sampB <- rnorm(n2, 0, 10)
+  sampComb <- c(sampA, sampB)
+  testStat <- mean(sampA) - mean(sampB)
+}
+```
+
+## Permutation Tests: Simulations {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: FALSE
+# Can assess the performance by performing the previous code with many datasets
+nSim <- 1000
+nPerm <- 500
+n1 <- 40
+n2 <- 20
+pvals.perm <- rep(0, nSim)
+
+for (i in 1:nSim) {
+  sampA <- rnorm(n1, 0, 1)
+  sampB <- rnorm(n2, 0, 10)
+  sampComb <- c(sampA, sampB)
+  testStat <- mean(sampA) - mean(sampB)
+  
+  permStats <- rep(0, nPerm)
+  for (j in 1:nPerm) {
+    permAind <- sample(1:(n1 + n2), n1, replace = FALSE)
+    sampA.perm <- sampComb[permAind]
+    sampB.perm <- sampComb[-permAind]
+    permStats[j] <- mean(sampA.perm) - mean(sampB.perm)
+  }
+}
+```
+
+## Permutation Tests: Simulations {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+# Can assess the performance by performing the previous code with many datasets
+nSim <- 1000
+nPerm <- 500
+n1 <- 40
+n2 <- 20
+pvals.perm <- rep(0, nSim)
+
+for (i in 1:nSim) {
+  sampA <- rnorm(n1, 0, 1)
+  sampB <- rnorm(n2, 0, 10)
+  sampComb <- c(sampA, sampB)
+  testStat <- mean(sampA) - mean(sampB)
+  
+  permStats <- rep(0, nPerm)
+  for (j in 1:nPerm) {
+    permAind <- sample(1:(n1 + n2), n1, replace = FALSE)
+    sampA.perm <- sampComb[permAind]
+    sampB.perm <- sampComb[-permAind]
+    permStats[j] <- mean(sampA.perm) - mean(sampB.perm)
+  }
+  
+  pvals.perm[i] <- 2 * min(mean(testStat >= permStats), mean(testStat <= permStats))
+}
+
+mean(pvals.perm < 0.05)
+```
+## Homework 6 - Question 2 - Part (d) {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+Construct three distributions F, G, and H such that for $X \sim F$, $Y \sim G$, and $Z \sim H$, we have
+
+$$
+P(X > Y) > 0.5, \qquad
+P(Y > Z) > 0.5, \qquad
+P(Z > X) > 0.5
+$$
+
+Hints: One way to accomplish this is to have $G$ skewed one way and $H$ skewed the other way, and then shift them up and down the line (by adding or subtracting a constant). So for instance, maybe $F = N(0, 1)$, $G = \chi^2(3) + c_1$, $H = - \chi^2(3) + c_2$. Other skewed distributions would work as well or possibly better.
+
+## Homework 6 - Question 2 - Part (d) {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+### Grid search
+c1Sequence <- c2Sequence <- seq(-10, 10, length = 50)
+```
+
+## Homework 6 - Question 2 - Part (d) {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+### Grid search
+c1Sequence <- c2Sequence <- seq(-10, 10, length = 50)
+cGrid <- expand.grid(c1Sequence, c2Sequence)
+```
+
+## Homework 6 - Question 2 - Part (d) {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+### Grid search
+c1Sequence <- c2Sequence <- seq(-10, 10, length = 50)
+cGrid <- expand.grid(c1Sequence, c2Sequence)
+cGrid
+```
+
+## Homework 6 - Question 2 - Part (d) { auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+#| output-location: fragment
+### See how it got it's name, eh?
+plot(cGrid, col = "purple")
+```
+
+## Homework 6 - Question 2 - Part (d) {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+### Grid search
+c1Sequence <- c2Sequence <- seq(-10, 10, length = 50)
+cGrid <- expand.grid(c1Sequence, c2Sequence)
+
+probMat <- array(NA, dim = c(nrow(cGrid), 3))
+n <- 1000
+```
+
+## Homework 6 - Question 2 - Part (d) {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: FALSE
+### Grid search
+c1Sequence <- c2Sequence <- seq(-10, 10, length = 50)
+cGrid <- expand.grid(c1Sequence, c2Sequence)
+
+probMat <- array(NA, dim = c(nrow(cGrid), 3))
+n <- 1000
+for (i in 1:nrow(cGrid)) {
+  c1 <- cGrid[i, 1]
+  c2 <- cGrid[i, 2]
+}
+```
+
+## Homework 6 - Question 2 - Part (d) {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: FALSE
+### Grid search
+c1Sequence <- c2Sequence <- seq(-10, 10, length = 50)
+cGrid <- expand.grid(c1Sequence, c2Sequence)
+
+probMat <- array(NA, dim = c(nrow(cGrid), 3))
+n <- 1000
+for (i in 1:nrow(cGrid)) {
+  c1 <- cGrid[i, 1]
+  c2 <- cGrid[i, 2]
+  
+  X <- rnorm(n, 0, 1)
+  Y <- rchisq(n, df = 3) + c1
+  Z <- -rchisq(n, df = 3) + c2
+}
+```
+
+## Homework 6 - Question 2 - Part (d) {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+### Grid search
+c1Sequence <- c2Sequence <- seq(-10, 10, length = 50)
+cGrid <- expand.grid(c1Sequence, c2Sequence)
+
+probMat <- matrix(NA, nrow = nrow(cGrid), ncol = 3)
+n <- 1000
+for (i in 1:nrow(cGrid)) {
+  c1 <- cGrid[i, 1]
+  c2 <- cGrid[i, 2]
+  
+  X <- rnorm(n, 0, 1)
+  Y <- rchisq(n, df = 3) + c1
+  Z <- -rchisq(n, df = 3) + c2
+  
+  probMat[i, 1] <- mean(X > Y)
+  probMat[i, 2] <- mean(Y > Z)
+  probMat[i, 3] <- mean(Z > X)
+}
+```
+
+## Homework 6 - Question 2 - Part (d) {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+probMat
+```
+
+## Homework 6 - Question 2 - Part (d) {auto-animate="true" auto-animate-easing="ease-in-out"}
+- Find which rows have all 3 probabilities above 0.50
+- What $c$ value combos do those correspond to?
+- Might need to play around with your grid range and coarseness
+- Once you find some $c$ value that work you can use essentially the same code just no need to change $c_{1}, c_{2}$ each iteration
+- There are other methods aside from where this hint is leading you.

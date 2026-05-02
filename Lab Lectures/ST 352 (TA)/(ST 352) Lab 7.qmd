@@ -1,0 +1,229 @@
+---
+title: "(ST 352) Lab 7 - One-Factor Analysis of Variance"
+format:
+  revealjs:
+    incremental: TRUE
+    scrollable: TRUE
+    theme: dark
+    transition: slide
+    transition-speed: slow
+    auto-animate: TRUE
+    chalkboard: TRUE
+---
+
+## Objectives {transition="zoom" transition-speed="slow"}
+- Use R to perform an One-Way Analysis of Variance procedure including a Multiple Comparison method
+
+## Remember Memory Game Activity
+- Remember to complete the Memory Game and complete thee Memory Game Survey (Due: Thursday May 30th)
+
+## Today's Example
+Researchers wanted to compare the “reflectivity” of four different paints used on highways. Twenty-four sections of highways were randomly selected and one of four types of paints (P1, P2, P3, or P4) was randomly assigned to each section of highway so that each type of paint was used on six sections. After six months, the percent of the original reflectivity was determined and recorded for each paint. The data are in the `paint` data set. The variables are:
+
+- `reflectivity` (percent of original reflectivity after 6 months)
+- `type` (type of paint)
+
+## Today's Data {transition="zoom" transition-speed="slow"}
+```{r}
+paint <- read.delim("C:/Users/Ghcto/OneDrive/Desktop/School/Spring 2024/ST 352 (TA)/Lab 7/paint.txt")
+paint
+```
+
+## Side-by-Side Box-and-Whisker Plot {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+boxplot(reflectivity ~ type, data = paint)
+```
+
+## Side-by-Side Box-and-Whisker Plot {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+boxplot(reflectivity ~ type, data = paint, horizontal = TRUE)
+```
+
+## Side-by-Side Box-and-Whisker Plot {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+boxplot(reflectivity ~ type, data = paint, horizontal = TRUE,
+        col = "plum")
+```
+
+## Side-by-Side Box-and-Whisker Plot {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+boxplot(reflectivity ~ type, data = paint, horizontal = TRUE,
+        col = "plum",
+        xlab = "% of Original Reflectivity After 6 Months",
+        ylab = "Type of Paint",
+        main = "Paint Reflectivity Experiment")
+```
+
+## Side-by-Side Box-and-Whisker Plot {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+boxplot(reflectivity ~ type, data = paint, horizontal = TRUE,
+        col = "plum",
+        xlab = "% of Original Reflectivity After 6 Months",
+        ylab = "Type of Paint",
+        main = "Paint Reflectivity Experiment")
+axis(2, at = c(1:4), labels = c("P1", "P2", "P3", "P4"), las = 2, cex.axis = 1)
+```
+
+## Side-by-Side Box-and-Whisker Plot {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+boxplot(reflectivity ~ type, data = paint, horizontal = TRUE,
+        col = "plum",
+        xlab = "% of Original Reflectivity After 6 Months",
+        ylab = "Type of Paint",
+        main = "Paint Reflectivity Experiment",
+        yaxt = "n")
+axis(2, at = c(1:4), labels = c("P1", "P2", "P3", "P4"), las = 2, cex.axis = 1)
+```
+
+## Why do we want this plot?
+- Typically used to visualize the distribution (quantiles) of some categorical variable
+  - Used to answer your lab questions :)
+
+:::aside
+Questions 1 to 4 can be answered now (if not already)
+:::
+
+## Summary Statistics {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# install.packages("mosaic")
+require(mosaic)
+```
+
+## Summary Statistics {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+favstats(reflectivity ~ type, data = paint)
+```
+
+## Summary Statistics {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Alternative Code - Repeat for Each Paint Type
+summary(paint$reflectivity[paint$type == "P1"])
+```
+
+## Summary Statistics {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Alternative Code - Repeat for Each Paint Type
+summary(paint$reflectivity[paint$type == "P1"])
+length(paint$reflectivity[paint$type == "P1"])
+```
+
+## Summary Statistics {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Alternative Code - Repeat for Each Paint Type
+summary(paint$reflectivity[paint$type == "P1"])
+length(paint$reflectivity[paint$type == "P1"])
+sd(paint$reflectivity[paint$type == "P1"])
+```
+
+## Summary Statistics {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Alternative Alt. Code
+tapply(paint$reflectivity, paint$type, FUN = summary)
+```
+
+## Summary Statistics {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Alternative Alt. Code
+tapply(paint$reflectivity, paint$type, FUN = summary)
+tapply(paint$reflectivity, paint$type, FUN = length)
+```
+
+## Summary Statistics {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Alternative Alt. Code
+tapply(paint$reflectivity, paint$type, FUN = summary)
+tapply(paint$reflectivity, paint$type, FUN = length)
+tapply(paint$reflectivity, paint$type, FUN = sd)
+```
+
+## [Summary Statistics (Comparing Mosaic to Alternative Alt. Output)]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Mosaic Package
+favstats(reflectivity ~ type, data = paint)
+
+# Alternative Alt. Code
+tapply(paint$reflectivity, paint$type, FUN = summary)
+tapply(paint$reflectivity, paint$type, FUN = length)
+tapply(paint$reflectivity, paint$type, FUN = sd)
+```
+
+## Analysis of Variance {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+aov(reflectivity ~ type, data = paint)
+```
+
+## Analysis of Variance {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+paintmod <- aov(reflectivity ~ type, data = paint)
+```
+
+## Analysis of Variance {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+paintmod <- aov(reflectivity ~ type, data = paint)
+summary(paintmod)
+```
+
+:::aside
+Questions 5 and 6 can be answered now (if not already)
+:::
+
+## [Bonferroni Multiple Comparison Method]{.r-fit-text}
+$$
+\text{Reject } H_{0} \text{ if } \\[0.25cm]
+p < \frac{\alpha}{k} \quad\Rightarrow\quad k \times p < \alpha
+$$
+
+:::aside
+Where $k$ is the number of pairwise comparisons and $p$ is our p-value
+:::
+
+## [Bonferroni Multiple Comparison Method]{.r-fit-text}
+$$
+\text{Reject } H_{0} \text{ if } \\[0.25cm]
+p < \frac{0.05}{6} \quad\Rightarrow\quad 6 \times p < 0.05
+$$
+
+:::aside
+Our specific problem numbers have been input
+:::
+
+## [Bonferroni Multiple Comparison Method]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+pairwise.t.test(paint$reflectivity, paint$type, p.adjust.method = "none")
+```
+
+## [Bonferroni Multiple Comparison Method]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Notice our p-values are 6 (the number of pairwise comparisons) times larger now
+pairwise.t.test(paint$reflectivity, paint$type, p.adjust.method = "bonf")
+```
+
+:::aside
+Question 7 (all questions) can now be answered (if not already)
+:::

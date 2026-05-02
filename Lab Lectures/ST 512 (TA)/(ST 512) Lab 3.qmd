@@ -1,0 +1,410 @@
+---
+title: "(ST 412/512) Lab 3 <br> Multiple Linear Regression (MLR) Inference"
+format:
+  revealjs:
+    incremental: TRUE
+    scrollable: TRUE
+    theme: dark
+    transition: slide
+    transition-speed: slow
+    auto-animate: TRUE
+    chalkboard: TRUE
+header-includes:
+  - |
+    <style>
+      .reveal .smaller {
+        font-size: 0.75em;  /* Adjust as needed */
+      }
+
+      .reveal .tiny-font {
+        font-size: 0.5em;  /* Even smaller font size */
+        white-space: nowrap;
+        overflow-x: auto;  /* Allow horizontal scrolling */
+      }
+    </style>
+---
+
+
+## Lab Objectives
+* Perform hypothesis tests 
+* Confidence intervals on single parameters
+* Answer Questions on Practice Quiz
+
+## Dataset {.smaller}
+* `case1002` (The Energy Costs of Echolocation by Bats)
+  * Looking at bats and how much energy they expend in-flight
+  * 20 observations (rows)
+  * 3 variables (columns)
+    * `Mass`: mass (in grams)
+    * `Type`: a factor with 3 levels indicating the type of flying vertebrate: 
+      * non-echolocating bats
+      * non-echolocating birds
+      * echolocating bats
+    * `Energy`: in–flight energy expenditure (in W)
+
+## Loading Data and Packages {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+library(Sleuth3)
+library(ggplot2)
+```
+
+## Loading Data and Packages {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# View Data
+case1002
+```
+
+## Loading Data and Packages {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Observing the structure of our data
+str(case1002)
+```
+
+## Running a MLR {auto-animate="true" auto-animate-easing="ease-in-out"}
+* Recall the question of interest from lecture:
+  * Zoologists wonder whether the combined energy costs of echolocation and flight in bats is just the sum of the flight energy cost and the at-rest echolocation, or whether bats have developed a more efficient mechanism for the in-flight echolocation
+* Could be answered with a test that the coefficient on the echo-locating bat indicator variable was zero
+
+## Running a MLR {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+fit_bats <- lm(log(Energy) ~ log(Mass) + Type, data = case1002)
+summary(fit_bats)
+```
+
+## Running a MLR {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# If we want the coefficients information
+summary(fit_bats)$coefficients
+```
+
+## Running a MLR {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+summary(fit_bats)$coefficients[, 3]   # t-statistics
+```
+
+## Running a MLR {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+summary(fit_bats)$coefficients[, 3]   # t-statistics
+summary(fit_bats)$coefficients[, 4]   # p-value
+```
+
+## Running a MLR {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+summary(fit_bats)$sigma   # Estimate of sigma
+```
+
+## Changing Model {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+* Our current model is
+
+::: {.fragment}
+
+\begin{align*}
+\mu\left(\ln(\text{Energy}) \mid \text{Mass, Type}\right) & = \beta_{0} + \beta_{1}\ln(\text{Mass}) \\
+& \quad + \beta_{2}\mathbf{I}\left\{\text{Type} = \text{Non-Echo Bat}\right\} \\
+& \quad + \beta_{3}\mathbf{I}\left\{\text{Type} = \text{Non-Echo Bird}\right\}
+\end{align*}
+
+:::
+
+* We can see that `echolocating bats` is the reference group (since it comes first alphabetically)
+* If we want to change this, we can change the reference group manually as talked about in last lab
+
+## Changing Model {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Creating a new column where the variable has a different reference group
+case1002$Type2 <- relevel(case1002$Type, ref = "non-echolocating bats")
+```
+
+## Changing Model {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Fitting model with newly created variable
+fit2 <- lm(log(Energy) ~ log(Mass) + Type2, data = case1002)
+summary(fit2)
+```
+
+## Changing Model {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+* Now our current model is
+
+::: {.fragment}
+
+\begin{align*}
+\mu\left(\ln(\text{Energy}) \mid \text{Mass, Type}\right) & = \beta_{0} + \beta_{1}\ln(\text{Mass}) \\
+& \quad + \beta_{2}\mathbf{I}\left\{\text{Type} = \text{Echo Bat}\right\} \\
+& \quad + \beta_{3}\mathbf{I}\left\{\text{Type} = \text{Non-Echo Bird}\right\}
+\end{align*}
+
+:::
+
+## Exercise {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+* Note that the parameter estimate for the non-echolocating bats in the previous model fit and the parameter estimate for the echolocating bats in this model fit are the same. Why?
+
+## Exercise {.tiny-font auto-animate="true" auto-animate-easing="ease-in-out"}
+* Parameter estimate for the non-echolocating bats in the previous model fit
+  * Model 1: Echolocating bats as reference group
+
+::: {.fragment}
+
+
+\begin{align*}
+    \mu\left(\ln(\text{Energy}) \mid \text{Mass, Type}\right) & = \beta_{0} + \beta_{1}\ln(\text{Mass}) \\
+    & \quad + \beta_{2}\mathbf{I}\left\{\text{Type} = \text{Non-Echo Bat}\right\} \\
+    & \quad + \beta_{3}\mathbf{I}\left\{\text{Type} = \text{Non-Echo Bird}\right\} \\[0.25cm]
+    \mu\left(\ln(\text{Energy}) \mid \text{Mass, Type = Echo Bat}\right) & = \beta_{0} + \beta_{1}\ln(\text{Mass})\\[0.25cm]
+    \mu\left(\ln(\text{Energy}) \mid \text{Mass, Type = Non-Echo Bat}\right) & = \beta_{0} + \beta_{1}\ln(\text{Mass}) + \beta_{2} \\[0.25cm]
+    \mu\left(\ln(\text{Energy}) \mid \text{Mass, Type = Non-Echo Bird}\right) & = \beta_{0} + \beta_{1}\ln(\text{Mass}) + \beta_{3} 
+\end{align*}
+
+:::
+
+* Parameter estimate for the echolocating bats in this model fit
+  * Model 2: Non-Echolocating bats as reference group
+
+::: {.fragment}
+
+\small
+\begin{align*}
+    \mu\left(\ln(\text{Energy}) \mid \text{Mass, Type}\right) & = \alpha_{0} + \alpha_{1}\ln(\text{Mass}) \\
+    & \quad + \alpha_{2}\mathbf{I}\left\{\text{Type} = \text{Echo Bat}\right\} \\
+    & \quad + \alpha_{3}\mathbf{I}\left\{\text{Type} = \text{Non-Echo Bird}\right\} \\[0.25cm]
+    \mu\left(\ln(\text{Energy}) \mid \text{Mass, Type = Echo Bat}\right) & = \alpha_{0} + \alpha_{1}\ln(\text{Mass}) + \alpha_{2} \\[0.25cm]
+    \mu\left(\ln(\text{Energy}) \mid \text{Mass, Type = Non-Echo Bat}\right) & = \alpha_{0} + \alpha_{1}\ln(\text{Mass}) \\[0.25cm]
+    \mu\left(\ln(\text{Energy}) \mid \text{Mass, Type = Non-Echo Bird}\right) & = \alpha_{0} + \alpha_{1}\ln(\text{Mass}) + \alpha_{3} 
+\end{align*}
+
+:::
+
+## Exercise {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+* We then would obtain a system of equations
+  * Equation 1: Type = Echo Bat
+  
+  ::: {.fragment}
+  
+  \begin{align*}
+        \beta_{0} + \beta_{1}\ln(\text{Mass}) & = \alpha_{0} + \alpha_{1}\ln(\text{Mass}) + \alpha_{2} 
+  \end{align*}
+  
+  :::
+    
+  * Equation 2: Type = Non-Echo Bat
+  
+  ::: {.fragment}
+  
+  \begin{align*}
+        \beta_{0} + \beta_{1}\ln(\text{Mass}) + \beta_{2} & = \alpha_{0} + \alpha_{1}\ln(\text{Mass})
+    \end{align*}
+    
+  :::
+  
+  
+  * Equation 3: Type = Non-Echo Bird
+  
+  ::: {.fragment}
+    
+  \begin{align*}
+      \beta_{0} + \beta_{1}\ln(\text{Mass}) + \beta_{3}  & = \alpha_{0} + \alpha_{1}\ln(\text{Mass}) + \alpha_{3} 
+  \end{align*}
+  
+  :::
+
+## Exercise {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+* Just rearranging the equations by isolating the constants on one side and the terms with $\ln(\text{Mass})$ on the other side
+* Equation 1: Type = Echo Bat
+  
+  ::: {.fragment}
+  
+  \begin{align*}
+        \beta_0 - \alpha_0 = (\alpha_1 - \beta_1) \ln(\text{Mass}) + \alpha_2
+  \end{align*}
+  
+  :::
+    
+  * Equation 2: Type = Non-Echo Bat
+  
+  ::: {.fragment}
+  
+  \begin{align*}
+        \beta_0 - \alpha_0 = (\alpha_1 - \beta_1) \ln(\text{Mass}) + \beta_2
+    \end{align*}
+    
+  :::
+  
+  
+  * Equation 3: Type = Non-Echo Bird
+  
+  ::: {.fragment}
+    
+  \begin{align*}
+      \beta_0 - \alpha_0 = (\alpha_1 - \beta_1) \ln(\text{Mass}) + \beta_3 - \alpha_3 
+  \end{align*}
+  
+  :::
+  
+## Exercise {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+* Equate the terms for the constants and the $\ln(\text{Mass})$ coefficients From the first and second equations, we have
+  * From the first and second equations, we have:
+  
+  ::: {.fragment}
+  
+  \begin{align*}
+       \alpha_2 = \beta_2
+  \end{align*}
+  
+  :::
+    
+  * From the second and third equations, we have:
+  
+  ::: {.fragment}
+  
+  \begin{align*}
+        \beta_2 = \beta_3 - \alpha_3
+    \end{align*}
+    
+  :::
+  
+  
+  * Thus, we can substitute $\alpha_2$ for $\beta_2$ and find the relationship between $\beta_3$ and $\alpha_3$
+  
+  ::: {.fragment}
+    
+  \begin{align*}
+      \alpha_2 = \beta_3 - \alpha_3
+  \end{align*}
+  
+  \begin{align*}
+      \beta_3 = \alpha_2 + \alpha_3
+  \end{align*}
+  
+  :::
+
+## Question {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+* Test the hypothesis that the mean of log-energy expenditure by non-echolocating bats and birds are different
+* Using the following model:
+
+::: {.fragment}
+
+\begin{align*}
+\mu\left(\ln(\text{Energy}) \mid \text{Mass, Type}\right) & = \beta_{0} + \beta_{1}\ln(\text{Mass}) \\
+& \quad + \beta_{2}\mathbf{I}\left\{\text{Type} = \text{Echo Bat}\right\} \\
+& \quad + \beta_{3}\mathbf{I}\left\{\text{Type} = \text{Non-Echo Bird}\right\}
+\end{align*}
+
+:::
+
+* Since `non-echolocating bats` are the reference group our hypotheses are
+
+::: {.fragment}
+
+$$
+H_{0}: \beta_{3} = 0, \quad\quad\quad H_{1}: \beta_{3} \neq 0
+$$
+:::
+ 
+## Question {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Fitting model with manually created binary variables???
+case1002$ebat <- ifelse(case1002$Type == "echolocating bats", 1, 0)
+case1002$bird <- ifelse(case1002$Type == "non-echolocating birds", 1, 0)
+```
+
+## Question {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Fitting model with manually created binary variables???
+fit_3 <- lm(log(Energy) ~ log(Mass) + ebat + bird, data = case1002)
+summary(fit_3)
+```
+
+## Exercise 2 {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+* Test the hypothesis that the mean of log-energy expenditure by echolocating bats and nonecholocating birds are the same.
+  * Write the model and hypotheses
+  
+::: {.fragment}
+
+\begin{align*}
+\mu\left(\ln(\text{Energy}) \mid \text{Mass, Type}\right) & = \beta_{0} + \beta_{1}\ln(\text{Mass}) \\
+& \quad + \beta_{2}\mathbf{I}\left\{\text{Type} = \text{Non-Echo Bat}\right\} \\
+& \quad + \beta_{3}\mathbf{I}\left\{\text{Type} = \text{Non-Echo Bird}\right\}
+\end{align*}
+
+:::
+
+::: {.fragment}
+
+$$
+H_{0}: \beta_{2} = 0, \quad\quad\quad H_{1}: \beta_{2} \neq 0
+$$
+
+:::
+
+  * $p$-value and conclusion
+
+## Exercise 2 {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Using the first (default) model
+fit_bats <- lm(log(Energy) ~ log(Mass) + Type, data = case1002)
+summary(fit_bats)
+```
+
+## Exercise 3 {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+* Test the hypothesis that the slopes of the linear relationship between the mean of log-energy expenditure and log of Mass are different between echolocating bats and non-echolocating bats.
+  * Write the model and hypotheses
+  
+::: {.fragment}
+
+\begin{align*}
+\mu\left(\ln(\text{Energy}) \mid \text{Mass, Type}\right) & = \beta_{0} + \beta_{1}\ln(\text{Mass}) \\
+& \quad + \beta_{2}\mathbf{I}\left\{\text{Type} = \text{Non-Echo Bat}\right\} \\
+& \quad + \beta_{3}\mathbf{I}\left\{\text{Type} = \text{Non-Echo Bird}\right\} \\
+& \quad + \beta_{4}\mathbf{I}\left\{\text{Type} = \text{Non-Echo Bat}\right\}\cdot\ln(\text{Mass}) \\
+& \quad + \beta_{5}\mathbf{I}\left\{\text{Type} = \text{Non-Echo Bird}\right\}\cdot\ln(\text{Mass}) \\
+\end{align*}
+
+:::
+
+::: {.fragment}
+
+$$
+H_{0}: \beta_{4} = 0, \quad\quad\quad H_{1}: \beta_{4} \neq 0
+$$
+
+:::
+
+  * $p$-value and conclusion
+  
+## Exercise 3 {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Using the first (default) model but now with interactions
+fit_bats_int <- lm(log(Energy) ~ log(Mass) + Type + Type:log(Mass), data = case1002)
+summary(fit_bats_int)
+```
+
+## Confidence Intervals {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Using R
+confint(fit2)
+
+```
+
+## Confidence Intervals {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Using R
+confint(fit2)
+
+# By hand
+-1.57636 + c(-1, 1) * qt(0.975, 16) * 0.28724
+```

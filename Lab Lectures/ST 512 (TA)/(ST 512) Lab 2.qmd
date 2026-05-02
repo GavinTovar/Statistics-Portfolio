@@ -1,0 +1,411 @@
+---
+title: "(ST 412/512) Lab 2 <br> Multiple Linear Regression (MLR) in R!"
+format:
+  revealjs:
+    incremental: TRUE
+    scrollable: TRUE
+    theme: dark
+    transition: slide
+    transition-speed: slow
+    auto-animate: TRUE
+    chalkboard: TRUE
+---
+
+## Lab Objectives
+* Understand how factors work in `R`, and how to specify indicator variables
+* Learn how to specify multiple regression models in `R`
+* Practice matching shorthand, longhand and code for models
+
+## Dataset {.smaller}
+* `case0901` (Effects of Light on Meadowfoam Flowering)
+  * Shining lights on some plants to see if they would grow?
+  * 24 observations (rows)
+  * 3 variables (columns)
+    * `Flowers`: average number of flowers per meadowfoam plant
+    * `Time`: time light intensity regiments started; 1 = Late, 2 = Early
+    * `Intensity`: light intensity (in some wacky unit, idk)
+
+## Loading Data and Packages {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Loading packages
+library(Sleuth3)
+library(ggplot2)
+```
+
+## Loading Data and Packages {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# View Data
+case0901
+```
+
+## Factors?! {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Observing the structure of our dataframe
+str(case0901)
+```
+
+## Brief Overview of MLR {.smaller}
+* If we are to treat `Intensity` as a continuous random variable, our model equation looks like
+
+::: {.fragment}
+
+$$
+  \mu\left(Y \mid \mathbf{X}\right) = \beta_{0} + \beta_{1}X_{1} + \beta_{2}X_{2}
+$$
+
+:::
+
+::: {.fragment}
+
+$$
+  \mu\left(\text{Flower} \mid \text{Intensity, Time}\right) = \beta_{0} + \beta_{1}\text{Intensity} + \beta_{2}\text{EarlyStart}
+$$
+
+:::
+
+::: {.fragment}
+
+$$
+  \mu\left(\text{Flower} \mid \text{Intensity, Time}\right) = \beta_{0} + \beta_{1}\text{Intensity} + \beta_{2}\mathbf{I}\left\{\text{EarlyStart} == 1\right\}
+$$
+
+:::
+
+## Brief Overview of MLR {auto-animate="true" auto-animate-easing="ease-in-out"}
+
+:::: {.columns}
+
+::: {.column width="40%"}
+
+```{r}
+#| echo: FALSE
+Data <- case0901
+Data
+```
+
+:::
+
+::: {.column width="60%"}
+
+```{r}
+#| echo: FALSE
+HideData <- Data
+HideData$Time <- factor(Data$Time)
+model.matrix(Flowers ~ Time + Intensity, data = HideData)
+```
+
+:::
+
+::::
+
+
+## Brief Overview of MLR {auto-animate="true" auto-animate-easing="ease-in-out"} {.smaller}
+::: {.fragment}
+
+\begin{align*}
+  \mu\left(\text{Flower} \mid \text{Intensity, Time}\right) & = \beta_{0} + \beta_{1}\text{EarlyStart} + \beta_{2}\text{Intensity300}  \\
+  & \quad + \beta_{3}\text{Intensity450} + \beta_{4}\text{Intensity600} \\
+  & \quad + \beta_{5}\text{Intensity750} + \beta_{6}\text{Intensity900}
+\end{align*}
+
+:::
+
+:::{.column-page}
+
+```{r}
+#| echo: FALSE
+options(width = 100)
+HideData$Intensity <- factor(Data$Intensity)
+model.matrix(Flowers ~ Time + Intensity, data = HideData)
+```
+
+:::
+
+## Brief Overview of MLR {.smaller}
+* Since we are working with an intercept, there will be a reference group assigned to one of the levels in a factor variable
+  * If the levels are character variables (strings) then the reference group is chosen by whichever comes first alphabetically
+  * If the levels are numbers then the lowest number is the reference group (as in our example)
+  * Level order can also be specified in the `factor()` or `relevel()` functions
+* If we fail to change numeric levels to factors then R will treat them as continuous variables and different results will ensue
+
+## Making a Factor {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+str(case0901)
+```
+
+## Making a Factor {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# We can manually change the values to binary
+case0901$Day24 <- as.numeric(case0901$Time == 2)
+```
+
+## Making a Factor {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Breaking down what this is doing
+case0901$Time == 2 # Which observations have an EarlyStart?
+```
+
+## Making a Factor {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Breaking down what this is doing
+as.numeric(case0901$Time == 2) # Turn T/F into 1/0
+```
+
+## Making a Factor {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+case0901$Day24 <- as.numeric(case0901$Time == 2)
+case0901$Day24
+```
+
+## Making a Factor {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+case0901$Day24 <- as.numeric(case0901$Time == 2)
+case0901$Day24
+```
+
+## Linear Model Action {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+summary(lm(Flowers ~ Intensity + Day24, data = case0901))
+```
+
+## Making a Factor {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+case0901$Day24 <- ifelse(case0901$Time == 2, 1, 0)
+case0901$Day24
+```
+
+## Making a Factor {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+case0901$intensity_f <- factor(case0901$Intensity)
+```
+
+## Making a Factor {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+case0901$intensity_f <- factor(case0901$Intensity)
+str(case0901$intensity_f)
+```
+
+## Making a Factor {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+case0901$intensity_f2 <- factor(case0901$Intensity, 
+                                levels = c("750", "300", "450", "600", "150", "900"))
+```
+
+## Making a Factor {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+case0901$intensity_f2 <- factor(case0901$Intensity, 
+                                levels = c("750", "300", "450", "600", "150", "900"))
+levels(case0901$intensity_f2)
+```
+
+## Making a Factor {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+case0901$intensity_f3 <- relevel(case0901$intensity_f, ref = "150")
+```
+
+## Making a Factor {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+case0901$intensity_f3 <- relevel(case0901$intensity_f, ref = "150")
+levels(case0901$intensity_f3)
+```
+
+## Fitting a MLR {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+summary(lm(Flowers ~ Intensity + Time, data = case0901))
+```
+
+## Fitting a MLR {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# More lines of code, but more explicit
+fit_1 <- lm(Flowers ~ factor(Intensity) + Time, data = case0901)
+summary(fit_1)
+```
+
+## Fitting a MLR {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+fit_2 <- lm(Flowers ~ relevel(factor(Intensity), ref = '600') + Time, data = case0901)
+summary(fit_2)
+```
+
+## Fitting a MLR {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+case0901$Intensity_new <- relevel(factor(case0901$Intensity), ref = "600")
+fit_3 <- lm(Flowers ~ Intensity_new + Time, data = case0901)
+summary(fit_3)
+```
+
+## Interactions {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Adding interactions
+fit_int <- lm(Flowers ~ Intensity + Time + Time:Intensity, data = case0901)
+summary(fit_int)
+```
+
+## Interactions {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Similar syntax which will create interaction and lower order terms
+fit_int <- lm(Flowers ~ Time*Intensity, data = case0901)
+summary(fit_int)
+```
+
+## Math Operators in lm() Function {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+ex0915  # the corn yield data
+```
+
+## Math Operators in lm() Function {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Add a square term
+summary(lm(Yield ~ Rainfall + I(Rainfall^2), data = ex0915))
+```
+
+## Math Operators in lm() Function {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Could create another variable outside of lm() then include
+ex0915$RainSquared <- (ex0915$Rainfall)^2
+summary(lm(Yield ~ Rainfall + RainSquared, data = ex0915))
+```
+
+## Examples - From R to Math {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+ex0923
+```
+
+## Examples - From R to Math {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+str(ex0923)
+```
+
+## Examples - From R to Math {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Example 1
+lm(log(Income2005) ~ Educ + Gender, data = ex0923)
+```
+
+## Examples - From R to Math {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Example 1
+summary(lm(log(Income2005) ~ Educ + Gender, data = ex0923))
+```
+
+## Examples - From R to Math {.smaller}
+* `Gender` is coded as a factor and thus translated to indicator variables
+  * F comes before M alphabetically hence Female is the reference group
+* `Educ` is an integer and thus will be treated as a continuous variables
+
+::: {.fragment}
+
+\begin{align*}
+  \mu\left(\ln(\text{Income}) \mid \text{Gender, Education}\right) & = \beta_{0} + \beta_{1}\text{Educ} + \beta_{2}\text{Male}
+\end{align*}
+
+:::
+
+## Examples - From R to Math {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Example 2
+summary(lm(log(Income2005) ~ Educ + relevel(Gender, ref = "male"), data = ex0923))
+```
+
+## Examples - From R to Math {.smaller}
+* The reference group for `Gender` is now change to be male rather than the previous default set to female
+
+::: {.fragment}
+
+\begin{align*}
+  \mu\left(\ln(\text{Income}) \mid \text{Gender, Education}\right) & = \beta_{0} + \beta_{1}\text{Educ} + \beta_{2}\text{Female}
+\end{align*}
+
+:::
+
+## Examples - From R to Math {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Example 3
+summary(lm(log(Income2005) ~ Gender + factor(Educ), data = ex0923))
+```
+
+## Examples - From R to Math {.smaller}
+* The continuous variables `Educ` was changed to a factor thus we will have many indicator variables now
+
+::: {.fragment}
+
+\begin{align*}
+  \mu\left(\ln(\text{Income}) \mid \text{Gender, Education}\right) & = \beta_{0} + \beta_{1}\text{Male} + \beta_{2}\text{Educ7} \\
+  & \quad + \beta_{3}\text{Educ8} + \beta_{4}\text{Educ9} \\
+  & \quad + \beta_{5}\text{Educ10} + \cdots + \beta_{15}\text{Educ20}
+\end{align*}
+
+:::
+
+## Examples - From R to Math {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Example 4
+summary(lm(log(Income2005) ~ Educ + Gender + Educ:Gender, data = ex0923))
+```
+
+## Examples - From R to Math {.smaller}
+* Treating `Educ` as a continuous variables again and adding the interaction between `Educ` and `Gender`
+
+::: {.fragment}
+
+\begin{align*}
+  \mu\left(\ln(\text{Income}) \mid \text{Gender, Education}\right) & = \beta_{0} + \beta_{1}\text{Educ} + \beta_{2}\text{Male} \\
+  & \quad + \beta_{3}\text{Educ}*\text{Male}
+\end{align*}
+
+:::
+
+## Examples - From R to Math {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Example 5
+summary(lm(log(Income2005) ~ Gender + factor(Educ) + factor(Educ):Gender, data = ex0923))
+```
+
+## Examples - From R to Math {.smaller}
+* Both variables treated as factors with interactions
+
+::: {.fragment}
+
+\begin{align*}
+  \mu\left(\ln(\text{Income}) \mid \text{Gender, Education}\right) & = \beta_{0} + \beta_{1}\text{Male} + \beta_{2}\text{Educ7} \\
+  & \quad + \beta_{3}\text{Educ8} + \beta_{4}\text{Educ9} \\
+  & \quad + \beta_{5}\text{Educ10} + \cdots + \beta_{15}\text{Educ20} \\
+  & \quad + \beta_{16}\text{Educ7}\cdot\text{Male} + \beta_{17}\text{Educ8}\cdot\text{Male} \\
+  & \quad + \cdots \beta_{29}\text{Educ20}\cdot\text{Male}
+\end{align*}
+
+:::

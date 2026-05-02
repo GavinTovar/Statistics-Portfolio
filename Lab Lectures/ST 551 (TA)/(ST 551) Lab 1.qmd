@@ -1,0 +1,470 @@
+---
+title: "(ST 551) Lab 1 <br> Welcome to R"
+format:
+  revealjs:
+    incremental: TRUE
+    scrollable: TRUE
+    theme: dark
+    transition: slide
+    transition-speed: slow
+    auto-animate: TRUE
+    chalkboard: TRUE
+---
+
+```{r}
+#| echo: FALSE
+# Here if I want to load something in the background
+```
+
+## Hello! {.smaller}
+* Who am I?
+  * A deep philosophical question
+  * So instead I will answer any questions anyone may have about my identity
+  * If no questions I am content to be anonymous for the term and we can continue
+* Office Hours
+  * Wednesday 3:00pm - 4:00pm (right before this)
+    * All the good spots were taken so fast! :(
+* Lab Structure
+  * I'll yap for a while
+  * After I have put everyone to sleep, I can answer any homework (or whatever) questions
+  
+## Let's Clear Some Things Up
+* Sarah challenged ME to a dual
+  * I don't play Tetris all day, just a couple weeks before we played
+* Next, I should all congratulate you all
+  * You answering of the three questions was perfect! -- Don't let her corrupt your minds
+
+## R We Ready To Go?
+* Hopefully everyone has R and RStudio installed on their system
+
+## What's Happening Today?
+* Kinda boring day today (if you've used R before), we're just covering some basic commands in R
+* There is an R script on Canvas you're welcome to use to follow along, `RLab1.R`
+* These slides go in a slightly different order than the script and lab PDF
+  * Let me know if you find typos and such in the Lab PDFs :|
+  
+## Today's Dataset {.smaller}
+* `case0102` (Sex Discrimination in Employment)
+* **Description**: The data are the beginning salaries for all 32 male and all 61 female skilled, entry–level clerical employees hired by a bank between 1969 and 1977.
+* 93 observations
+* 2 variables:
+  * `Salary`: starting salaries (in US$)
+  * `Sex`: sex of the clerical employee, with levels "Female" and "Male"
+
+## Loading Data {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# If package is not installed: install.packages("Sleuth3")
+library(Sleuth3)
+```
+
+## Dimensions {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+nrow(case0102)
+```
+
+## Dimensions {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+nrow(case0102)
+ncol(case0102)
+```
+
+## Dimensions {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+nrow(case0102)
+ncol(case0102)
+dim(case0102)
+```
+
+## Subsetting {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+head(case0102) # I guess not technically subsetting...
+```
+
+## Subsetting {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+case0102[1:10, ] # First 10 observations
+```
+
+## Subsetting {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+case0102[1:15, 1] # First 15 observations and first column
+```
+
+## Subsetting {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# If we want to look at the first column (all observations)
+case0102[, 1]
+```
+
+## Subsetting {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Since we're working with a dataframe (a list) we can also subset by
+case0102$Salary
+```
+
+## Subsetting {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Since we're working with a dataframe (a list) we can also subset by
+case0102$Salary
+case0102[[1]]
+```
+
+## Subsetting {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Or when the naming attribute is present
+case0102[, "Salary"]
+```
+
+## Subsetting {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+# Or when the naming attribute is present
+case0102[, "Salary"]
+case0102[["Salary"]]
+```
+
+## Structure and Attributes {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# How to check if we have the `names' attribute
+names(case0102)
+```
+
+## Structure and Attributes {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# How to check if we have the `names' attribute
+names(case0102)
+colnames(case0102) # Equivalent to names() on a dataframe
+```
+
+## Structure and Attributes {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# The overall structure of an object
+str(case0102)
+```
+
+## How Many Males? {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Which elements of this vector are `male'
+case0102$Sex == "Male"
+```
+
+## How Many Males? {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Which elements of this vector are `male'
+case0102$Sex == "Male"
+
+# Count how many `TRUE's (1s) there are
+sum(case0102$Sex == "Male")
+```
+
+## How Many Males? {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Could have also done:
+table(case0102$Sex)
+```
+
+## How Many Males? {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Or even:
+summary(case0102$Sex)
+```
+
+## Average Salary? {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# 5 number summary, but no mean
+summary(case0102$Salary)
+```
+
+## Average Salary? {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# 5 number summary, but no mean
+summary(case0102$Salary)
+
+mean(case0102$Salary) # Easy fix
+```
+
+## Average Salary for Males? {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Salary for just male observations
+case0102$Salary[case0102$Sex == "Male"]
+```
+
+## Average Salary for Males? {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Salary for just male observations
+case0102$Salary[case0102$Sex == "Male"]
+
+# Summing up all `TRUE's (1s)
+sum(case0102$Salary[case0102$Sex == "Male"])
+```
+
+## Average Salary for Males? {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Could have used the `subset' function too
+case0102.males <- subset(case0102, Sex == "Male")
+```
+
+## Average Salary for Males? {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Could have used the `subset' function too
+case0102.males <- subset(case0102, Sex == "Male")
+
+# Returns a subsetted dataframe
+head(case0102.males)
+```
+
+## Average Salary for Males? {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Could have used the `subset' function too
+case0102.males <- subset(case0102, Sex == "Male")
+
+# Returns a subsetted dataframe
+head(case0102.males)
+
+# Can now take the mean of the `Salary' variable (column)
+mean(case0102.males$Salary)
+```
+
+## Histogram of Salary Data {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Default plotting (no additional arguments)
+hist(case0102$Salary)
+```
+
+## Histogram of Salary Data {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Can specify bin width
+hist(case0102$Salary, breaks = seq(3750, 8250, 250))
+```
+
+## Sequence {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# How does the seq() function work?
+seq(1, 4, 0.5)
+```
+
+## Sequence {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# How does the seq() function work?
+seq(1, 4, 0.5)
+seq(-4,-6, -1)
+```
+
+## Sequence {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# How does the seq() function work?
+seq(1, 4, 0.5)
+seq(-4,-6, -1)
+seq(1, 4, length = 10) 
+```
+
+## Sequence {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# How does the seq() function work?
+seq(1, 4, 0.5)
+seq(-4,-6, -1)
+seq(1, 4, length = 10) 
+seq(-4,-6, length = 5)
+```
+
+## Histogram of Salary Data {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Adding a title
+hist(case0102$Salary, 
+     breaks = seq(3750, 8250, 250), 
+     main = "Histogram of Salaries")
+```
+
+## Histogram of Salary Data {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Adding a label
+hist(case0102$Salary,
+     breaks = seq(3750, 8250, 250),
+     main = "Histogram of Salaries",
+     xlab = "Salary")
+```
+
+## Histogram of Salary Data {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Adding some color
+hist(case0102$Salary,
+     breaks = seq(3750, 8250, 250),
+     main = "Histogram of Salaries",
+     xlab = "Salary",
+     col = "lightblue")
+```
+
+## [Histogram of Salary Data (For The Boys)]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Histogram of just the guys
+hist(case0102$Salary[case0102$Sex == "Male"])
+```
+
+## [Histogram of Salary Data (For The Boys)]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Histogram of just the guys -- another way
+hist(case0102.males$Salary)
+```
+
+## Boxplot Time {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+boxplot(Salary ~ Sex, data = case0102)
+```
+
+## Summary Statistics {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+samp.A <- rexp(30)
+```
+
+## Summary Statistics {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+samp.A
+```
+
+## Summary Statistics {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+mean(samp.A) # Mean
+```
+
+## Summary Statistics {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+var(samp.A) # Variance
+```
+
+## Summary Statistics {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+median(samp.A) # Median
+```
+
+## Summary Statistics {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+sd(samp.A) # Standard Deviation
+```
+
+## Summary Statistics {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+range(samp.A) # Range
+```
+
+## Summary Statistics {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Each run of this code will generate another (random) sample
+samp.B <- rexp(30)
+samp.B; mean(samp.B); var(samp.B); median(samp.B); sd(samp.B); range(samp.B)
+```
+
+## Sampling Distribution Time {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Basic `for' loop
+for (i in 1:10) {
+  print(i)
+}
+```
+
+## Sampling Distribution Time {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Basic `for' loop
+for (i in c(13, 17, 32)) {
+  print(i)
+}
+```
+
+## Sampling Distribution Time {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Basic `for' loop
+for (i in c(1/10, 1/100, 1/1000)) {
+  print(i^2)
+}
+```
+
+## Sampling Distribution Time {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Basic `for' loop
+rslt <- 0
+for (i in 4:12) {
+  rslt <- rslt + i
+}
+rslt
+```
+
+## Sampling Distribution Time {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Basic `for' loop
+rsltVec <- rep(0, 12)
+for (i in 1:12) {
+  rsltVec[i] <- i^2
+}
+rsltVec
+```
+
+## Sampling Distribution Time {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Basic `for' loop simulation template
+nSamp <- 10000
+sampMedVec <- rep(0, nSamp)
+for (i in 1:nSamp) {
+  newSamp <- rexp(30)
+  sampMedVec[i] <- median(newSamp)
+}
+```
+
+## Sampling Distribution Time {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Histogram of results
+hist(sampMedVec, 
+     main = "Histogram of Sample Median (n = 30)", 
+     xlab = "Sample Median")
+```

@@ -1,0 +1,419 @@
+---
+title: "(ST 412/512) Lab 4 <br> Polynomial Regression"
+format:
+  revealjs:
+    incremental: true
+    scrollable: true
+    theme: dracula
+    transition: slide
+    transition-speed: slow
+    auto-animate: true
+    chalkboard: true
+    code-line-numbers: true
+    css: styles.css
+    plugins:
+      - reveal.js/plugin/zoom-js/zoom.js
+      - reveal.js/plugin/highlight/highlight.js
+---
+
+## Welcome Back
+* Any questions before we get started?
+* Office Hours: Thursday 10:00am - 11:00am
+* Pretty short lab today (hurrah?)
+
+## [R Studio Customization]{.r-fit-text}
+
+For those interested in customizing RStudio, the following are some of my favorite enhancements, ranked by the level of enthusiasm they usually spark.
+
+## [R Studio Customization - Dark Mode]{.r-fit-text}
+* To change the editor's theme in RStudio:
+* **Tools → Global Options → Appearance → Editor theme**
+* If you want more options, you can install the **`rsthemes`** package, which provides additional RStudio IDE themes for syntax highlighting and the user interface.
+
+::: {.fragment}
+```{r}
+#| echo: TRUE
+#| eval: FALSE
+install.packages("rsthemes")
+```
+:::
+
+## [R Studio Customization - Rainbow Parentheses]{.r-fit-text}
+* For multicolored matching parentheses:
+* **Tools → Global Options → Code → Display → Syntax**
+
+## [R Studio Customization - Window Pane Adjustments]{.r-fit-text}
+* I (and many others) find that moving the console to be side-by-side with the source files is convenient. To adjust your windows:
+* **Tools → Global Options → Pane Layout**
+* or you can access the panes by clicking on their icon (below **Profile**). If you want your console side-by-side you would swap its position with the environment.
+* If you want to have multiple scripts set up to edit you can click **Add Column**
+
+## Polynomial Regression
+Polynomial regression is just a specific version of multiple linear regression (MLR) where some of our explanatory variables have higher-order powers, for example:
+
+::: {.fragment}
+$$
+\operatorname{E}\left(Y \mid \mathbf{X}\right) = \beta_{0} + \beta_{1}X + \beta_{2}X^{2} + \beta_{3}X^{3}
+$$
+:::
+
+<div class="footnote fragment" style="position: absolute; bottom: 1em; font-size: 0.8em;">
+   There could be more or less polynomial terms included, this was just an example
+</div>
+
+## [Dataset Summary: Galileo's Data on Falling Bodies]{.r-fit-text}
+* This dataset comes from one of Galileo’s experiments (circa 1609) investigating the motion of falling bodies with a horizontal component of motion.
+* The data were used to support his mathematical proof that such trajectories follow a parabolic path.
+
+## Dataset Details {.smaller}
+
+- **Dataset name:** `case1001` (Galileo's Data on the Motion of Falling Bodies)  
+- **Number of observations:** 7  
+- **Number of variables:** 2  
+
+::: {.fragment}
+
+| Variable   | Description |
+|-----------|-------------|
+| `Distance` | Horizontal distance traveled (in *punti*) |
+| `Height`   | Initial height of the falling body (in *punti*) |
+
+:::
+
+## Loading Data and Packages {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+case1001 <- read.csv("case1001.csv", header = TRUE)
+```
+
+## Loading Data and Packages {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Loading packages (optional)
+library(Sleuth3) # Actually contains case1001 dataset and much more
+library(ggplot2)
+```
+
+## Data's Structure {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Observing the structure of our dataframe
+str(case1001)
+```
+
+## Plotting Data {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: FALSE
+# Base plot code
+plot(case1001$Height, case1001$Distance, 
+     pch = 20, 
+     col = "blue")
+```
+
+## Plotting Data {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: slide
+# Base plot code
+plot(case1001$Height, case1001$Distance, 
+     pch = 20, 
+     col = "blue")
+
+# Plot regression line
+abline(lm(Distance ~ Height, data = case1001), col = "blue")
+```
+
+## Plotting Data {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Correlation between X and Y
+cor(case1001$Height, case1001$Distance)
+```
+
+## Plotting Data {auto-animate="true" auto-animate-easing="ease-in-out"}
+* Some people might have looked at the given plot and thought there was some curvature apparent
+  * Wanting to "capture" such curvature, an option would be to fit a polynomial regression (add in higher order terms to the model)
+  
+## Fitting Polynomial Regressions {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Polynomial of degree 1 (or order 1), i.e., a straight line
+fit1 <- lm(Distance ~ Height, data = case1001)
+summary(fit1)
+```
+
+## Fitting Polynomial Regressions {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+Corresponding to the following model:
+\begin{align*}
+\text{Model Equation: } \quad  \mu(\text{Distance} \mid \text{Height}) & = \beta_0 + \beta_1 \text{Height} \\[0.25cm]
+\text{Fitted Equation: }\quad  \hat{\mu}(\text{Distance} \mid \text{Height}) & = \hat{\beta}_{0} + \hat{\beta}_{1}\,\text{Height} \\[0.20cm]
+    & = `r summary(fit1)[["coefficients"]][1, 1]` + `r summary(fit1)[["coefficients"]][2, 1]`\,\text{Height}
+\end{align*}
+
+## Fitting Polynomial Regressions {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Plotting the residuals
+plot(case1001$Height, fit1$res,
+     pch = 20,
+     col = "blue")
+abline(h = 0) 
+```
+
+## Fitting Polynomial Regressions {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+* We see some pattern in the residual plot (i.e. it does not look to be randomly scattered)
+* If we are to obtain our $R^{2}$ and $R^{2}_{\text{Adj.}}$ values
+
+::: {.fragment}
+$$
+R^{2} = `r summary(fit1)$r.squared`, \quad\quad\quad R^{2}_{\text{Adj.}} = `r summary(fit1)$adj.r.squared`
+$$
+:::
+
+* This is indicating that a large part of the variance is $Y$ is being explained by our explanatory variable(s)
+* One could use these as a metric when fitting higher order terms (to assess fit)
+
+## Fitting Polynomial Regressions {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+case1001$Height2 <- case1001$Height^2 # Need to define the variable to include in the model
+
+# Polynomial of degree 2 (or order 2)
+fit2 <- lm(Distance ~ Height + Height2, data = case1001)
+summary(fit2)
+```
+
+## Fitting Polynomial Regressions {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Plotting the residuals
+plot(case1001$Height, fit2$res, 
+     pch = 20, 
+     col = "blue")
+abline(h = 0)
+```
+
+## Fitting Polynomial Regressions {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Many ways of coding the higher order terms
+fit2.I <- lm(Distance ~ Height + I(Height^2), data = case1001)
+fit2.poly <- lm(Distance ~ poly(Height, 2, raw = TRUE), data = case1001)
+```
+
+## Fitting Polynomial Regressions {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+* `I()` stands for “as-is” or “inhibit interpretation”.
+  * In a formula, R normally treats operators like `^`, `*`, and `+` in a special modeling sense. `I()` tells R: “don’t treat this as a model formula — just calculate it literally.”
+  * Equivalent to when we previously created a separate squared variable
+* `poly(Height, 2, raw = TRUE)` also creates polynomial terms — but does it automatically
+  * `poly(Height, 2)` would be  `raw = FALSE`, meaning `poly()` would create orthogonal (uncorrelated) polynomial terms instead of raw powers.
+  
+## Fitting Polynomial Regressions {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# We can see they're all the same results
+summary(fit2)$coef
+summary(fit2.I)$coef
+summary(fit2.poly)$coef
+```
+
+## Fitting Polynomial Regressions {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Polynomial of degree 3 (or order 3)
+fit3 <- lm(Distance ~ poly(Height, 3, raw = TRUE), data = case1001)
+summary(fit3)
+```
+
+## Fitting Polynomial Regressions {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Plotting the residuals
+plot(case1001$Height, fit3$res, 
+     pch = 20, 
+     col = "blue")
+abline(h = 0)
+```
+
+## Fitting Polynomial Regressions {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Polynomial of degree 4 (or order 4)
+fit4 <- lm(Distance ~ poly(Height, 4, raw = TRUE), data = case1001)
+summary(fit4)
+```
+
+## Fitting Polynomial Regressions {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Plotting the residuals
+plot(case1001$Height, fit4$res, 
+     pch = 20,
+     col = "blue")
+abline(h = 0)
+```
+
+## Fitting Polynomial Regressions {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Polynomial of degree 5 (or order 5)
+fit5 <- lm(Distance ~ poly(Height, 5, raw = TRUE), data = case1001)
+summary(fit5)
+```
+
+## Fitting Polynomial Regressions {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Plotting the residuals
+plot(case1001$Height, fit5$res, 
+     pch = 20,
+     col = "blue")
+abline(h = 0)
+```
+
+## Fitting Polynomial Regressions {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Polynomial of degree 6 (or order 6)
+fit6 <- lm(Distance ~ poly(Height, 6, raw = TRUE), data = case1001)
+summary(fit6)
+```
+
+## Fitting Polynomial Regressions {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Plotting the residuals
+plot(case1001$Height, fit6$res, 
+     pch = 20,
+     col = "blue")
+abline(h = 0)
+```
+
+## Fitting Polynomial Regressions {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+* One could look at all of their $R^{2}$ and $R^{2}_{\text{Adj.}}$ values and compare
+* One could look at the residuals plots
+* One could compare via ESS $F$-tests (two models at a time)
+
+## Model Comparisons {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Comparing the linear and quadratic models
+anova(fit1, fit2) # Order matters (reduced, full)
+```
+
+## Model Comparisons {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+\begin{align*}
+\text{Model Equation (\text{fit1}): } \quad  \mu(\text{Distance} \mid \text{Height}) & = \beta_0 + \beta_1 \text{Height} \\[0.25cm]
+\text{Model Equation (\text{fit2}): }\quad  \mu(\text{Distance} \mid \text{Height}) & = \alpha_0 + \alpha_1 \text{Height} + \alpha_2 \text{Height}^{2}
+\end{align*}
+
+$$
+H_{0}: \alpha_{2} = 0, \qquad H_{1}: \alpha_{2} \neq 0
+$$
+
+
+## Model Comparisons {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Comparing the quadratic and cubic models
+anova(fit2, fit3)
+```
+
+## Model Comparisons {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+anova(fit3, fit4)
+```
+
+## Model Comparisons {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+anova(fit4, fit5)
+```
+
+## Model Comparisons {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+anova(fit5, fit6)
+```
+
+## Plotting {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+* To plot the different curves, we basically need to create a "grid"" of of points in the x-axis and evaluate our polynomials for each one of the points in the grid
+
+::: {.fragment}
+```{r}
+#| echo: TRUE
+#| output-location: slide
+grid <- data.frame(Height = seq(from = 0, to = 1100, by = 1)) # Range based on observed data
+grid$pred1 <- predict(fit1, grid) # Evaluate the grid using fitted model
+plot(grid$Height, grid$pred1, col = "red") # Plotting the points we just created
+```
+:::
+
+## Plotting {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+grid$pred2 <- predict(fit2.poly, grid) # Using the version where we used the function poly()
+grid$pred3 <- predict(fit3, grid)
+grid$pred4 <- predict(fit4, grid)
+grid$pred5 <- predict(fit5, grid)
+grid$pred6 <- predict(fit6, grid)
+```
+
+## Plotting {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: slide
+par(mfrow = c(2, 3))
+# Linear
+plot(case1001$Height, case1001$Distance,
+     pch = 20,
+     col = "blue",
+     main = "linear")
+lines(grid$Height, grid$pred1, col = "red")
+
+# Quadratic
+plot(case1001$Height, case1001$Distance,
+     pch = 20,
+     col = "blue",
+     main = "quadratic")
+lines(grid$Height, grid$pred2, col = "red")
+
+# Cubic
+plot(case1001$Height, case1001$Distance,
+     pch = 20,
+     col = "blue",
+     main = "cubic")
+lines(grid$Height, grid$pred3, col = "red")
+
+# Quartic
+plot(case1001$Height, case1001$Distance,
+     pch = 20,
+     col = "blue",
+     main = "quartic")
+lines(grid$Height, grid$pred4, col = "red")
+
+# Quintic
+plot(case1001$Height, case1001$Distance,
+     pch = 20,
+     col = "blue",
+     main = "quintic")
+lines(grid$Height, grid$pred5, col = "red")
+
+# Sextic
+plot(case1001$Height, case1001$Distance,
+     pch = 20,
+     col = "blue",
+     main = "sextic")
+lines(grid$Height, grid$pred6, col = "red")
+```
+
+## But Really... {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+* Though we teach this exploratory process here, in reality it shouldn't be done preceding inference
+* There are several problems that arise from the previous work shown today:
+  * Multiple hypothesis testing
+  * Data snooping
+  
+  

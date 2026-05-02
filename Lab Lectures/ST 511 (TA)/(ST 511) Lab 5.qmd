@@ -1,0 +1,414 @@
+---
+title: "(ST 411/511) Lab 5 <br> Ah Yeah! - ANOVA"
+format:
+  revealjs:
+    incremental: TRUE
+    scrollable: TRUE
+    theme: dark
+    transition: slide
+    transition-speed: slow
+    auto-animate: TRUE
+    chalkboard: TRUE
+---
+
+## Lab Objectives
+
+- Perform an ANOVA F-test to evaluate if mean lifetimes differ across various diets (case study 5.1.1)
+- Generate an ANOVA table for finch beak depth data (case study 2.1.1) and compare with previous t-test results.
+- Compute the pooled standard deviation $s_{p}$.
+- Write a confidence interval for the difference in population means (case study 5.1.1)
+
+## Loading Data and Packages {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+library(Sleuth3)
+library(ggplot2)
+```
+
+## Dataset
+- `case0501` (Diet Restriction and Longevity)
+- **Description**: Female mice were randomly assigned to six treatment groups to investigate whether restricting dietary intake increases life expectancy.
+    
+## Dataset
+- 178 observations
+- 2 variables:
+  - `Diet`: Type of diet group
+    - `NP`: Mice ate unlimited amount of nonpurified, standard diet.
+    - `N/N85`: Mice fed normally before and after weaning. After weaning, ration was controlled at 85 kcal/week.
+    - `N/R50`: Normal diet before weaning and reduced calorie diet (50 kcal/week) after weaning.
+    - `R/R50`: Reduced calorie diet of 50 kcal/week both before and after weaning.
+    - `N/R50 lopro`: Normal diet before weaning, restricted diet (50 kcal/week) after weaning, and dietary protein content decreased with age.
+    - `N/R40`: Normal diet before weaning and reduced diet (40 kcal/week) after weaning.
+  - `Lifetime`: Lifetime of each subject (in months)
+    
+## Dataset {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+case0501
+```
+
+## Dataset {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# To see how R orders the groups and some summary statistics
+summary(case0501)
+```
+
+## Side-by-Side Boxplot {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+# Side-by-side boxplots
+qplot(Diet, Lifetime, data = case0501, geom = "boxplot")
+```
+
+## Side-by-Side Boxplot {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: FALSE
+ggplot(case0501, aes(x = Diet, y = Lifetime)) +
+  geom_boxplot(fill = "lightblue", color = "darkblue", outlier.color = "red", outlier.shape = 16) +
+  labs(
+    title = "Lifetime by Diet Group",
+    x = "Diet Type",
+    y = "Lifetime (months)"
+  ) +
+  theme_minimal(base_size = 14) +
+  theme(
+    plot.title = element_text(hjust = 0.5, face = "bold"),
+    axis.text.x = element_text(angle = 45, hjust = 1)
+  )
+```
+
+## ANOVA {auto-animate="true" auto-animate-easing="ease-in-out"}
+- To compare means, we are unable to use $t$-tests here since there are more than 2 groups.
+  - Lucky for us there exists a method to compare more than two population means
+  - ANOVA can be thought about (loosely) as the generalization of the $t$-test to multiple groups $(> 2)$
+
+## ANOVA Assumptions {auto-animate="true" auto-animate-easing="ease-in-out"}
+- Independence
+- Normality
+- Constant (Equal) Variance
+
+## ANOVA Hypotheses {auto-animate="true" auto-animate-easing="ease-in-out"}
+- Null Hypothesis: All (6) population means are equal
+- Alternative Hypothesis: At least one population mean is different than the others
+  - Notice the language, *at least one*, means that only one has to be statistically different from the rest, **not** that all means must be different.
+  
+## ANOVA in R {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Running it in R
+case0501_aov <- aov(Lifetime ~ Diet, data = case0501)
+```
+
+## ANOVA in R {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+case0501_aov
+```
+
+## ANOVA in R {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Obtain the ANOVA table
+anova(case0501_aov)
+```
+
+## ANOVA in R {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Equivalently
+summary(case0501_aov)
+```
+
+## ANOVA Table {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: FALSE
+# Load necessary libraries
+library(knitr)
+library(dplyr)
+
+# Get the summary of the ANOVA
+anova_summary <- summary(case0501_aov)
+
+# Extract the relevant part from the summary
+anova_table <- as.data.frame(anova_summary[[1]])
+
+# Optionally rename the columns for clarity
+colnames(anova_table) <- c("Df", "Sum Sq", "Mean Sq", "F value", "Pr(>F)")
+
+# Replace NAs with empty strings, round numeric values
+anova_table <- anova_table %>%
+  mutate(across(where(is.numeric), ~ ifelse(is.na(.), "", round(., 2))))
+
+# Replace the top right cell (the last row, p-value) with 2.2e-16
+anova_table[1, "Pr(>F)"] <- "2.2e-16"
+
+# Use kable to display the table
+kable(anova_table, caption = "ANOVA Summary Table", digits = 4)
+```
+
+## [2 Different Degrees of Freedom?]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+F.Dist.Plot <- function(df1 = 5, df2 = 10, cooler = "#8a17e3") {
+  # Generate a sequence of x values for plotting the F-distribution
+  x_vals <- seq(0, 5, length.out = 100)
+
+  # Calculate the density of the F-distribution at each x value
+  f_density <- data.frame(
+    x = x_vals,
+    y = df(x_vals, df1, df2)
+  )
+
+  # Plot the F-distribution
+  plop <- ggplot(f_density, aes(x = x, y = y)) +
+    geom_line(color = cooler, size = 1) +
+    labs(
+      title = bquote("F-distribution with " ~ df[1] == .(df1) ~ "and" ~ df[2] == .(df2)),
+      x = "F value",
+      y = "Density"
+      ) +
+    theme_minimal() +
+    theme(
+      plot.title = element_text(face = "bold", size = 16, hjust = 0.5, color = "#333333"),
+      axis.title = element_text(size = 12, face = "bold"),
+      axis.text = element_text(size = 10, color = "#555555"),
+      panel.grid.major = element_line(color = "gray85"),
+      panel.grid.minor = element_blank(),
+      plot.background = element_rect(fill = "#f9f9f9", color = NA),
+    )
+  print(plop)
+}
+```
+
+## [2 Different Degrees of Freedom?]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: slide
+# Plotting our F-distribution in case0501
+F.Dist.Plot(df1 = 5, df2 = 343)
+```
+
+## [2 Different Degrees of Freedom?]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: slide
+# We will typically have a higher denominator degrees of freedom
+F.Dist.Plot(df1 = 5, df2 = 20, cooler = "#4287f5")
+```
+
+## [2 Different Degrees of Freedom?]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: slide
+# What happens if we increase the denominator degrees of freedom?
+F.Dist.Plot(df1 = 5, df2 = 50, cooler = "#f54284")
+```
+
+## [2 Different Degrees of Freedom?]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: slide
+# What happens if we increase the numerator degrees of freedom?
+F.Dist.Plot(df1 = 10, df2 = 20, cooler = "#f5a442")
+```
+
+## [2 Different Degrees of Freedom?]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: slide
+# What happens if we increase the numerator degrees of freedom?
+F.Dist.Plot(df1 = 20, df2 = 20, cooler = "#42eff5")
+```
+
+## [2 Different Degrees of Freedom?]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: slide
+# What happens if we increase the both degrees of freedom?
+F.Dist.Plot(df1 = 50, df2 = 50, cooler = "#42f54b")
+```
+
+## [2 Different Degrees of Freedom?]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: slide
+# Alright, last one
+F.Dist.Plot(df1 = 100, df2 = 100, cooler = "#ed6840")
+```
+
+## [Back to the t-test \*Insert Sunglasses Emoji\*]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+t.test(Depth ~ Year, data = case0201, var.equal = TRUE)
+```
+
+## Compare with ANOVA {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# ANOVA always makes the equal variance assumption
+case0201_aov <- aov(Depth ~ Year, data = case0201)
+```
+
+## Compare with ANOVA {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+anova(case0201_aov)
+```
+
+## Comparing test outputs {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+#| scroll: FALSE
+t.test(Depth ~ Year, data = case0201, var.equal = TRUE)
+
+anova(case0201_aov)
+```
+
+
+## Comparing test outputs {auto-animate="true" auto-animate-easing="ease-in-out"}
+- We see the $p$-values are the same
+- The test statistics are also the same since $(-4.5833)^2 = 21.00664$
+  - A $t$-statistic (with $n-1$ degrees of freedom) squared is equal to an $F$-statistic with one numerator degrees of freedom and $n-1$ denominator degrees of freedom.
+
+
+## Comparing test outputs {auto-animate="true" auto-animate-easing="ease-in-out"}
+$$
+\left(t_{n-1}\right)^{2} = F_{1, n-1}
+$$
+
+## Comparing test outputs {auto-animate="true" auto-animate-easing="ease-in-out"}
+- Thus we can see that the ANOVA F-test is the same as a two-sided two-sample equal variance t-test when there are two groups
+- When there are more than two groups, you can think of the ANOVA F-test as a generalization
+of the two-sided two-sample t-test
+
+## Calculating $s_{p}$ {auto-animate="true" auto-animate-easing="ease-in-out"}
+$$
+\begin{align*}
+s_{p}^{2} & = \frac{(n_{1}-1)s^{2}_{1} + (n_{2}-1)s^{2}_{2}}{(n_{1}+n_{2}-2)} \\[0.25cm]
+s_{p} & = \sqrt{\frac{(n_{1}-1)s^{2}_{1} + (n_{2}-1)s^{2}_{2}}{(n_{1}+n_{2}-2)}}
+\end{align*}
+$$
+
+
+## Calculating $s_{p}$ {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Calculate pooled standard deviation
+sp <- sqrt(((89-1)*1.0353309^2 + (89-1)*0.9064799^2) / (89 + 89 - 2))
+```
+
+## Calculating $s_{p}$ {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+sp <- sqrt(((89-1)*1.0353309^2 + (89-1)*0.9064799^2) / (89 + 89 - 2))
+sp
+```
+
+## Calculating $s_{p}$ {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+anova(case0201_aov)
+```
+
+## Calculating $s_{p}$ {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+anova(case0201_aov)
+sp^2
+```
+
+## Calculating $s_{p}$ {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+anova(case0201_aov)
+166.638/176
+```
+
+## Calculating $s_{p}$ {auto-animate="true" auto-animate-easing="ease-in-out"}
+- $s_{p}^{2}$ is called:
+  - pooled variance estimate
+  - residual mean square
+  - mean squared error (MSE)
+- and estimates the population variance $\sigma^{2}$
+
+## Confidence Intervals
+$$
+(\bar{Y}_{1} - \bar{Y}_{2}) \pm t_{(n_{1}+n_{2}-2)\left(1-\frac{\alpha}{2}\right)} \cdot s_{p}\sqrt{\left(\dfrac{1}{n_{1}} + \dfrac{1}{n_{2}}\right)}
+$$
+
+## Confidence Intervals
+$$
+(\bar{Y}_{i} - \bar{Y}_{j}) \pm t_{(n_{1}+n_{2}-2)\left(1-\frac{\alpha}{2}\right)} \cdot s_{p}\sqrt{\left(\dfrac{1}{n_{i}} + \dfrac{1}{n_{j}}\right)}
+$$
+
+## Confidence Intervals
+- Notice the ladder equation allows for any two groups to be used
+- Since we have the *constant variance* assumption it seems reasonable to use all the data to calculate the estimate for variance and use that for whichever pairwise comparison confidence interval
+- Because we are using this $s_{p}^{2}$ estimate from the ANOVA table we will use its corresponding degrees of freedom (df) for the confidence interval df
+
+## Confidence Intervals (`case0501`) {auto-animate="true" auto-animate-easing="ease-in-out"}
+Let's write a confidence interval for the difference between population mean lifetimes for the N/R50 and lopro diets.
+```{r}
+#| echo: TRUE
+with(case0501, aggregate(Lifetime ~ Diet, FUN = mean))
+```
+
+## Confidence Intervals (`case0501`) {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+with(case0501, aggregate(Lifetime ~ Diet, FUN = length))
+```
+
+## Confidence Intervals (`case0501`) {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Could have also used good ol summary()
+summary(case0501$Diet)
+```
+
+## Confidence Intervals (`case0501`) {auto-animate="true" auto-animate-easing="ease-in-out"}
+For the N/R50 and lopro diets, we are interested in groups 3 and 6, thus 
+$$
+\bar{Y}_{3} = 42.29718, \quad \bar{Y}_{6} = 39.68571, \quad n_{3} = 71, \quad n_{6} = 56
+$$
+
+## Confidence Intervals (`case0501`) {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Calculating our critical value (notice we are using the residual dfs)
+qt(0.975, df = 343)
+```
+
+## Confidence Intervals (`case0501`) {auto-animate="true" auto-animate-easing="ease-in-out"}
+$$
+\bar{Y}_{3} - \bar{Y}_{6} \pm t_{343}\left(1-\frac{\alpha}{2}\right) \cdot \sqrt{s_{p}^{2}} \cdot \sqrt{\left(\dfrac{1}{n_{3}} + \dfrac{1}{n_{6}}\right)} \\[0.25cm]
+42.29718 - 39.68571 \pm t_{343}\left(1-\frac{\alpha}{2}\right) * \sqrt{44.6} * \sqrt{\frac{1}{71} + \frac{1}{56}} \\[0.25cm]
+$$
+
+
+## Confidence Intervals (`case0501`) {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Calculate confidence interval for mean difference
+lower_bound <- 42.29718 - 39.68571 - qt(0.975, 343) * sqrt(44.6) * sqrt(1/71 + 1/56)
+```
+
+## Confidence Intervals (`case0501`) {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Calculate confidence interval for mean difference
+lower_bound <- 42.29718 - 39.68571 - qt(0.975, 343) * sqrt(44.6) * sqrt(1/71 + 1/56)
+upper_bound <- 42.29718 - 39.68571 + qt(0.975, 343) * sqrt(44.6) * sqrt(1/71 + 1/56)
+```
+
+## Confidence Intervals (`case0501`) {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Calculate confidence interval for mean difference
+lower_bound <- 42.29718 - 39.68571 - qt(0.975, 343) * sqrt(44.6) * sqrt(1/71 + 1/56)
+upper_bound <- 42.29718 - 39.68571 + qt(0.975, 343) * sqrt(44.6) * sqrt(1/71 + 1/56)
+c(lower_bound, upper_bound)
+```

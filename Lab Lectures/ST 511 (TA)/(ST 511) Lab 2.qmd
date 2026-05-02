@@ -1,0 +1,462 @@
+---
+title: "(ST 411/511) Lab 2 <br> t-test Party"
+format:
+  revealjs:
+    incremental: TRUE
+    scrollable: TRUE
+    theme: dark
+    transition: slide
+    transition-speed: slow
+    auto-animate: TRUE
+    chalkboard: TRUE
+---
+## All Office Hours {.smaller}
+<ul class="nonincremental">
+  <li>My office hours (Weniger 253)
+    <ul>
+      <li>Tuesday, 2:00pm - 3:00pm</li>
+      <li>Friday, 11:00am - 12:00pm</li>
+    </ul>
+  </li>
+  <li>Other TA office hours (Weniger 253)
+    <ul>
+      <li>Monday, 3:00pm - 4:00pm</li>
+      <li>Tuesday, 12:00pm - 1:00pm</li>
+      <li>Wednesday, 2:00pm - 3:00pm</li>
+      <li>Friday, 3:00pm - 4:00pm</li>
+    </ul>
+  </li>
+  <li>Lisa's office hours (Kidder 82)
+    <ul>
+      <li>Monday, 11:00am - 12:00pm</li>
+      <li>Wednesday, 11:00am - 12:00pm</li>
+    </ul>
+  </li>
+</ul>
+  
+## Objectives {transition="zoom" transition-speed="slow"}
+- Do a paired t-test with R’s `t.test()` function.
+- Calculate the t-statistic and p-value by hand, with R’s assistance.
+- Calculate a confidence interval by hand, using R as a calculator.
+- Do a two-sample t-test using `t.test()`.
+- Read in a data set from a comma-delimited text file
+
+## Lab2.pdf and Lab2.R
+- All the relevant code and details pertaining to Lab 2 are expressed within these two documents
+  
+## Loading packages {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Notice once installed, we only need to load to use now
+library(Sleuth3)
+library(ggplot2)
+```
+
+## Today's Dataset
+- 15 observations
+- 2 variables
+  - `Uneffected`: volume of left hippocampus of unaffected twin (in $\text{cm}^{3}$)
+  - `Affected`: volume of left hippocampus of affected twin (in $\text{cm}^{3}$)
+
+## Today's Dataset {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: FALSE
+help(case0202)
+```
+
+## Today's Dataset {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+case0202
+```
+
+## Explortatory Histogram {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+# Histogram of differences
+qplot(Unaffected - Affected, data = case0202, geom = "histogram")
+```
+
+<!-- ## Explortatory Histogram {auto-animate="true" auto-animate-easing="ease-in-out"} -->
+<!-- ```{r} -->
+<!-- #| echo: TRUE -->
+<!-- #| output-location: fragment -->
+<!-- # Another version of a histogram -->
+<!-- ggplot(data = case0202, aes(x = (Unaffected - Affected))) +  -->
+<!--   geom_freqpoly() + -->
+<!--   labs(title = "Freqpoly Plot of Differences", -->
+<!--        y = "Frequency", -->
+<!--        x = "Difference (Unaffected - Affected) in Twins") + -->
+<!--   theme_bw() -->
+<!-- ``` -->
+
+## Paired t-test {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Create a vector of differences (Unaffected - Affected)
+diffs <- case0202$Unaffected - case0202$Affected
+diffs <- with(case0202, Unaffected - Affected)
+
+# Equivalent ways to do the same thing
+```
+
+## Paired t-test {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Create a vector of differences (Unaffected - Affected)
+diffs
+```
+
+## Paired t-test {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+# Histogram of differences (again)
+qplot(diffs, geom = "histogram")
+```
+
+<!-- ## Paired t-test {auto-animate="true" auto-animate-easing="ease-in-out"} -->
+<!-- ```{r} -->
+<!-- #| echo: TRUE -->
+<!-- #| output-location: fragment -->
+<!-- # Another version of a histogram (again) -->
+<!-- ggplot(data = as.data.frame(diffs), aes(x = diffs)) +  -->
+<!--   geom_freqpoly() + -->
+<!--   labs(title = "Freqpoly Plot of Differences", -->
+<!--        y = "Frequency", -->
+<!--        x = "Difference (Unaffected - Affected) in Twins") + -->
+<!--   theme_bw() -->
+<!-- ``` -->
+
+## Paired t-test {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+# Actually doing the t-test
+t.test(diffs)
+```
+
+## Paired t-test {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+# What else is being done by default?
+t.test(x = diffs, mu = 0, alternative = "two.sided", conf.level = 0.95, paired = FALSE, var.equal = FALSE)
+```
+
+## Paired t-test
+- Notice the `paired` argument is `FALSE` by default. How can we call it a paired t-test if we don't use the paired argument?
+  - A two-sample paired t-test is mathematically equivalent to a one sample t-test on the differences
+- Let's perform it another way and see if our results match
+
+## Paired t-test V2 {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+with(case0202, t.test(Unaffected, Affected, paired = TRUE))
+```
+
+## [Comparing the two paired t-tests side-by-side]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+:::: {.columns}
+
+::: {.column width="50%"}
+```{r}
+#| echo: TRUE
+t.test(diffs)
+```
+:::
+
+::: {.column width="50%"}
+```{r}
+#| echo: TRUE
+with(case0202, t.test(Unaffected, Affected, paired = TRUE))
+```
+:::
+
+::::
+
+## [Make sure to use `paired' argument when performing paired t-tests]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+:::: {.columns}
+
+::: {.column width="50%"}
+```{r}
+#| echo: TRUE
+t.test(diffs)
+```
+:::
+
+::: {.column width="50%"}
+```{r}
+#| echo: TRUE
+with(case0202, t.test(Unaffected, Affected))
+```
+:::
+
+::::
+
+## Paired t-test `by hand'
+$$
+t(\delta_{0}) = \dfrac{(\bar{X} - \bar{Y}) - \delta_{0}}{\sqrt{\dfrac{s^{2}_{X}}{n} + \dfrac{s^{2}_{Y}}{n} - 2\dfrac{s_{XY}}{n}}} = \dfrac{\bar{D}- \delta_{0}}{\sqrt{\dfrac{s^{2}_{D}}{n}}}
+$$
+
+## Paired t-test `by hand'
+$$
+t(0) = \dfrac{(\bar{X} - \bar{Y})}{\sqrt{\dfrac{s^{2}_{X}}{n} + \dfrac{s^{2}_{Y}}{n} - 2\dfrac{s_{XY}}{n}}} = \dfrac{\bar{D}}{\sqrt{\dfrac{s^{2}_{D}}{n}}}
+$$
+
+:::aside
+We typically test if the difference is non-zero therefore the $\delta_{0}$ will be erased
+:::
+
+## Paired t-test `by hand' {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+Ybar <- mean(diffs)  #Sample mean of the differences
+s <- sd(diffs)       #Sample standard deviation
+n <- length(diffs)   #Sample size
+```
+
+## Paired t-test `by hand' {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+Ybar    #Sample mean of the differences
+s       #Sample standard deviation
+n       #Sample size
+```
+
+## Paired t-test `by hand' {auto-animate="true" auto-animate-easing="ease-in-out"}
+$$
+SE(\bar{D}) = \sqrt{\frac{s_{D}^{2}}{n}}
+$$
+
+```{r}
+#| echo: TRUE
+se_Ybar <- s/sqrt(n)    #Calculate the SE of the sample mean
+se_Ybar
+```
+
+## Paired t-test `by hand' {auto-animate="true" auto-animate-easing="ease-in-out"}
+$$
+t\text{-ratio} = \dfrac{\bar{D}}{\sqrt{\dfrac{s^{2}_{D}}{n}}}
+$$
+
+```{r}
+#| echo: TRUE
+t.ratio <- Ybar/se_Ybar
+t.ratio
+```
+
+## Checking That it Matches R {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+t.ratio
+t.test(diffs)
+```
+
+## Probability Distribution Visualization {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: slide
+tt <- data.frame(t.val = seq(-4, 4, length.out = 100))
+theme_set(theme_classic(base_size = 28))
+ggplot(tt, aes(x = t.val, y = dt(t.val, 14))) + 
+  geom_line(size = 1.1) + 
+  ylab("Density") + 
+  ggtitle("t Probability Density Function (pdf)")
+```
+
+```{r}
+theme_set(theme_grey())
+```
+
+## Calculating $p$-values {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+pt(3.228928, 14)
+```
+
+## Visualization of $p$-value {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: FALSE
+t.dist <- data.frame(x = seq(-4, 4, by = 0.001),
+                     y = dt(seq(-4, 4, by = 0.001), df = 14))
+Crit.Vals <- c(-1,1)*t.ratio
+wrong.tail <- subset(t.dist, x < Crit.Vals[2])
+lower.tail <- subset(t.dist, x < Crit.Vals[1])
+upper.tail <- subset(t.dist, x > Crit.Vals[2])
+
+ggplot(data = t.dist, aes(x,y)) +
+    geom_line(linewidth = 1.25) +
+    geom_area(data = wrong.tail, fill = "lightblue") +
+  labs(title = "One-Sided Lower p-value Visualization",
+       y = "Density",
+       x = "t-statistic") +
+  theme_bw()
+```
+
+## Calculating $p$-values {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+1 - pt(3.228928, 14)
+```
+
+## Visualization of $p$-value {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: FALSE
+ggplot(data = t.dist, aes(x,y)) +
+    geom_line(linewidth = 1.25) +
+    geom_area(data = upper.tail, fill = "lightblue") +
+  labs(title = "One-Side Upper p-value Visualization",
+       y = "Density",
+       x = "t-statistic") +
+  theme_bw()
+```
+
+## Calculating $p$-values {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+2*(1 - pt(3.228928, 14))
+
+2*(pt(3.228928, 14, lower.tail = FALSE))
+```
+
+## Visualization of $p$-value {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: FALSE
+ggplot(data = t.dist, aes(x,y)) +
+    geom_line(linewidth = 1.25) +
+    geom_area(data = lower.tail, fill = "lightblue") +
+    geom_area(data = upper.tail, fill = "lightblue") +
+  labs(title = "Two-sided p-value Visualization",
+       y = "Density",
+       x = "t-statistic") +
+  theme_bw()
+```
+
+## Checking That it Matches R {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+t.ratio
+2*(1 - pt(3.228928, 14))
+t.test(diffs)
+```
+
+## [Calculating 95% Confidence Interval `by hand']{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+$$
+\bar{D} \pm t_{n-1}\left(1-\frac{\alpha}{2}\right)\sqrt{\dfrac{s^{2}_{D}}{n}}
+$$
+
+
+## [Calculating 95% Confidence Interval `by hand']{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+Ybar - qt(0.975, df = 14)*se_Ybar
+Ybar + qt(0.975, df = 14)*se_Ybar
+```
+
+## [Calculating 95% Confidence Interval `by hand']{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Another way
+Ybar + c(-1,1)*qt(0.975, df = 14)*se_Ybar
+```
+
+
+## Checking That it Matches R {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+t.ratio
+2*(1 - pt(3.228928, 14))
+Ybar - qt(0.975, df = 14)*se_Ybar
+Ybar + qt(0.975, df = 14)*se_Ybar
+t.test(diffs)
+```
+
+## Case Study 2.1.1. - Two-Sample $t$-test
+- 178 observations
+- 2 variables
+  - `Year`: Year the finch was caught, 1976 or 1978
+  - `Depth`: Beak depth of the finch (mm)
+  
+## Explortatory Plot {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+qplot(factor(Year), Depth, data = case0201, geom = "boxplot")
+```
+
+## Explortatory Plot {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+t.test(Depth ~ Year, data = case0201, var.equal = TRUE)
+```
+
+## One-Sided Alternative Hypothesis
+$$
+H_{0}: \mu_{1} - \mu_{2} = 0, \quad\quad\quad H_{1}: \mu_{1} - \mu_{2} < 0
+$$
+
+## One-Sided $t$-test {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+t.test(Depth ~ Year, data = case0201, var.equal = TRUE, alternative = "less")
+```
+
+## Loading in Data for Homework 2 {.smaller}
+```{mermaid}
+flowchart TD
+A{RStudio} -->|Recommended| B{R Script}
+B -->|"Environment Panel (Top Right Panel)"| C1[Import Dataset Button]
+--> C2("From Text (base)...") 
+--> C3(Wa-La)
+B --> D1["File Button (Top Left)"] 
+--> D2(Import Dataset) 
+--> D3("From Text (base)...") 
+--> D4(Ta-Da)
+B -->|Directly Coding it| E1[Set Working Directory] 
+--> E2("'read.csv' function") 
+--> E3(Woo-Hoo)
+```
+
+## Loading in Data for Homework 2 
+```{r}
+#| echo: TRUE
+setwd("C:/Users/Ghcto/OneDrive/Desktop/School/Year 2/Fall 2024/ST 511 (TA)/Labs/Lab 2")
+```
+
+## Loading in Data for Homework 2 
+```{r}
+#| echo: TRUE
+setwd("C:/Users/Ghcto/OneDrive/Desktop/School/Year 2/Fall 2024/ST 511 (TA)/Labs/Lab 2")
+HW2Dat <- read.csv("bird_stress.csv", stringsAsFactors = TRUE)
+```
+
+## Loading in Data for Homework 2
+```{r}
+#| echo: TRUE
+bird_stress <- read.csv("C:/Users/Ghcto/OneDrive/Desktop/School/Year 2/Fall 2024/ST 511 (TA)/Labs/Lab 2/bird_stress.csv")
+```
+
+## Loading in Data for Homework 2
+```{r}
+#| echo: TRUE
+HW2Dat <- read.csv("C:/Users/Ghcto/OneDrive/Desktop/School/Year 2/Fall 2024/ST 511 (TA)/Labs/Lab 2/bird_stress.csv")
+```
+
+## Loading in Data for Homework 2
+```{r}
+#| echo: TRUE
+HW2Dat
+```
+
+## Loading in Data for Homework 2
+```{r}
+#| echo: TRUE
+str(HW2Dat)
+```
+
+

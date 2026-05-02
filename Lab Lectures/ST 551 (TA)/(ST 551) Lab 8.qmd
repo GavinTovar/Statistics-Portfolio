@@ -1,0 +1,583 @@
+---
+title: "(ST 551) Lab 8 <br> Contingency Tables"
+format:
+  revealjs:
+    incremental: TRUE
+    scrollable: TRUE
+    theme: dracula
+    transition: slide
+    transition-speed: slow
+    auto-animate: TRUE
+    chalkboard: TRUE
+    code-line-numbers: TRUE
+    plugins:
+      - reveal.js/plugin/zoom-js/zoom.js
+      - reveal.js/plugin/highlight/highlight.js
+---
+
+<style>
+.slightlysmaller {
+  font-size: 0.85em;   /* Slightly smaller than normal */
+}
+
+.evensmaller {
+  font-size: 0.666em;   /* Slightly smaller than normal */
+}
+
+.bigger {
+  font-size: 1.15em;   /* Slightly bigger than normal */
+}
+
+.biggest {
+  font-size: 1.3em;    /* Larger, if needed */
+}
+
+.footnote {
+  position: absolute;
+  bottom: 1em;
+  font-size: 0.8em;
+  color: #555;
+}
+</style>
+
+## No Lab Next Week
+* Questions, Comments, Concerns?
+
+
+## Last Episode... {.evensmaller}
+* Last week we talked about the Chi-squared test of homogeneity or independence with the following scenario:
+  * Suppose we sampled $m = 25$ people from Eastern Oregon and $n = 25$ from Western Oregon, classifying each as vegetarian or non-vegetarian:
+
+::: {.fragment}
+\begin{array}{lccc}
+    & \text{Western Oregon} & \text{Eastern Oregon} & \text{Totals} \\
+    \hline
+    \text{Vegetarian} & 15 & 5 & 20 \\
+    \text{Non-vegetarian} & 10 & 20 & 30 \\
+    \text{Totals} & 25 & 25 & 50 \\
+\end{array}
+:::
+
+::: {.fragment}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+tabA <- cbind(c(15, 10), c(5, 20))
+tabA
+```
+:::
+
+## Last Episode... {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+#| output-location: fragment
+testRslt <- chisq.test(tabA, correct = FALSE)
+testRslt
+```
+
+## Last Episode... {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+testRslt <- chisq.test(tabA, correct = FALSE)
+testRslt
+testRslt2 <- prop.test(tabA, correct = FALSE)
+testRslt2
+```
+
+## [This Episode - Fisher's Exact Test]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+fisherRslt <- fisher.test(tabA)
+```
+
+## [This Episode - Fisher's Exact Test]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+fisherRslt <- fisher.test(tabA)
+fisherRslt
+```
+
+## [This Episode - Fisher's Exact Test]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+names(fisherRslt)
+```
+
+
+## [Fisher's Exact Test... Manually :(]{.r-fit-text} {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+- Pros
+  - As long as there is no pairing (our groups are independent) we can always use Fisher's Exact test because we can always estimate an odds ratio
+- Cons
+  - It's a total pain in the butt to calculate by hand (essentially impossible in most cases)
+  - There are just better / easier alternatives (chi-squared test, log-odds tests, difference in proportions test) in most cases
+- So...
+  - In an exam settings, I would pretty much never use this test unless I have to (aka the question tells me I have to)
+
+## [Fisher's Exact Test... Manually :(]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+- What we testing:
+  - $H_{0}: p_{X} = p_{Y}$ (No association between response variable $X$ and grouping variable $G$)
+- Test Statistic: 
+  - Probability of observed table conditioning on margins
+- p-value: 
+  - Sum of probability of all tables as or more extreme than observed table
+  
+  
+## The Hypergeometric Distribution {.smaller}
+- The `dhyper()` function computes probabilities from the **hypergeometric distribution**:
+  - ``dhyper(x, m, n, k)``
+
+- Use it when sampling **without replacement** and counting the number of “successes.”
+
+- In a 2×2 table, the key is:
+  - `x` = the count in the **cell of interest**  
+  - `m` = total count of the corresponding **row or column** containing that cell  
+  - `n = N - m`  
+  - `k` = total of the **other dimension** (row or column) containing that cell  
+
+- It does *not* matter whether you treat `m` and `n` as row totals or column totals, but `m` and `k` must correspond to the row/column of the cell in question (here, the first-row, first-column cell).
+
+---
+
+## Our Example {.evensmaller}
+We observed:
+
+$$
+\begin{array}{lccc}
+    & \text{Western Oregon} & \text{Eastern Oregon} & \text{Totals} \\
+    \hline
+    \text{Vegetarian} & 15 & 5 & 20 \\
+    \text{Non-vegetarian} & 10 & 20 & 30 \\
+    \text{Totals} & 25 & 25 & 50 \\
+\end{array}
+$$
+
+The observed value in cell $[1,1]$ is:
+
+$$
+x = 15
+$$
+
+There are two equivalent ways to parameterize the hypergeometric distribution:
+
+- Treat **row totals** (Vegetarian vs Non-vegetarian) as `m` and `n`  
+- Treat **column totals** (Western vs Eastern Oregon) as `m` and `n`
+- Both yield the same probability.
+
+---
+
+## [Computing the Probability of the Observed Table]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+dhyper(tabA[1,1], m = 25, n = 25, k = 20)
+```
+
+## [Computing the Probability of the Observed Table]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+dhyper(tabA[1,1], m = 25, n = 25, k = 20)
+dhyper(tabA[1,1], m = 20, n = 30, k = 25)
+```
+
+## [Computing the Probability of the Observed Table]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+dhyper(tabA[1,1], m = 25, n = 25, k = 20)
+obsTabProb <- dhyper(tabA[1,1], m = 25, n = 25, k = 20)
+```
+
+## [Computing the Probability of the Observed Table]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+Either case shown computes:
+
+$$
+P\left(X = 15\right) = \frac{\binom{m}{15} \binom{n}{k - 15}}{\binom{50}{k}} = \frac{\binom{25}{15} \binom{25}{5}}{\binom{50}{20}}
+$$
+
+## [Computing the Probability of the Observed Table]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+One could also always just do this ``even more manually'' by:
+
+$$
+P\left(X = 15\right)= \frac{\binom{25}{15} \binom{25}{5}}{\binom{50}{20}}
+$$
+
+::: {.fragment}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+choose(25, 15) * choose(25, 5) / choose(50, 20)
+dhyper(15, m = 25, n = 25, k = 20)
+```
+:::
+
+
+
+## [Probabilities of All Possible Tables]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+The possible values in cell $[1, 1]$ range from 0 to 20:
+$$
+\begin{array}{|c|c|}
+    \hline 
+    k & 20 - k \\
+    \hline
+    25 - k & 25 - (20 - k) \\
+    \hline
+\end{array}
+    \qquad \text{for } k = 0, 1, \ldots, 20
+$$
+
+::: {.fragment}
+To compute hypergeometric probabilities for each
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+dhyper(0:20, m = 25, n = 25, k = 20)
+allTabsProbs <- dhyper(0:20, m = 25, n = 25, k = 20)
+```
+:::
+
+## [p-value Time]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+# The indices of probabilities ≤ the observed table probability
+which(allTabsProbs <= obsTabProb) 
+```
+
+## [p-value Time]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+# The indices of probabilities ≤ the observed table probability
+which(allTabsProbs <= obsTabProb)
+
+# The corresponding values of k producing such tables
+(0:20)[allTabsProbs <= obsTabProb]
+```
+
+## [p-value Time]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+allTabsProbs[allTabsProbs <= obsTabProb]
+```
+
+## [p-value Time]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+allTabsProbs[allTabsProbs <= obsTabProb]
+sum(allTabsProbs[allTabsProbs <= obsTabProb])
+```
+
+## [p-value Time]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+# We can check it matches the R function
+sum(allTabsProbs[allTabsProbs <= obsTabProb])
+fisher.test(tabA)[["p.value"]]
+```
+
+## [p-value Time]{.r-fit-text} {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+$$
+\sum\limits_{i \in \mathcal{T}}P\left(\text{table}_{i}\right) \qquad \text{where } \mathcal{T} \equiv \left\{P\left(\text{table}_{i}\right) \le P\left(\text{observed table}\right)\right\}
+$$
+
+## Paired Binary Data
+- What happens when we don't have independence between groups?
+- We need to account for that correlation structure somehow
+- As an example we can generate some paired binary data and try out our Paired $t$-test and McNemar's test
+
+## Generating Paired Binary Data {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+We want to generate **two paired binary samples**  
+$$
+(X_1, Y_1), (X_2, Y_2), \ldots, (X_n, Y_n)
+$$
+that may be **correlated**. One approach is:
+
+1. Generate each $X_i$ first
+2. Generate $Y_i$ **conditionally** on $X_i$
+
+- This allows the success probability of $Y_i$ to depend on the value of $X_i$ (thus not independent)
+
+---
+
+## Generating Paired Binary Data {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+- Step 1: Generate the X Sample 
+  - We begin by choosing a success probability for $X_i$:
+
+::: {.fragment}
+$$
+P(X_i = 1) = p_X
+$$
+:::
+
+---
+
+## Generating Paired Binary Data {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+- Step 2: Conditional Success Probability for $Y$
+  - To induce correlation, we generate $Y_i$ using:
+
+::: {.fragment}
+$$
+P(Y_i = 1 \mid X_i = 1) = p_{Y|1},
+\qquad
+P(Y_i = 1 \mid X_i = 0) = p_{Y|0}
+$$
+:::
+
+
+::: {.fragment}
+Then the marginal success probability for $Y_i$ is:
+
+$$
+\begin{aligned}
+P(Y_i = 1)
+&= p_{Y|1} \cdot p_X + p_{Y|0} \cdot (1 - p_X)
+\end{aligned}
+$$
+
+:::
+
+- This ensures that the distribution of $Y$ depends on the value of $X$.
+
+---
+
+## Generating Paired Binary Data {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+Matching or Violating the Null Hypothesis, if we want the null hypothesis
+
+$$
+H_0 : p_X = p_Y
+$$
+
+to hold, we must choose $p_{Y|1}$ and $p_{Y|0}$ such that:
+
+$$
+p_X = p_{Y|1}\,p_X + p_{Y|0}(1 - p_X)
+$$
+
+Otherwise the null hypothesis is false. This gives control over whether the paired samples have equal or unequal marginal probabilities.
+
+---
+
+## Generating Paired Binary Data {auto-animate="true" auto-animate-easing="ease-in-out"}
+Lastly, we solve for $p_{Y|0}$. If we **fix** $p_{Y|1}$, we can solve for $p_{Y|0}$:
+
+$$
+p_{Y|0}
+= \frac{p_X - p_{Y|1}p_X}{1 - p_X}
+= p_X \cdot \frac{1 - p_{Y|1}}{1 - p_X}
+$$
+
+This lets us construct any desired $p_Y$.
+
+---
+
+## Generating Paired Binary Data {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+pX <- 0.5      # P(X = 1)
+pY1 <- 0.7     # P(Y = 1 | X = 1)
+
+# Solve for pY0 so that p_Y has desired value
+pY0 <- pX * (1 - pY1) / (1 - pX)
+
+# Marginal P(Y = 1)
+pY <- pY1 * pX + pY0 * (1 - pX)
+pY
+```
+
+## Generating Paired Binary Data {auto-animate="true" auto-animate-easing="ease-in-out"}
+That's the basic idea. With our marginal probabilities worked out. We can generate some data:
+
+- We first set a sample size, 
+- then generating the $X$ sample,
+- then generating the $Y$ sample conditional on the $X$ sample.
+
+
+## Generating Paired Binary Data {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+n <- 50
+```
+
+## Generating Paired Binary Data {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+n <- 50
+sampX <- rbinom(n, 1, pX)
+```
+
+## Generating Paired Binary Data {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+n <- 50
+sampX <- rbinom(n, 1, pX)
+table(sampX)
+```
+
+## Generating Paired Binary Data {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+n <- 50
+sampX <- rbinom(n, 1, pX)
+rbind(sampX, pY1 * (sampX == 1) + pY0 * (sampX == 0)) # Each pair displayed
+```
+
+## Generating Paired Binary Data {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+n <- 50
+sampX <- rbinom(n, 1, pX)
+sampY <- rbinom(n, 1, pY1 * (sampX == 1) + pY0 * (sampX == 0))
+```
+
+## Generating Paired Binary Data {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+n <- 50
+sampX <- rbinom(n, 1, pX)
+sampY <- rbinom(n, 1, pY1 * (sampX == 1) + pY0 * (sampX == 0))
+table(sampX, sampY)
+```
+
+## Testing Time {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+t.test(sampX, sampY, paired = TRUE)
+```
+
+## Testing Time {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+t.test(sampX, sampY, paired = TRUE)
+mcnemar.test(sampX, sampY, correct = FALSE)
+```
+
+## Testing Time {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+nsim <- 10000
+pval.mc <- pval.t <- rep(0, nsim)
+```
+
+## Testing Time {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: FALSE
+nsim <- 10000
+pval.mc <- pval.t <- rep(0, nsim)
+for (i in 1:nsim) {
+  sampX <- rbinom(n, 1, pX)
+  sampY <- rbinom(n, 1, pY1 * (sampX == 1) + pY0 * (sampX == 0))
+}
+```
+
+## Testing Time {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: FALSE
+nsim <- 10000
+pval.mc <- pval.t <- rep(0, nsim)
+for (i in 1:nsim) {
+  sampX <- rbinom(n, 1, pX)
+  sampY <- rbinom(n, 1, pY1 * (sampX == 1) + pY0 * (sampX == 0))
+  pval.mc[i] <- mcnemar.test(sampX, sampY, correct = FALSE)$p.val
+  pval.t[i] <- t.test(sampX, sampY, paired = TRUE)$p.val
+}
+
+```
+
+## Testing Time {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+nsim <- 10000
+pval.mc <- pval.t <- rep(0, nsim)
+for (i in 1:nsim) {
+  sampX <- rbinom(n, 1, pX)
+  sampY <- rbinom(n, 1, pY1 * (sampX == 1) + pY0 * (sampX == 0))
+  pval.mc[i] <- mcnemar.test(sampX, sampY, correct = FALSE)$p.val
+  pval.t[i] <- t.test(sampX, sampY, paired = TRUE)$p.val
+}
+mean(pval.mc < 0.05)
+mean(pval.t < 0.05)
+```
+
+## Testing Time {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+plot(pval.mc, pval.t, 
+     col = "orchid", 
+     pch = 17)
+abline(0, 1)
+```
+
+## Testing Time - Part 2 {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+pX <- 1 / 3      # P(X = 1)
+pY1 <- 0.50      # P(Y = 1 | X = 1)
+
+# Solve for pY0 so that p_Y has desired value
+pY0 <- pX * (1 - pY1) / (1 - pX)
+
+# Marginal P(Y = 1)
+pY <- pY1 * pX + pY0 * (1 - pX)
+pY
+```
+
+## Testing Time - Part 2 {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+n <- 25
+sampX <- rbinom(n, 1, pX)
+sampY <- rbinom(n, 1, pY1 * (sampX == 1) + pY0 * (sampX == 0))
+table(sampX, sampY)
+```
+
+
+## Testing Time - Part 2 {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+nsim <- 10000
+pval.mc <- pval.t <- rep(0, nsim)
+for (i in 1:nsim) {
+  sampX <- rbinom(n, 1, pX)
+  sampY <- rbinom(n, 1, pY1 * (sampX == 1) + pY0 * (sampX == 0))
+  pval.mc[i] <- mcnemar.test(sampX, sampY, correct = FALSE)$p.val
+  pval.t[i] <- t.test(sampX, sampY, paired = TRUE)$p.val
+}
+mean(pval.mc < 0.05)
+mean(pval.t < 0.05)
+```
+
+## Testing Time - Part 2 {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: TRUE
+plot(pval.mc, pval.t, 
+     col = "lawngreen", 
+     pch = 17)
+abline(0, 1)
+```

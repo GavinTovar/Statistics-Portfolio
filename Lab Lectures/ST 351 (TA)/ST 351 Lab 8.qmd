@@ -1,0 +1,519 @@
+---
+title: "(ST 351) Lab 8 Two-Sample t-test"
+format: 
+  revealjs:
+    incremental: TRUE
+    scrollable: TRUE
+    theme: dark
+    transition: slide
+    chalkboard: TRUE
+---
+
+## [(Unequal Variance) Two-sample t-test Assumptions]{.r-fit-text}
+- Independent observations in each sample
+- Samples independent of each other
+- Normally distributed data **OR** Large sample sizes
+
+:::aside
+Also called: Two-sample t-test (Welch-Satterthwaite)
+:::
+
+## [(Unequal Variance) Two-sample t-test - Other Conditions]{.r-fit-text}
+- Random sample from each population
+- Quantitative response variable
+- Two-category categorical explanatory variable
+
+## When to **NOT** use the t-test
+- If at least one sample size is “small” AND the sample data are not symmetric
+- The sample data are heavily skewed and/or there are extreme outliers
+
+## Central Limit Theorem (My Hero) {auto-animate=true}
+```{r}
+set.seed(11302023)
+
+z.data <- rnorm(100)
+t.data.df3 <- rt(30, 3)
+t.data.df20 <- rt(30, 20)
+t.data.df60 <- rt(30, 60)
+
+curve(dnorm(x, mean = mean(z.data), sd = sd(z.data)),
+      main = "Distribution Comparisons",
+      xlab = "",
+      ylab = "Density",
+      from = -3, to = 3,
+      ylim = c(0,0.45),
+      col = "blue", 
+      lwd = 2)
+legend("topright", 
+       legend = "Normal Distribution", 
+       fill = "blue")
+```
+
+## Central Limit Theorem (My Hero)
+```{r}
+curve(dnorm(x, mean = mean(z.data), sd = sd(z.data)),
+      main = "Distribution Comparisons",
+      xlab = "",
+      ylab = "Density",
+      from = -3, to = 3,
+      ylim = c(0,0.45),
+      col = "blue", 
+      lwd = 2)
+curve(dnorm(x, mean = mean(t.data.df3), sd = sd(t.data.df3)),
+      col = "seagreen", 
+      lwd = 2,
+      add = TRUE)
+legend("topright", 
+       legend = c("t Distribution (df = 3)", "Normal Distribution"), 
+       fill = c("seagreen", "blue"))
+```
+
+## Central Limit Theorem (My Hero)
+```{r}
+curve(dnorm(x, mean = mean(z.data), sd = sd(z.data)),
+      main = "Distribution Comparisons",
+      xlab = "",
+      ylab = "Density",
+      from = -3, to = 3,
+      ylim = c(0,0.45),
+      col = "blue", 
+      lwd = 2)
+curve(dnorm(x, mean = mean(t.data.df3), sd = sd(t.data.df3)),
+      col = "seagreen", 
+      lwd = 2,
+      add = TRUE)
+curve(dnorm(x, mean = mean(t.data.df20), sd = sd(t.data.df20)),
+      col = "lawngreen", 
+      lwd = 2,
+      add = TRUE)
+legend("topright", 
+       legend = c("t Distribution (df = 3)", "t Distribution (df = 20)", "Normal Distribution"), 
+       fill = c("seagreen", "lawngreen", "blue"))
+```
+
+## Central Limit Theorem (My Hero)
+```{r}
+curve(dnorm(x, mean = mean(z.data), sd = sd(z.data)),
+      main = "Distribution Comparisons",
+      xlab = "",
+      ylab = "Density",
+      from = -3, to = 3,
+      ylim = c(0,0.45),
+      col = "blue", 
+      lwd = 2)
+curve(dnorm(x, mean = mean(t.data.df3), sd = sd(t.data.df3)),
+      col = "seagreen", 
+      lwd = 2,
+      add = TRUE)
+curve(dnorm(x, mean = mean(t.data.df20), sd = sd(t.data.df20)),
+      col = "lawngreen", 
+      lwd = 2,
+      add = TRUE)
+curve(dnorm(x, mean = mean(t.data.df60), sd = sd(t.data.df60)),
+      col = "lightgreen", 
+      lwd = 2,
+      add = TRUE)
+legend("topright", 
+       legend = c("t Distribution (df = 3)", "t Distribution (df = 20)", 
+                  "t Distribution (df = 60)", "Normal Distribution"), 
+       fill = c("seagreen", "lawngreen", "lightgreen", "blue"))
+```
+
+## Example
+We want to determine if there is a *difference* in the average speed of roller coasters between steel and wooden track roller coasters
+
+:::aside
+The coasters data set contains many variables on a sample of wooden track roller coasters and a sample of steel track roller coasters, including speed (speed of roller coaster in miles per hour) and track (wooden or steel).
+:::
+
+## [Identify the Variable of Interest and Population of Interest]{.r-fit-text}
+- Variable of interest: speed of roller coasters (in mph)
+- Populations: roller coasters with wooden tracks and steel tracks
+
+## [Assess Sample Representativeness]{.r-fit-text}
+- Doesn't say anything about randomization. It *could* be. 
+
+:::aside
+We'll just pretend it is and proceed
+:::
+
+## [State Null and Alternative Hypotheses]{.r-fit-text}
+- Null Hypothesis:
+  - $H_{0}: \mu_{steel} = \mu_{wood} \equiv \mu_{steel} - \mu_{wood} = 0$
+    - There is **NOT** a difference in the average speed of roller coasters between steel and wooden track
+roller coasters
+- Alternative Hypothesis:
+  - $H_{A}: \mu_{steel} \neq \mu_{wood} \equiv \mu_{steel} - \mu_{wood} \neq 0$
+    - There is a difference in the average speed of roller coasters between steel and wooden track
+roller coasters
+- Where $\mu_{steel}$ = Population average (mean) speed of steel track roller coasters
+- Where $\mu_{wood}$ = Population average (mean) speed of wooden track roller coasters
+
+## Importing & Viewing Data {auto-animate=true}
+```{r}
+#| echo: TRUE
+#| results: hide
+# setwd("C:/Users/Ghcto/OneDrive/Desktop/Fall 2023/ST 351 (TA)")
+setwd("C:/Users/Ghcto/OneDrive/Desktop/School/Fall 2023/ST 351 (TA)/Lab 8")
+```
+## Importing & Viewing Data {auto-animate=true}
+```{r}
+#| echo: TRUE
+#| results: hide
+# setwd("C:/Users/Ghcto/OneDrive/Desktop/Fall 2023/ST 351 (TA)")
+setwd("C:/Users/Ghcto/OneDrive/Desktop/School/Fall 2023/ST 351 (TA)/Lab 8")
+
+coasters <- read.delim("C:/Users/Ghcto/OneDrive/Desktop/School/Fall 2023/ST 351 (TA)/Lab 8/coasters.txt")
+```
+## Importing & Viewing Data {auto-animate=true}
+```{r}
+#| echo: TRUE
+#| results: hide
+# setwd("C:/Users/Ghcto/OneDrive/Desktop/Fall 2023/ST 351 (TA)")
+setwd("C:/Users/Ghcto/OneDrive/Desktop/School/Fall 2023/ST 351 (TA)/Lab 8")
+
+coasters <- read.delim("C:/Users/Ghcto/OneDrive/Desktop/School/Fall 2023/ST 351 (TA)/Lab 8/coasters.txt")
+
+head(coasters)
+```
+## Importing & Viewing Data {auto-animate=true}
+```{r}
+#| echo: TRUE
+# setwd("C:/Users/Ghcto/OneDrive/Desktop/Fall 2023/ST 351 (TA)")
+setwd("C:/Users/Ghcto/OneDrive/Desktop/School/Fall 2023/ST 351 (TA)/Lab 8")
+
+coasters <- read.delim("C:/Users/Ghcto/OneDrive/Desktop/School/Fall 2023/ST 351 (TA)/Lab 8/coasters.txt")
+
+head(coasters)
+```
+
+## Summary Statistics {auto-animate=true}
+```{r}
+#| echo: TRUE
+#| warning: false
+#| message: false
+#| results: hide
+library(mosaic)
+```
+
+## Summary Statistics {auto-animate=true}
+```{r}
+#| echo: TRUE
+#| warning: false
+#| message: false
+#| results: hide
+library(mosaic)
+favstats(speed ~ track, data = coasters)
+```
+
+## Summary Statistics {auto-animate=true}
+```{r}
+#| echo: TRUE
+#| warning: false
+#| message: false
+library(mosaic)
+favstats(speed ~ track, data = coasters)
+```
+
+:::aside
+Remember not to just copy and paste your summary statistics results directly from R
+:::
+
+:::aside
+Units in MPH
+:::
+
+## Summary Statistics {auto-animate=true}
+```{r}
+#| echo: TRUE
+#| results: hide
+# Alternative Code
+summary(coasters$speed[coasters$track=="Steel"])
+summary(coasters$speed[coasters$track=="Wood"])
+```
+
+## Summary Statistics {auto-animate=true}
+```{r}
+#| echo: TRUE
+# Alternative Code
+summary(coasters$speed[coasters$track=="Steel"])
+summary(coasters$speed[coasters$track=="Wood"])
+```
+
+## Summary Statistics {auto-animate=true}
+```{r}
+#| echo: TRUE
+#| results: hide
+# Alternative Code
+summary(coasters$speed[coasters$track=="Steel"])
+summary(coasters$speed[coasters$track=="Wood"])
+sd(coasters$speed[coasters$track=="Steel"])
+sd(coasters$speed[coasters$track=="Wood"])
+```
+
+## Summary Statistics {auto-animate=true}
+```{r}
+#| echo: TRUE
+# Alternative Code
+summary(coasters$speed[coasters$track=="Steel"])
+summary(coasters$speed[coasters$track=="Wood"])
+sd(coasters$speed[coasters$track=="Steel"])
+sd(coasters$speed[coasters$track=="Wood"])
+```
+
+## Summary Statistics {auto-animate=true}
+```{r}
+#| echo: TRUE
+#| results: hide
+# Alternative Code
+summary(coasters$speed[coasters$track=="Steel"])
+summary(coasters$speed[coasters$track=="Wood"])
+sd(coasters$speed[coasters$track=="Steel"])
+sd(coasters$speed[coasters$track=="Wood"])
+length(coasters$speed[coasters$track=="Steel"])
+length(coasters$speed[coasters$track=="Wood"])
+```
+
+## Summary Statistics {auto-animate=true}
+```{r}
+#| echo: TRUE
+# Alternative Code
+summary(coasters$speed[coasters$track=="Steel"])
+summary(coasters$speed[coasters$track=="Wood"])
+sd(coasters$speed[coasters$track=="Steel"])
+sd(coasters$speed[coasters$track=="Wood"])
+length(coasters$speed[coasters$track=="Steel"])
+length(coasters$speed[coasters$track=="Wood"])
+```
+
+## Summary Statistics {auto-animate=true}
+```{r}
+#| echo: TRUE
+# Comparing the two methods
+favstats(speed ~ track, data = coasters)
+summary(coasters$speed[coasters$track=="Steel"])
+summary(coasters$speed[coasters$track=="Wood"])
+sd(coasters$speed[coasters$track=="Steel"])
+sd(coasters$speed[coasters$track=="Wood"])
+length(coasters$speed[coasters$track=="Steel"])
+length(coasters$speed[coasters$track=="Wood"])
+```
+
+:::aside
+Remember not to just copy and paste your summary statistics results directly from R
+:::
+
+:::aside
+Units in MPH
+:::
+
+## [Side-by-Side Box-and-Whisker Plots]{.r-fit-text} {auto-animate=true}
+```{r}
+#| echo: TRUE
+boxplot(speed ~ track, data = coasters)
+```
+
+## [Side-by-Side Box-and-Whisker Plots]{.r-fit-text} {auto-animate=true}
+```{r}
+#| echo: TRUE
+boxplot(speed ~ track, data = coasters, horizontal = TRUE)
+```
+
+## [Side-by-Side Box-and-Whisker Plots]{.r-fit-text} {auto-animate=true}
+```{r}
+#| echo: TRUE
+boxplot(speed ~ track, data = coasters, horizontal = TRUE,
+ col = "lightblue")
+```
+
+## [Side-by-Side Box-and-Whisker Plots]{.r-fit-text} {auto-animate=true}
+```{r}
+#| echo: TRUE
+boxplot(speed ~ track, data = coasters, horizontal = TRUE,
+ col = "lightgreen",
+ main = "Speed of World Roller Coasters")
+```
+
+## [Side-by-Side Box-and-Whisker Plots]{.r-fit-text} {auto-animate=true}
+```{r}
+#| echo: TRUE
+boxplot(speed ~ track, data = coasters, horizontal = TRUE,
+ col = "pink",
+ main = "Speed of World Roller Coasters",
+ xlab = "speed (miles per hour)",
+ ylab = "type of track")
+```
+
+## Normal Probability Plot {auto-animate=true}
+```{r}
+#| echo: TRUE
+# Normal probability plot of the speeds for the steel tracks
+qqnorm(coasters$speed[coasters$track=="Steel"])
+```
+
+## Normal Probability Plot {auto-animate=true}
+```{r}
+#| echo: TRUE
+# Normal probability plot of the speeds for the steel tracks
+qqnorm(coasters$speed[coasters$track=="Steel"])
+qqline(coasters$speed[coasters$track=="Steel"])
+```
+
+
+## Normal Probability Plot {auto-animate=true}
+```{r}
+#| echo: TRUE
+# Normal probability plot of the speeds for the wooden tracks
+qqnorm(coasters$speed[coasters$track=="Wood"])
+```
+
+## Normal Probability Plot {auto-animate=true}
+```{r}
+#| echo: TRUE
+# Normal probability plot of the speeds for the wooden tracks
+qqnorm(coasters$speed[coasters$track=="Wood"])
+qqline(coasters$speed[coasters$track=="Wood"])
+```
+
+## [Side-by-Side Comparison of Normal Probability Plots]{.r-fit-text} {auto-animate=true}
+```{r}
+# Side-by-Side Comparison
+par(mfrow = c(1,2))
+qqnorm(coasters$speed[coasters$track=="Steel"])
+qqline(coasters$speed[coasters$track=="Steel"])
+qqnorm(coasters$speed[coasters$track=="Wood"])
+qqline(coasters$speed[coasters$track=="Wood"])
+par(mfrow = c(1,1))
+```
+
+
+## [Behind the Scenes of 't.test' function]{.r-fit-text} {auto-animate=true}
+**Test Statistic:**
+$$
+\begin{aligned}
+t(\mu_{0}) & = \dfrac{(\bar{X} - \bar{Y}) - \mu_{0}}{\sqrt{\dfrac{s^{2}_{X}}{m} + \dfrac{s^{2}_{Y}}{n}}} \\[0.25cm]
+\end{aligned}
+$$
+
+## [Behind the Scenes of 't.test' function]{.r-fit-text} {auto-animate=true}
+**Test Statistic:**
+$$
+\begin{aligned}
+t(\mu_{0}) & = \dfrac{(\bar{X} - \bar{Y}) - \mu_{0}}{\sqrt{\dfrac{s^{2}_{X}}{m} + \dfrac{s^{2}_{Y}}{n}}} \\[0.25cm]
+\text{We know,} \; \mu_{0} & = 0, \; \text{therefore:} \\[0.25cm]
+\end{aligned}
+$$
+
+## [Behind the Scenes of 't.test' function]{.r-fit-text} {auto-animate=true}
+**Test Statistic:**
+$$
+\begin{aligned}
+t(\mu_{0}) & = \dfrac{(\bar{X} - \bar{Y}) - \mu_{0}}{\sqrt{\dfrac{s^{2}_{X}}{m} + \dfrac{s^{2}_{Y}}{n}}} \\[0.25cm]
+\text{We know,} \; \mu_{0} & = 0, \; \text{therefore:} \\[0.25cm]
+& = \dfrac{(\bar{X} - \bar{Y})}{\sqrt{\dfrac{s^{2}_{X}}{m} + \dfrac{s^{2}_{Y}}{n}}}
+\end{aligned}
+$$
+
+## [Behind the Scenes of 't.test' function]{.r-fit-text} {transition="zoom" transition-speed="slow"}
+**Welch-Satterthwaite Approximation**: to the null distribution of $t(\mu_{0})$
+$$
+\nu = \dfrac{\left(\dfrac{s^{2}_{X}}{m} + \dfrac{s^{2}_{Y}}{n}\right)^{2}}{\dfrac{s^{4}_{X}}{m^{2}(m-1)} + \dfrac{s^{4}_{Y}}{n^{2}(n-1)}}
+$$
+Note: $\min(m-1, n-1) \le v \le m+n-2$
+
+:::aside
+Note: $\nu$ are the degrees of freedom
+:::
+
+## [Behind the Scenes of 't.test' function]{.r-fit-text} {transition="zoom" transition-speed="slow"}
+**Confidence Interval:**
+$$
+(\bar{X} - \bar{Y}) \pm t_{(v)(1-\frac{\alpha}{2})}\sqrt{\dfrac{s^{2}_{X}}{m} + \dfrac{s^{2}_{Y}}{n}}
+$$
+
+:::aside
+Remember, unless specified otherwise, R will make group 1 the one that comes alphabetically first (steel tracks in our case)
+:::
+
+## Using 't.test' function {auto-animate=true}
+```{r}
+#| echo: true
+#| results: hide
+t.test(speed ~ track,
+       data = coasters)
+```
+
+## Using 't.test' function {auto-animate=true}
+```{r}
+#| echo: true
+t.test(speed ~ track,
+       data = coasters)
+```
+
+## Using 't.test' function {auto-animate=true}
+```{r}
+#| echo: true
+#| results: hide
+t.test(speed ~ track,
+       data = coasters,
+       mu = 0)
+```
+
+## Using 't.test' function {auto-animate=true}
+```{r}
+#| echo: true
+#| results: hide
+t.test(speed ~ track,
+       data = coasters,
+       mu = 0,
+       alternative = "two.sided")
+```
+
+## Using 't.test' function {auto-animate=true}
+```{r}
+#| echo: true
+#| results: hide
+t.test(speed ~ track,
+       data = coasters,
+       mu = 0,
+       alternative = "two.sided",
+       conf.level = 0.95)
+```
+
+## Using 't.test' function {auto-animate=true}
+```{r}
+#| echo: true
+t.test(speed ~ track,
+       data = coasters,
+       mu = 0,
+       alternative = "two.sided",
+       conf.level = 0.95)
+```
+
+## Using 't.test' function {auto-animate=true}
+:::: {.columns}
+::: {.column width="50%"}
+```{r}
+#| echo: true
+# Outputs are the same!
+t.test(speed ~ track,
+       data = coasters)
+```
+:::
+::: {.column width="50%"}
+```{r}
+#| echo: true
+# Outputs are the same!
+t.test(speed ~ track,
+       data = coasters,
+       mu = 0,
+       alternative = "two.sided",
+       conf.level = 0.95)
+```
+:::
+::::
+
+## Answer Question of Interest
+- There is not enough evidence to indicate the mean speed of roller coasters on steel tracks is different than the mean speed of roller coasters on wooden tracks (p-value = 0.3098).
+- Confidence interval for $\mu_{steel} - \mu_{wood} = (-7.07 \; MPH, 2.28 \; MPH)$
+- We’re 95% confident that the mean speed of roller coasters on steel tracks is between 7.07 MPH less to 2.28 MPH more than the mean speed of roller coasters on wooden tracks.

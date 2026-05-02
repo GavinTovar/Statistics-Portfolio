@@ -1,0 +1,222 @@
+---
+title: "(ST 412/512) Lab 8 <br> Two-Way ANOVA"
+format:
+  revealjs:
+    incremental: true
+    scrollable: true
+    theme: dracula
+    transition: slide
+    transition-speed: slow
+    auto-animate: true
+    chalkboard: true
+    code-line-numbers: true
+    css: (ST 512) StyleSheets.css
+    plugins:
+      - reveal.js/plugin/zoom-js/zoom.js
+      - reveal.js/plugin/highlight/highlight.js
+---
+
+## Welcome Back
+* Any questions before we get started?
+* Office Hours: Thursday 10:00am - 11:00am
+
+## Loading Data and Packages {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: FALSE
+case1302 <- read.csv("case1302.csv",header=TRUE) 
+```
+
+## Loading Data and Packages {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+library(Sleuth3) # Contains case1302 dataset
+```
+
+## Checkin' Out Data {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+case1302
+```
+
+## Checkin' Out Data {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+summary(case1302)
+```
+
+## Checkin' Out Data {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+levels(case1302$Company)
+```
+
+## Checkin' Out Data {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+case1302$Company <- factor(case1302$Company, levels = c("C1", "C2", "C3", "C4", "C5",
+                                                        "C6", "C7", "C8", "C9", "C10"))
+levels(case1302$Company)
+```
+
+## Checkin' Out Data {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: slide
+plot(as.numeric(case1302$Company), case1302$Score,
+  xlab = "Company",
+  ylab = "Score",
+  pch = ifelse(case1302$Treat == "Pygmalion", 17, 16),
+  col = ifelse(case1302$Treat == "Pygmalion", "red", "black")
+)
+legend(
+  "topright",
+  pch = c(17, 16),
+  col = c("red", "black"),
+  legend = c("Pygmalion", "Control")
+)
+```
+
+## Checkin' Out Data {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: slide
+boxplot(case1302$Score ~ case1302$Company,
+  main = "Scores vs Company",
+  xlab = "Company",
+  ylab = "Score",
+  col = 1:10
+)
+# Add the overall mean of scores and standard deviations to facilitate comparisons
+abline(h = mean(case1302$Score))
+abline(h = mean(case1302$Score) + sd(case1302$Score),
+       lty = 2)
+abline(h = mean(case1302$Score) - sd(case1302$Score),
+       lty = 2)
+```
+
+## Checkin' Out Data {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: slide
+boxplot(case1302$Score ~ case1302$Treat,
+  main = "Scores vs Treatment",
+  xlab = "Company",
+  ylab = "Score",
+  col = 3:4
+)
+# Add the overall mean of scores and standard deviations to facilitate comparisons
+abline(h = mean(case1302$Score))
+abline(h = mean(case1302$Score) + sd(case1302$Score),
+       lty = 2)
+abline(h = mean(case1302$Score) - sd(case1302$Score),
+       lty = 2)
+```
+
+## Checkin' Out Data {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: slide
+interaction.plot(
+  case1302$Company,
+  case1302$Treat,
+  case1302$Score,
+  col = ifelse(case1302$Treat == "Pygmalion", "red", "blue"),
+  xlab = "Company",
+  ylab = "Scores",
+  trace.label = "Treatment"
+)
+```
+
+## Fittin' {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+## Fit the non-additive model
+non_add <- lm(Score ~ Treat + Company + Treat:Company, data = case1302)
+summary(non_add)
+```
+
+## Fittin' {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+## Fit model without intercept term
+summary(lm(Score ~ Treat + Company + Treat:Company - 1, data = case1302))
+```
+
+## Fittin' {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+anova(non_add)
+```
+
+## Fittin' {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: slide
+plot(non_add$fitted, non_add$resid,
+  xlab = "Fitted Values",
+  ylab = "Residuals",
+  pch = 16
+)
+abline(h = 0)
+```
+
+## Fittin' {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+add <- lm(Score ~ Treat + Company, data = case1302) 
+summary(add)
+```
+
+## Fittin' {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+anova(add)
+```
+
+## Fittin' {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: slide
+plot(add$fitted, add$resid,
+     xlab = "Fitted Values",
+     ylab = "Residuals",
+     pch = 16)
+abline(h = 0)
+```
+
+## Fittin' {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+anova(add, non_add)
+```
+
+## Fittin' {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+one <- lm(Score ~ Treat, data = case1302)
+summary(one)
+```
+
+## Fittin' {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+anova(one)
+```
+
+## Fittin' {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: slide
+plot(one$fitted, one$resid,
+     xlab = "Fitted Values",
+     ylab = "Residuals",
+     pch = 16)
+abline(h = 0)
+```
+
+## Fittin' {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+anova(one, add)
+```

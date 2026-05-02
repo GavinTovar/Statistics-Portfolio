@@ -1,0 +1,317 @@
+---
+title: "(ST 412/512) Lab 8 <br> No-Way Two-Way ANOVA"
+format:
+  revealjs:
+    incremental: TRUE
+    scrollable: TRUE
+    theme: dark
+    transition: slide
+    transition-speed: slow
+    auto-animate: TRUE
+    chalkboard: TRUE
+header-includes:
+  - |
+    <style>
+      .reveal .barelysmaller {
+          font-size: 0.90em;
+        }
+      
+      .reveal .smaller {
+        font-size: 0.75em;
+      }
+
+      .reveal .tiny-font {
+        font-size: 0.5em;
+        white-space: nowrap;
+        overflow-x: auto;  /* Allow horizontal scrolling */
+      }
+    </style>
+---
+
+## Lab Objectives
+* Create an interaction plot
+* Estimate contrasts
+
+## Loading Data and Packages {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+library(Sleuth3)
+library(ggplot2)
+library(dplyr) # Data manipulation functions
+```
+
+## Dataset {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+* `case1301` (Seaweed Grazers)
+  * Something about seaweed?
+  * 96 observations (rows)
+  * 3 variables (columns)
+    * `Cover`: percent of regenerated seaweed cover
+    * `Block`: a factor with levels "B1", "B2", "B3", "B4", "B5", "B6", "B7" and "B8"
+    * `Treat`: a factor indicating treatment, with levels "C", "f", "fF", "L", "Lf" and "LfF"
+
+## Viewing Data {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+case1301
+```
+
+## Viewing Data {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Copying dataset with a different name
+seaweed <- case1301
+
+# Logit-transforming response variable
+seaweed$logitCover <- with(case1301, log(Cover / (100 - Cover)))
+```
+
+## Interaction Plot {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+with(seaweed, interaction.plot(Block, Treat, response = logitCover))
+```
+
+## Interaction Plot {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+* **`interaction.plot(x.factor, trace.factor, response, fun = mean, ...)`**  
+  * Creates an interaction plot to visualize the interaction between two categorical variables on a numeric response.
+* **Arguments:**
+  * `x.factor` – The factor plotted on the x-axis.
+  * `trace.factor` – The factor used to create different traces (lines) in the plot.
+  * `response` – The numeric variable whose mean (or another function) is plotted.
+  * `fun` – A function to summarize the response variable (default: `mean`).
+  * `type` – Type of plot (default: `"l"` for lines, but can be `"p"` for points, `"b"` for both).
+  * `col` – Colors for different lines.
+  * `lty` – Line types.
+  * `pch` – Plotting characters for points.
+  * `xlab`, `ylab`, `main` – Axis labels and title.
+* We could also make an interaction plot by manipulating the data with `dplyr`
+
+## Interaction Plot {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+seaweed1 <- group_by(seaweed, Block, Treat)
+```
+
+## Interaction Plot {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+seaweed1 <- group_by(seaweed, Block, Treat)
+seaweed1
+```
+
+## Interaction Plot {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+seaweed2 <- summarize(seaweed1, Trt_mean = mean(logitCover))
+```
+
+## Interaction Plot {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+seaweed2 <- summarize(seaweed1, Trt_mean = mean(logitCover))
+seaweed2
+```
+
+## Interaction Plot {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Could have done this in one pipe operation as
+seaweed %>%
+  group_by(Block, Treat) %>%
+  summarize(Trt_mean = mean(logitCover)) -> seaweed2
+```
+
+## Interaction Plot {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Could have done this in one pipe operation as
+seaweed %>%
+  group_by(Block, Treat) %>%
+  summarize(Trt_mean = mean(logitCover)) -> seaweed2
+seaweed2
+```
+
+
+## Interaction Plot {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+ggplot(data = seaweed2, aes(x = Block, y = Trt_mean, shape = Treat)) +
+  geom_point() + 
+  geom_line(aes(group = Treat))
+```
+
+## Interaction Plot {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Some additions
+ggplot(data = seaweed2, aes(x = Block, y = Trt_mean, shape = Treat, color = Treat)) +
+  geom_point() + 
+  geom_line(aes(group = Treat, color = Treat)) +
+  labs(y = "Treatment Mean") +
+  theme_bw()
+```
+
+## Contrasts {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+* **Estimating Contrasts for Seaweed Grazer Effects**  
+  * Contrasts help quantify the effects of different grazers by forming linear combinations of treatment means.
+
+* **Defined Contrasts:**  
+  * **Large Fish:**  
+  $$ \frac{1}{2} \mu_{LfF} - \frac{1}{2} \mu_{Lf} + \frac{1}{2} \mu_{fF} - \frac{1}{2} \mu_{f} $$  
+  * **Small Fish:**  
+  $$ \frac{1}{2} \mu_{Lf} - \frac{1}{2} \mu_{f} + \frac{1}{2} \mu_{f} - \frac{1}{2} \mu_{C} $$  
+  * **Limpets:**  
+  $$ \frac{1}{3} \mu_{LfF} - \frac{1}{3} \mu_{fF} + \frac{1}{3} \mu_{Lf} - \frac{1}{3} \mu_{f} + \frac{1}{3} \mu_{L} - \frac{1}{3} \mu_{C} $$  
+  * **Limpets × Small Fish Interaction:**  
+  $$ \frac{1}{2} \mu_{LfF} - \frac{1}{2} \mu_{fF} + \frac{1}{2} \mu_{Lf} - \frac{1}{2} \mu_{f} - \mu_L + \mu_C $$  
+  * **Limpets × Large Fish Interaction:**  
+  $$ \mu_{LfF} - \mu_{fF} - \mu_{Lf} + \mu_{f} $$  
+
+* **Contrast Coefficients:**  
+  * Contrasts are linear combinations of means where the sum of the coefficients is 0.
+  * Example for the **Large Fish** contrast:
+    * Coefficients: $$ \frac{1}{2}, -\frac{1}{2}, \frac{1}{2}, -\frac{1}{2}, 0, 0 $$
+    * Corresponding means: $$ \mu_{LfF}, \mu_{Lf}, \mu_{fF}, \mu_{f}, \mu_{L}, \mu_{C} $$
+
+## Contrasts {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+* **Estimating Contrasts:**  
+  * One approach is to compute sample means and sizes, then apply Chapter 6 formulas:  
+    * **Point Estimate:**  
+      $$
+      \hat{g} = C_1 \bar{Y}_1 + \dots + C_I \bar{Y}_I
+      $$
+    * **Standard Error:**  
+      $$
+      SE(\hat{g}) = \hat{\sigma} \sqrt{ \frac{C_1^2}{n_1} + \dots + \frac{C_I^2}{n_I} }
+      $$
+
+## Contrasts {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+summary(seaweed$Treat)
+```
+
+## Contrasts {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+summary(seaweed$Treat)
+Means <- with(seaweed, unlist(lapply(split(logitCover, Treat), mean)))
+```
+
+## Contrasts {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+What this code is doing:
+
+```{r}
+#| echo: TRUE
+with(seaweed, split(logitCover, Treat))
+```
+
+```{r}
+#| echo: TRUE
+with(seaweed, lapply(split(logitCover, Treat), mean))
+```
+
+```{r}
+#| echo: TRUE
+with(seaweed, unlist(lapply(split(logitCover, Treat), mean)))
+```
+
+## Contrasts {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+Means <- with(seaweed, unlist(lapply(split(logitCover, Treat), mean)))
+names(Means) <- names(summary(seaweed$Treat))
+```
+
+## Contrasts {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+Means <- with(seaweed, unlist(lapply(split(logitCover, Treat), mean)))
+names(Means) <- names(summary(seaweed$Treat))
+Means
+```
+
+## Contrasts {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+summary(lm(logitCover ~ Treat + Block, data = seaweed))
+```
+
+## Contrasts {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Pulling out estimate of sigma
+s <- summary(lm(logitCover ~ Treat + Block, data = seaweed))$sigma
+```
+
+## Contrasts {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+ghat <- 0.5 * Means["LfF"] - 0.5 * Means["Lf"] + 0.5 * Means["fF"] - 0.5 * Means["f"]
+```
+
+## Contrasts {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Calculations from previous formulas
+ghat <- 0.5 * Means["LfF"] - 0.5 * Means["Lf"] + 0.5 * Means["fF"] - 0.5 * Means["f"]
+SE_ghat <- s * sqrt((0.5)^2 / 16 + (-0.5)^2 / 16 + (0.5)^2 / 16 + (-0.5)^2 /16)
+```
+
+## Contrasts {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Upper and lower confidence interval bounds
+ghat - qt(0.975, 83) * SE_ghat
+ghat + qt(0.975, 83) * SE_ghat
+```
+
+## Contrasts {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Upper and lower confidence interval bounds
+lwr <- ghat - qt(0.975, 83) * SE_ghat
+upr <- ghat + qt(0.975, 83) * SE_ghat
+CI <- c(lwr, upr)
+CI
+```
+
+## Contrasts (Sophisticated Way) {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# One can calculate all 5 contrasts at once
+M <- matrix(c(0, 0, -1/2, 1/2, -1/2, 1/2,
+              -1/2, -1/2, 1/2, 0, 1/2, 0,
+              1/3, -1/3, -1/3, -1/3, 1/3, 1/3,
+              1, -1, 1/2, 1/2, -1/2, -1/2,
+              0, 0, -1, 1, 1, -1),
+            nrow = 6, ncol = 5)
+M
+```
+
+## Contrasts (Sophisticated Way) {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+contrasts(seaweed$Treat) <- M %*% solve(t(M) %*% M)
+```
+
+## Contrasts (Sophisticated Way) {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+summary(lm(logitCover ~ Treat + Block, data = seaweed))$coefficients
+```
+
+## Contrasts (Sophisticated Way) {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+summary(lm(logitCover ~ Treat + Block, data = seaweed))$coefficients
+confint(lm(logitCover ~ Treat + Block, data = seaweed))
+```
+
+## Contrasts (Sophisticated Way) {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+Indicators <- contr.treatment(6)         # A diagonal matrix
+colnames(Indicators) <- names(Means)[-1] # Name variables as before
+contrasts(seaweed$Treat) <- Indicators   # Putting it back to normal
+```

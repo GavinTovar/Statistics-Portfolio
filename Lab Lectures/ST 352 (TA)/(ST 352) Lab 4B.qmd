@@ -1,0 +1,682 @@
+---
+title: "(ST 352) Lab 4B - Transforming Data"
+format:
+  revealjs:
+    incremental: TRUE
+    scrollable: TRUE
+    theme: dark
+    transition: slide
+    transition-speed: slow
+    auto-animate: TRUE
+    chalkboard: TRUE
+---
+
+## Objectives {transition="zoom" transition-speed="slow"}
+- Use appropriate graphical displays to assess the conditions for simple linear regression, explain if a transformation is needed 
+- Use R to perform a natural log transformation on the response and/or explanatory variables
+- Use R to obtain output from a Simple Linear Regression analysis that best satisfies the conditions of the simple linear regression model.
+
+## Today's Example
+FEV (forced expiratory volume) is an index of pulmonary function that measures the volume of air expelled after one second of constant effort. The data set FEV contains determinations of FEV on 654 children ages 3-19 who were seen in the Childhood Respiratory Disease Study (CRD Study) in East Boston, Massachusetts. These data are part of a longitudinal study to follow the change in pulmonary function over time in children. For this example, we’ll investigate if the height of children helps to predict their FEV.
+
+## Today's Data {transition="zoom" transition-speed="slow"}
+```{r}
+FEV <- read.delim("C:/Users/Ghcto/OneDrive/Desktop/School/Spring 2024/ST 352 (TA)/Lab 4/FEV.txt")
+FEV
+```
+
+## Today's Data {transition="zoom" transition-speed="slow"}
+```{r}
+FEV[,3:4]
+```
+  
+## [Simple Linear Regression - Assumptions]{.r-fit-text}
+- Representative sample
+  - How was the data collected?
+  - Do we have a random sample of the correct population?
+- Independence
+  - How was the data collected?
+- Linearity condition
+  - Scatterplot
+  - Residual plot
+- Constant variance
+  - Residual plot
+- Normality condition
+  - Normal probability plot of residuals
+
+## Scatterplot Action {auto-animate=true}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+# Checking linearity condition
+plot(volume ~ height, data = FEV)
+```
+
+## Scatterplot Action {auto-animate=true}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+plot(volume ~ height, data = FEV,
+     pch = 19)
+```
+
+## Scatterplot Action {auto-animate=true}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+plot(volume ~ height, data = FEV,
+     pch = 19,
+     col = "#49f5c4") # Picked using Google's "Color Picker"
+```
+
+## Scatterplot Action {auto-animate=true}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+plot(volume ~ height, data = FEV,
+     pch = 19,
+     col = "#49f5c4",
+     main = "Relationship Between Height and Forced Expiratory Volume (FEV)")
+```
+
+## Scatterplot Action {auto-animate=true}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+plot(volume ~ height, data = FEV,
+     pch = 19,
+     col = "#49f5c4",
+     main = "Relationship Between Height and Forced Expiratory Volume (FEV)",
+     xlab = "Height (inches)",
+     ylab = "Forced Expiratory Volume (FEV)")
+```
+
+## [Relevant Information from Scatterplot]{.r-fit-text}
+- Checking linearity condition
+- Checking for outliers
+
+## Residual Plot Action {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Step 1: Create a model
+lmod2 <- lm(volume ~ height, data = FEV)
+```
+
+## Residual Plot Action {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+# Step 1: Create a model
+lmod2 <- lm(volume ~ height, data = FEV)
+
+# Step 2: Use residuals from model to build a plot
+plot(lmod2$residuals ~ FEV$height)
+```
+
+## Residual Plot Action {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+# Step 2: Use residuals from model to build a plot
+plot(lmod2$residuals ~ FEV$height,
+     pch = 19, 
+     col = "#49f5c4") # We'll continue to use this color for all plots of the 'default' model
+```
+
+## Residual Plot Action {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+# Step 2: Use residuals from model to build a plot
+plot(lmod2$residuals ~ FEV$height,
+     pch = 19, 
+     col = "#49f5c4",
+     main = "Residual Plot")
+```
+
+## Residual Plot Action {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+# Step 2: Use residuals from model to build a plot
+plot(lmod2$residuals ~ FEV$height,
+     pch = 19, 
+     col = "#49f5c4",
+     main = "Residual Plot",
+     xlab = "Height (inches)",
+     ylab = "Residuals")
+```
+
+## Residual Plot Action {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+# Step 2: Use residuals from model to build a plot
+plot(lmod2$residuals ~ FEV$height,,
+     pch = 19, 
+     col = "#49f5c4",
+     main = "Residual Plot",
+     xlab = "Height (inches)",
+     ylab = "Residuals")
+abline(h = 0) # Creating a horizontal line at 0
+```
+
+## [Relevant Information from Residual Plot]{.r-fit-text}
+- Checking linearity condition
+- Checking for outliers
+- Constant variance condition
+
+## [Normal Probability Plot of the Residuals]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+qqnorm(lmod2$residuals)
+```
+
+## [Normal Probability Plot of the Residuals]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+qqnorm(lmod2$residuals,
+       pch = 19)
+```
+
+## [Normal Probability Plot of the Residuals]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+qqnorm(lmod2$residuals,
+       pch = 19,
+       col = "#49f5c4")
+```
+
+## [Normal Probability Plot of the Residuals]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+qqnorm(lmod2$residuals,
+       pch = 19,
+       col = "#49f5c4",
+       main = "Normal Probability Plot of Residuals")
+```
+
+## [Normal Probability Plot of the Residuals]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+qqnorm(lmod2$residuals,
+       pch = 19,
+       col = "#49f5c4",
+       main = "Normal Probability Plot of Residuals")
+qqline(lmod2$residuals)
+```
+
+## [Normal Probability Plot of the Residuals]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: FALSE
+# Comparing with real Normal data
+par(mfrow = c(1,2))
+qqnorm(lmod2$residuals,
+       pch = 19,
+       col = "#49f5c4",
+       main = "Normal Probability Plot of Residuals")
+qqline(lmod2$residuals)
+
+dat.norm <- rnorm(dim(FEV)[1], 0, 100)
+qqnorm(dat.norm,
+       pch = 19,
+       col = "#000000",
+       main = "Simulated Normal Data")
+qqline(dat.norm)
+par(mfrow = c(1,1))
+```
+
+## [Relevant Information from Residual Plot]{.r-fit-text}
+- Normality condition
+
+## Independence Condition
+- No graphical check (in this class)
+- Does one person’s FEV in the study influence any other person’s FEV in the study?
+
+## [Transforming the Response Variable]{.r-fit-text}
+- Since some conditions were not satisfied, an option we can employ is to transform our variables
+- Log transformations are common
+- We'll start with log transforming the response (volume)
+
+## Transforming the Response Variable {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+### Scatterplot
+plot(log(volume) ~ height, data = FEV,
+     pch = 19,
+     col = "#3965f7", # We'll use this color for the transformation of the response, plots
+     main = "Relationship Between Height and log(FEV)",
+     xlab = "Height (inches)",
+     ylab = "log(FEV)")
+```
+
+## [Transforming the Response Variable]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+### Residual Plot
+# Step 1: Create model
+logmod <- lm(log(volume) ~ height, data = FEV)
+
+# Step 2: Create residual plot
+plot(logmod$residuals ~ FEV$height, data = FEV,
+     pch = 19, 
+     col = "#3965f7",
+     main = "Residual Plot: FEV Transformed",
+     xlab = "Height (inches)",
+     ylab = "Residuals")
+abline(h = 0)
+```
+
+## [Transforming the Response Variable]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+### Normal Probability Plot
+qqnorm(logmod$residuals,
+       pch = 19,
+       col = "#3965f7",
+       main = "Normal Probability Plot of Residuals")
+qqline(logmod$residuals)
+```
+
+## [Transforming the Response Variable]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+### Normal Probability Plot
+qqnorm(logmod$residuals,
+       pch = 19,
+       col = "#3965f7",
+       main = "Normal Probability Plot of Residuals")
+qqline(logmod$residuals)
+mtext("FEV Transformed") # Overlays a subtitle
+```
+
+## [Transforming the Explanatory Variable]{.r-fit-text}
+- One doesn't have to transform the response
+  - Explanatory variable(s) could be transformed
+- Let's see what happens if we transformed the explanatory variable instead of the response
+
+## [Transforming the Explanatory Variable]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+### Scatterplot
+plot(volume ~ log(height), data = FEV,
+     pch = 19,
+     col = "#a68ced", # We'll use this color for the transformation of the explanatory, plots
+     main = "Relationship Between log(Height) and Forced Expiratory Volume (FEV)",
+     xlab = "log(Height)",
+     ylab = "Forced Expiratory Volume (FEV)")
+```
+
+## [Transforming the Explanatory Variable]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+### Residual Plot
+# Step 1: Create model
+logmod2 <- lm(volume ~ log(height), data = FEV)
+
+# Step 2: Create residual plot
+plot(logmod2$residuals ~ log(FEV$height), data = FEV,
+     pch = 19, 
+     col = "#a68ced",
+     main = "Residual Plot: Height Transformed",
+     xlab = "log(Height)",
+     ylab = "Residuals")
+abline(h = 0)
+```
+
+## [Transforming the Explanatory Variable]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+### Normal Probability Plot
+qqnorm(logmod2$residuals,
+       pch = 19,
+       col = "#a68ced",
+       main = "Normal Probability Plot of Residuals")
+qqline(logmod2$residuals)
+mtext("Height Transformed")
+```
+
+## [Transforming the Both the Response and Explanatory Variables]{.r-fit-text}
+- We are not limited to the transformation of one variable, we could transform them all if we so desired
+
+## [Transforming the Both the Response and Explanatory Variables]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+### Scatterplot
+plot(log(volume) ~ log(height), data = FEV,
+     pch = 19,
+     col = "#f78239", # We'll use this color for the transformation of the both variables
+     main = "Relationship Between log(Height) and log(FEV)",
+     xlab = "log(Height)",
+     ylab = "log(FEV)")
+```
+
+## [Transforming the Both the Response and Explanatory Variables]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+### Residual Plot
+# Step 1: Create model
+logmod3 <- lm(log(volume) ~ log(height), data = FEV)
+
+# Step 2: Create residual plot
+plot(logmod3$residuals ~ log(FEV$height), data = FEV,
+     pch = 19, 
+     col = "#f78239",
+     main = "Residual Plot: FEV and Height Transformed",
+     xlab = "log(Height)",
+     ylab = "Residuals")
+abline(h = 0)
+```
+
+## [Transforming the Both the Response and Explanatory Variables]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+### Normal Probability Plot
+qqnorm(logmod3$residuals,
+       pch = 19,
+       col = "#f78239",
+       main = "Normal Probability Plot of Residuals")
+qqline(logmod3$residuals)
+mtext("FEV and Height Transformed")
+```
+
+## Comparing our Scatterplots {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: FALSE
+#| fig-width: 18
+#| fig-height: 10
+par(mfrow = c(2,2))
+plot(volume ~ height, data = FEV,
+     pch = 19,
+     col = "#49f5c4",
+     main = "Relationship Between Height and Forced Expiratory Volume (FEV)",
+     xlab = "Height (inches)",
+     ylab = "Forced Expiratory Volume (FEV)")
+plot(log(volume) ~ height, data = FEV,
+     pch = 19,
+     col = "#3965f7", 
+     main = "Relationship Between Height and log(FEV)",
+     xlab = "Height (inches)",
+     ylab = "log(FEV)")
+plot(volume ~ log(height), data = FEV,
+     pch = 19,
+     col = "#a68ced",
+     main = "Relationship Between log(Height) and Forced Expiratory Volume (FEV)",
+     xlab = "log(Height)",
+     ylab = "Forced Expiratory Volume (FEV)")
+plot(log(volume) ~ log(height), data = FEV,
+     pch = 19,
+     col = "#f78239", # We'll use this color for the transformation of the both variables
+     main = "Relationship Between log(Height) and log(FEV)",
+     xlab = "log(Height)",
+     ylab = "log(FEV)")
+par(mfrow = c(1,1))
+```
+
+## Comparing our Residual Plots {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: FALSE
+#| fig-width: 18
+#| fig-height: 10
+par(mfrow = c(2,2))
+plot(lmod2$residuals ~ FEV$height, data = FEV,
+     pch = 19, 
+     col = "#49f5c4",
+     main = "Residual Plot",
+     xlab = "Height (inches)",
+     ylab = "Residuals")
+abline(h = 0)
+plot(logmod$residuals ~ FEV$height, data = FEV,
+     pch = 19, 
+     col = "#3965f7",
+     main = "Residual Plot: FEV Transformed",
+     xlab = "Height (inches)",
+     ylab = "Residuals")
+abline(h = 0)
+plot(logmod2$residuals ~ log(FEV$height), data = FEV,
+     pch = 19, 
+     col = "#a68ced",
+     main = "Residual Plot: Height Transformed",
+     xlab = "log(Height)",
+     ylab = "Residuals")
+abline(h = 0)
+plot(logmod3$residuals ~ log(FEV$height), data = FEV,
+     pch = 19, 
+     col = "#f78239",
+     main = "Residual Plot: FEV and Height Transformed",
+     xlab = "log(Height)",
+     ylab = "Residuals")
+abline(h = 0)
+par(mfrow = c(1,1))
+```
+
+## [Comparing our Normal Probability Plots (Q-Q Plots)]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: FALSE
+#| fig-width: 18
+#| fig-height: 10
+par(mfrow = c(2,2))
+qqnorm(lmod2$residuals,
+       pch = 19,
+       col = "#49f5c4",
+       main = "Normal Probability Plot of Residuals")
+qqline(lmod2$residuals)
+mtext("No Transformations")
+qqnorm(logmod$residuals,
+       pch = 19,
+       col = "#3965f7",
+       main = "Normal Probability Plot of Residuals")
+qqline(logmod$residuals)
+mtext("FEV Transformed")
+qqnorm(logmod2$residuals,
+       pch = 19,
+       col = "#a68ced",
+       main = "Normal Probability Plot of Residuals")
+qqline(logmod2$residuals)
+mtext("Height Transformed")
+qqnorm(logmod3$residuals,
+       pch = 19,
+       col = "#f78239",
+       main = "Normal Probability Plot of Residuals")
+qqline(logmod3$residuals)
+mtext("FEV and Height Transformed")
+par(mfrow = c(1,1))
+```
+
+## How do we choose?
+- Transformation of the response seems to be roughly as good as the transformation of both variables
+- Which of the two should we pick?
+  - Principle of parsimony, all else equal we opt for the simpler model
+- We'll continue with the model that just transforms the response variable (volume)
+
+## [Careful When Performing This in Practice]{.r-fit-text}
+- This is a form of model selection
+  - Model selection as a first step, is a form of data snooping (Berk et al., 2009)
+  - "In effect, there is an opportunity to look at all the face-down cards before a bet is placed" (Berk et al., 2009)
+- For the purposes of this class, exposure to this process serves as a vehicle for learning but not as an example of how statistically sound research should be carried out.
+
+:::aside
+Berk, R., Brown, L., & Zhao, L. (2009). Statistical inference after model selection. Journal of Quantitative Criminology, 26(2), 217–236. https://doi.org/10.1007/s10940-009-9077-7
+:::
+
+## Obtaining Output from Model
+```{r}
+#| echo: TRUE
+# Previously done
+logmod <- lm(log(volume) ~ height, data = FEV)
+```
+
+## Obtaining Output from Model
+```{r}
+#| echo: TRUE
+# Removes stars from output
+options(show.signif.stars = FALSE)
+```
+
+## Obtaining Output from Model
+```{r}
+#| echo: TRUE
+# Output
+summary(logmod)
+```
+
+## Obtaining Output from Model
+```{r}
+#| echo: TRUE
+# Just coefficients
+coef(summary(logmod))
+```
+
+```{r}
+#| echo: FALSE
+options(show.signif.stars = TRUE)
+```
+
+## [Using the Simple Linear Regression model for Prediction (Review)]{.r-fit-text}
+```{r}
+#| echo: TRUE
+# Point estimate
+predict(logmod, data.frame(height = 70))
+```
+
+## [Using the Simple Linear Regression model for Prediction (Review)]{.r-fit-text}
+```{r}
+#| echo: FALSE
+plot(log(volume) ~ height, data = FEV,
+     pch = 19,
+     col = "#3965f7", 
+     main = "Relationship Between Height and log(FEV)",
+     xlab = "Height (inches)",
+     ylab = "log(FEV)")
+abline(logmod, lwd = 2)
+```
+
+## [Using the Simple Linear Regression model for Prediction (Review)]{.r-fit-text}
+```{r}
+#| echo: FALSE
+plot(log(volume) ~ height, data = FEV,
+     pch = 19,
+     col = "#3965f7", 
+     main = "Relationship Between Height and log(FEV)",
+     xlab = "Height (inches)",
+     ylab = "log(FEV)")
+abline(logmod, lwd = 2)
+abline(v = 70, lty = 2)
+```
+
+## [Using the Simple Linear Regression model for Prediction (Review)]{.r-fit-text}
+```{r}
+#| echo: FALSE
+plot(log(volume) ~ height, data = FEV,
+     pch = 19,
+     col = "#3965f7", 
+     main = "Relationship Between Height and log(FEV)",
+     xlab = "Height (inches)",
+     ylab = "log(FEV)")
+abline(logmod, lwd = 2,)
+abline(v = 70, lty = 2)
+points(x = 70, y = predict(logmod, data.frame(height = 70))[[1]], 
+       type = "p", cex = 1.5, col = "#42f590", pch = 19)
+```
+
+## [Using the Simple Linear Regression model for Prediction (Review)]{.r-fit-text}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+# Prediction interval
+predict(logmod, data.frame(height = 70), interval = "prediction")
+```
+
+```{r}
+#| echo: FALSE
+plot(log(volume) ~ height, data = FEV,
+     pch = 19,
+     col = "#3965f7", 
+     main = "Relationship Between Height and log(FEV)",
+     xlab = "Height (inches)",
+     ylab = "log(FEV)")
+abline(logmod, lwd = 2)
+points(x = 70, y = predict(logmod, data.frame(height = 70))[[1]], 
+       type = "p", cex = 1.5, col = "#42f590", pch = 19)
+
+prediction <- predict(logmod, data.frame(height = 70), interval = "prediction")
+
+lines(c(70, 70), c(prediction[2], prediction[3]), col = "#e84f4d", lwd = 3, lty = "dashed")
+```
+
+## [Using the Simple Linear Regression model for Prediction (Review)]{.r-fit-text}
+```{r}
+#| echo: TRUE
+# Prediction interval
+predict(logmod, data.frame(height = 70), interval = "prediction")
+```
+
+```{r}
+#| echo: FALSE
+plot(log(volume) ~ height, data = FEV,
+     pch = 19,
+     col = "#3965f7", 
+     main = "Relationship Between Height and log(FEV)",
+     xlab = "Height (inches)",
+     ylab = "log(FEV)")
+abline(logmod, lwd = 2)
+mtext("Prediction Interval")
+# abline(v = 70, lty = 2)
+points(x = 70, y = predict(logmod, data.frame(height = 70))[[1]], 
+       type = "p", cex = 1.5, col = "#42f590", pch = 19)
+
+predictions <- predict(logmod, newdata = data.frame(height = seq(45, 75, length = 2500)), interval = "prediction")
+
+lines(seq(45, 75, length = 2500), predictions[,2], col = "#e84f4d", lty = 2, lwd = 2)
+lines(seq(45, 75, length = 2500), predictions[,3], col = "#e84f4d", lty = 2, lwd = 2)
+```
+
+## [Using the Simple Linear Regression model for Prediction (Review)]{.r-fit-text}
+```{r}
+#| echo: TRUE
+# Confidence intervals
+predict(logmod, data.frame(height = 70), interval = "confidence")
+```
+
+```{r}
+#| echo: FALSE
+plot(log(volume) ~ height, data = FEV,
+     pch = 19,
+     col = "#3965f7", 
+     main = "Relationship Between Height and log(FEV)",
+     xlab = "Height (inches)",
+     ylab = "log(FEV)")
+abline(logmod, lwd = 2)
+mtext("Confidence Interval")
+# abline(v = 70, lty = 2)
+points(x = 70, y = predict(logmod, data.frame(height = 70))[[1]], 
+       type = "p", cex = 1.5, col = "#42f590", pch = 19)
+
+predictions <- predict(logmod, newdata = data.frame(height = seq(45, 75, length = 2500)), interval = "confidence")
+
+lines(seq(45, 75, length = 2500), predictions[,2], col = "#e84f4d", lty = 2, lwd = 2)
+lines(seq(45, 75, length = 2500), predictions[,3], col = "#e84f4d", lty = 2, lwd = 2)
+```
+
+## [Using the Simple Linear Regression model for Prediction (Review)]{.r-fit-text}
+```{r}
+#| echo: TRUE
+# Confidence interval for slope coefficient
+confint(logmod, "height", level = 0.95)
+```
+

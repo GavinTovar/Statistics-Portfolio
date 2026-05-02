@@ -1,0 +1,417 @@
+---
+title: "(ST 352) Lab 5 - Multiple Linear Regression Analysis"
+format:
+  revealjs:
+    incremental: TRUE
+    scrollable: TRUE
+    theme: dark
+    transition: slide
+    transition-speed: slow
+    auto-animate: TRUE
+    chalkboard: TRUE
+---
+
+## Objectives {transition="zoom" transition-speed="slow"}
+- Using R, obtain and interpret appropriate graphical displays to assess conditions for inference in multiple linear regression. 
+- Using R, obtain output from a Multiple Linear Regression analysis that best satisfies the conditions.
+- Use R to obtain a predicted value and a prediction interval. Interpret the prediction interval in the context of the problem
+
+## Today's Example
+Researchers were interested in what characteristics of a person may explain their body fat (measured as a percentage). Factors researchers thought might be significant predictors of percent body fat were age, height, weight, and various body measurements (such as neck, abdomen, knee, and ankle circumference, just to name a few). In this example, in addition to age, height, and weight as explanatory variables, we will use just one of the body measurements (chest circumference) as our last explanatory variable. A full data set (not available for your use) contains these variables and other body measurements. The `bodyfat` data set on Canvas only contains the following variables:
+
+## Today's Data {transition="zoom" transition-speed="slow"}
+```{r}
+bodyfat <- read.delim("C:/Users/Ghcto/OneDrive/Desktop/School/Spring 2024/ST 352 (TA)/Lab 5/bodyfat.txt")
+bodyfat
+```
+
+## Goal
+Use the `bodyfat` data set to perform a multiple linear regression analysis to determine which (if any) of age, height, weight, and/or chest help explain percent body fat.
+
+:::aside
+This is the same dataset that is used in your lab assignment this week
+:::
+
+## [Step 1: Is the sample representative of the population?]{.r-fit-text}
+- Who knows
+
+## [Step 2 - Assessing correlation among the explanatory variables]{.r-fit-text}
+- Obtain a scatterplot matrix to assess the correlation between explanatory variables
+- Obtain a correlation matrix showing the correlation coefficients between pairs of
+explanatory variables
+
+## [Step 2 - Assessing correlation among the explanatory variables]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+pairs(~ age + weight + height + chest, data = bodyfat)
+```
+
+## [Step 2 - Assessing correlation among the explanatory variables]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+pairs(~ age + weight + height + chest, data = bodyfat,
+      col = "lawngreen",
+      pch = 19)
+```
+
+
+## [Step 2 - Assessing correlation among the explanatory variables]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+pairs(~ age + weight + height + chest, data = bodyfat,
+      col = "lawngreen",
+      pch = 19,
+      main = "Body Fat Explanatory Variables")
+```
+
+
+## [Step 2 - Assessing correlation among the explanatory variables]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+pairs(~ age + weight + height + chest, data = bodyfat,
+      col = "lawngreen",
+      pch = 19,
+      main = "Body Fat Explanatory Variables",
+      # Labels are applied left to right, should match first input argument order
+      labels = c("Age (years)", "Weight (lbs)", "Height (inches)", "Chest Circumference (cm)"))
+```
+
+## [Step 2 - Assessing correlation among the explanatory variables]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+pairs(~ age + weight + height + chest, data = bodyfat,
+      col = "lawngreen",
+      pch = 19,
+      main = "Body Fat Explanatory Variables",
+      labels = c("Age (years)", "Weight (lbs)", "Height (inches)", "Chest Circumference (cm)"),
+      lower.panel = NULL)
+```
+
+## [Step 2 - Assessing correlation among the explanatory variables]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+pairs(~ age + weight + height + chest, data = bodyfat,
+      col = "lawngreen",
+      pch = 19,
+      main = "Body Fat Explanatory Variables",
+      labels = c("Age (years)", "Weight (lbs)", "Height (inches)", "Chest Circumference (cm)"),
+      lower.panel = NULL,
+      gap = 2)
+```
+
+## [Step 2 - Assessing correlation among the explanatory variables]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+pairs(~ age + weight + height + chest, data = bodyfat,
+      col = "lawngreen",
+      pch = 19,
+      main = "Body Fat Explanatory Variables",
+      labels = c("Age (years)", "Weight (lbs)", "Height (inches)", "Chest Circumference (cm)"),
+      lower.panel = NULL,
+      gap = 0)
+```
+
+## [Step 2 - Assessing correlation among the explanatory variables]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+pairs(~ age + weight + height + chest, data = bodyfat,
+      col = "lawngreen",
+      pch = 19,
+      main = "Body Fat Explanatory Variables",
+      labels = c("Age (years)", "Weight (lbs)", "Height (inches)", "Chest Circumference (cm)"),
+      lower.panel = NULL,
+      gap = 1,
+      font.labels = 2)
+```
+
+## Slight Aside
+- `1` Default Font
+  - `2` Bold
+  - `3` Italicized
+  - `4` Bold and Italicized
+  - `5` Greek Letters
+- `6` Times New Roman Font
+  - `7` Bold Times New Roman
+  - `8` Italicized Times New Roman
+  - `9` Bold and Italicized Times New Roman
+- `10` Typewriter Font
+  - `11` Bold Typewriter 
+  - `12` Italicized Typewriter 
+  - `13` Bold and Italicized Typewriter
+- Goes up to 20 different `font.labels` in total (everything past 20 is the same)
+
+## [Step 2 - Assessing correlation among the explanatory variables]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+pairs(~ age + weight + height + chest, data = bodyfat,
+      col = "lawngreen",
+      pch = 19,
+      main = "Body Fat Explanatory Variables",
+      labels = c("Age (years)", "Weight (lbs)", "Height (inches)", "Chest Circumference (cm)"),
+      lower.panel = NULL,
+      gap = 0.75,
+      font.labels = 2)
+```
+
+## [Step 2 - Assessing correlation among the explanatory variables]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+- Uses for explanatory variable scatterplot matrix
+  - Checking for high correlation between explanatory variables
+  - Checking for a linear relationship between response variable and each explanatory variable
+  - Checking for outliers
+- What do we see?
+
+## [Step 2 - Assessing correlation among the explanatory variables]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+cor(bodyfat)
+```
+
+## [Step 2 - Assessing correlation among the explanatory variables]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+round(cor(bodyfat), digits = 4)
+```
+
+## [Step 2 - Assessing correlation among the explanatory variables]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+cor(bodyfat)[2:5,2:5]
+
+# Accomplishes the same as the above
+cor(bodyfat)[-1,-1]
+```
+
+## [Step 2 - Assessing correlation among the explanatory variables]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+- Uses for correlation matrix
+- Gives the correlation coefficient between each pair of explanatory variables. This can be used in
+conjunction with the scatterplot matrix to check for high correlation between explanatory
+variables.
+
+:::aside
+Take a minute to answer question 1 on the lab assignment
+:::
+
+## [Strategy in determining which of two highly correlated variables to remove]{.r-fit-text}
+- Generate a linear model with just the two highly correlated explanatory variables. 
+- Look at the p-values from the t-tests – the one with the highest p-value would be removed as it would be deemed the lesser significant variable
+  - Note that the one with the t-statistic closer to 0 will have the higher p-value.
+  
+## [Strategy in determining which of two highly correlated variables to remove]{.r-fit-text}
+```{r}
+lmod <- lm(fat ~ weight + chest, data = bodyfat)
+summary(lmod)
+```
+
+:::aside
+Take a minute to answer question 2 on the lab assignment
+:::
+
+## Step 3 - Checking for outliers {auto-animate="true" auto-animate-easing="ease-in-out"}
+- Scatterplot matrix
+  - We need to generate a new scatterplot matrix with the response variable included
+
+## Step 3 - Checking for outliers {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+pairs(fat ~ age + weight + height + chest, data = bodyfat,
+      col = "lawngreen",
+      pch = 19,
+      main = "Body Fat Variables",
+      labels = c("Body Fat Percentage", "Age (years)", "Weight (lbs)", "Height (inches)", "Chest Circumference (cm)"),
+      lower.panel = NULL,
+      gap = 0.75,
+      font.labels = 2)
+```
+
+## Step 3 - Checking for outliers {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+# Create model (remember to exclude variable that was take out earlier)
+lmod2 <- lm(fat ~ age + height + chest, data = bodyfat)
+
+# Construct residual plot
+plot(lmod2$residuals ~ lmod2$fitted)
+```
+
+## Step 3 - Checking for outliers {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+# Construct residual plot
+plot(lmod2$residuals ~ lmod2$fitted,
+     pch = 19,
+     col = "pink")
+```
+
+## Step 3 - Checking for outliers {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+plot(lmod2$residuals ~ lmod2$fitted,
+     pch = 19,
+     col = "pink",
+     main = "Residual vs. Predicted Values",
+     ylab = "Residuals",
+     xlab = "Predicted Body Fat %")
+```
+
+## Step 3 - Checking for outliers {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+plot(lmod2$residuals ~ lmod2$fitted,
+     pch = 19,
+     col = "pink",
+     main = "Residual vs. Predicted Values",
+     ylab = "Residuals",
+     xlab = "Predicted Body Fat %")
+abline(h = 0)
+```
+
+## Step 3 - Checking for outliers {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+# Residual plot (residuals vs. explanatory variable)
+plot(lmod2$residuals ~ bodyfat$age,
+     pch = 19,
+     col = "orange",
+     main = "Residual vs. Age",
+     ylab = "Residuals",
+     xlab = "Age (years)")
+abline(h = 0)
+```
+
+## Step 3 - Checking for outliers {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| code-line-numbers: "2"
+#| output-location: fragment
+# Residual plot (residuals vs. explanatory variable)
+plot(lmod2$residuals ~ bodyfat$age,
+     pch = 19,
+     col = "orange",
+     main = "Residual vs. Age",
+     ylab = "Residuals",
+     xlab = "Age (years)")
+abline(h = 0)
+```
+
+## [Step 4 - Assess the linearity, constant variation, and normality conditions]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+- Linearity condition
+  - Scatterplot matrix (pairs plot)
+  - Residual plot
+- Constant variance
+  - Residual plot
+- Normality condition
+  - Normal probability plot of residuals
+  
+## [Step 4 - Assess the linearity, constant variation, and normality conditions]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: FALSE
+pairs(fat ~ age + weight + height + chest, data = bodyfat,
+      col = "lawngreen",
+      pch = 19,
+      main = "Body Fat Variables",
+      labels = c("Body Fat Percentage", "Age (years)", "Weight (lbs)", "Height (inches)", "Chest Circumference (cm)"),
+      lower.panel = NULL,
+      gap = 0.75,
+      font.labels = 2)
+```
+
+## [Step 4 - Assess the linearity, constant variation, and normality conditions]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: FALSE
+plot(lmod2$residuals ~ lmod2$fitted,
+     pch = 19,
+     col = "pink",
+     main = "Residual vs. Predicted Values",
+     ylab = "Residuals",
+     xlab = "Predicted Body Fat %")
+abline(h = 0)
+```
+
+## [Step 4 - Assess the linearity, constant variation, and normality conditions]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+qqnorm(lmod2$residuals)
+```
+
+## [Step 4 - Assess the linearity, constant variation, and normality conditions]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+qqnorm(lmod2$residuals,
+       pch = 19, 
+       col = "purple",
+       main = "Normal Probability Plot of Residuals")
+```
+
+## [Step 4 - Assess the linearity, constant variation, and normality conditions]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+qqnorm(lmod2$residuals,
+       pch = 19, 
+       col = "purple",
+       main = "Normal Probability Plot of Residuals")
+qqline(lmod2$residuals)
+```
+
+## [Step 4 - Assess the linearity, constant variation, and normality conditions]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: FALSE
+qqnorm(lmod2$residuals,
+       pch = 19, 
+       col = "purple",
+       main = "Normal Probability Plot of Residuals")
+qqline(lmod2$residuals)
+```
+
+:::aside
+Take a couple minutes to answer questions 3 through 6 on the lab assignment
+:::
+
+## [Steps 5-7 - Analysis - Use your model to make predictions and obtain a prediction interval]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+# Previously created model
+lmod2 <- lm(fat ~ age + height + chest, data = bodyfat)
+summary(lmod2)
+```
+
+## [Steps 5-7 - Analysis - Use your model to make predictions and obtain a prediction interval]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output: FALSE
+predict(lmod2, data.frame(age = 30, height = 72, chest = 105))
+```
+
+## [Steps 5-7 - Analysis - Use your model to make predictions and obtain a prediction interval]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+predict(lmod2, data.frame(age = 30, height = 72, chest = 105),
+        interval = "prediction")
+```
+
+## [Steps 5-7 - Analysis - Use your model to make predictions and obtain a prediction interval]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+predict(lmod2, data.frame(age = 30, height = 72, chest = 105),
+        interval = "prediction",
+        level = 0.95)
+```
+

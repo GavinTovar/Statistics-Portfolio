@@ -1,0 +1,30 @@
+/* Typography utilities (Reveal.js safe version) */
+
+.reveal .text-sm {
+  font-size: 0.85em;
+}
+
+.reveal .text-xs {
+  font-size: 0.666em;
+}
+
+.reveal .text-xxs {
+  font-size: 0.50em;
+}
+
+.reveal .text-lg {
+  font-size: 1.15em;
+}
+
+.reveal .text-xl {
+  font-size: 1.3em;
+}
+
+/* Footnotes */
+
+.reveal .footnote {
+  position: absolute;
+  bottom: 1em;
+  font-size: 0.8em;
+  color: #555;
+}

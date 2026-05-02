@@ -1,0 +1,1019 @@
+---
+title: "Transform with Caution: <br> When Statistical Magic Can Go Wrong"
+author: The Guy From Lab
+format:
+  revealjs:
+    incremental: TRUE
+    scrollable: TRUE
+    theme: dracula
+    transition: slide
+    transition-speed: slow
+    auto-animate: TRUE
+    auto-animate-easing: ease-in-out
+    chalkboard: TRUE
+    plugins:
+      - reveal.js/plugin/zoom-js/zoom.js
+      - reveal.js/plugin/highlight/highlight.js
+    dependencies:
+      - r: kableExtra
+---
+
+<style>
+.slightlysmaller {
+  font-size: 0.85em;   /* Slightly smaller than normal */
+}
+
+.evensmaller {
+  font-size: 0.666em;   /* Slightly smaller than normal */
+}
+
+.bigger {
+  font-size: 1.15em;   /* Slightly bigger than normal */
+}
+
+.biggest {
+  font-size: 1.3em;    /* Larger, if needed */
+}
+
+.footnote {
+  position: absolute;
+  bottom: 1em;
+  font-size: 0.8em;
+  color: #555;
+}
+</style>
+
+
+## Imagine This {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r, echo = FALSE}
+set.seed(588190)
+library(tidyverse)
+library(gridExtra)
+library(e1071)
+library(knitr)
+library(kableExtra)
+
+# Need to generate at start so tests line up like I want
+# Set Sample Sizes
+n1 <- 1000
+n2 <- 1000
+
+# Generate samples
+sampX <- 100 * rgamma(n1, shape = 0.58, scale = 2 / 0.58)
+sampY <- 100 * exp(rnorm(n2, log(2) - 1, sqrt(2)))
+```
+
+- You're walking down the street and you see some commotion in your way, people are gathered around.
+- As you approach you hear whispering, crying, some are even angry.
+- Deciding to engage you speak to the calmest one available and inquire on what is going on, you come to find they're all discussing performing a t-test on some data.
+- Then before you can say anything else you see the following lying, lifelessly on the ground...
+
+## \*Gasp\* {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+ggplot(data = data.frame(vals = 100*rgamma(100, shape = 0.58, scale = 2/0.58)), aes(x = vals)) +
+  geom_histogram(bins = 50, fill = "#f56056", col = "white", alpha = 0.8) +
+  labs(x = expression(X),
+       y = "Frequency",
+       title = "A Skewed Histogram",
+       subtitle = "A Tragic Tale") +
+  theme_minimal() +
+  theme(panel.border = element_rect(color = "black", fill = NA, size = 1))
+```
+
+## Everyone Wants to be Normal
+- Many methods require this Normality assumption
+  - $t$-tests
+  - ANOVA
+  - Linear Regression, etc.
+- Without Normality these methods are not exact (but they are asymptotically exact because they're based on sample means)
+- The level of inexactness will depend on the population distribution(s) skewness, kurtosis, etc.
+
+## Transforming Data {.smaller}
+- To remedy situations of asymmetry some people (perhaps too many) suggest employing data transformations
+  - A common data transformation is the log transformation ($\ln(x)$)
+    - Often it's suggested for right-skewed positive data
+    - One of the most abused data transformations
+  - Some other transformations include
+    - Square root transformation ($\sqrt{x}$)
+    - Cube root transformation ($\sqrt[3]{x}$)
+    - Logit transformation (sometimes for percent data) $\log\!\left(\frac{p}{1 - p}\right)$
+
+## [Transforming Data - The Punchline]{.r-fit-text} {.smaller}
+- Why caution on data transformations?
+- Once transformation is performed we are almost never answering the original question
+- If we are interested in say, population means on the original scale, performing a hypothesis test on population means of transformed data is going to answer a different question
+
+::: {.fragment}
+$$
+E(g(T)) \neq g(E(T))
+$$
+:::
+
+::: {.fragment}
+Transforming inference back to the original scale is very challenging to interpret unless strong assumptions are made (stay tuned for more!)
+:::
+
+## [Disagreement Among the Little Ones]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+To illustrate my point, let's generate some data:
+```{r}
+#| echo: TRUE
+#| eval: FALSE
+# Set Sample Sizes
+n1 <- 1000
+n2 <- 1000
+
+# Generate samples
+sampX <- 100 * rgamma(n1, shape = 0.58, scale = 2 / 0.58)
+sampY <- 100 * exp(rnorm(n2, log(2) - 1, sqrt(2)))
+```
+
+## [Disagreement Among the Little Ones]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+hist_sampX <- ggplot(data.frame(sampX), aes(x = sampX)) +
+  geom_histogram(binwidth = 20, fill = "#87CEEB", color = "black", alpha = 0.7) +
+  labs(title = "Histogram of Sample X", x = "Sample X", y = "Frequency") +
+  theme_minimal() +
+  theme(panel.border = element_rect(color = "black", fill = NA, size = 1))
+
+hist_sampY <- ggplot(data.frame(sampY), aes(x = sampY)) +
+  geom_histogram(binwidth = 20, fill = "#98FB98", color = "black", alpha = 0.7) +
+  labs(title = "Histogram of Sample Y", x = "Sample Y", y = "Frequency") +
+  theme_minimal() +
+  theme(panel.border = element_rect(color = "black", fill = NA, size = 1))
+grid.arrange(hist_sampX, hist_sampY, ncol = 2)
+```
+
+## [Disagreement Among the Little Ones]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: FALSE
+t.test(sampX, sampY)
+```
+
+## [Disagreement Among the Little Ones]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+t.test(sampX, sampY) # Not significant: means are plausibly equal
+```
+
+## [Disagreement Among the Little Ones]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+hist_log_sampX <- ggplot(data.frame(log_sampX = log(sampX)), aes(x = log_sampX)) +
+  geom_histogram(binwidth = 0.5, fill = "#1E90FF", color = "black", alpha = 0.7) +
+  labs(title = "Histogram of log(Sample X)", x = "log(Sample X)", y = "Frequency") +
+  theme_minimal() +
+  theme(panel.border = element_rect(color = "black", fill = NA, size = 1))
+
+hist_log_sampY <- ggplot(data.frame(log_sampY = log(sampY)), aes(x = log_sampY)) +
+  geom_histogram(binwidth = 0.5, fill = "#3CB371", color = "black", alpha = 0.7) +
+  labs(title = "Histogram of log(Sample Y)", x = "log(Sample Y)", y = "Frequency") +
+  theme_minimal() +
+  theme(panel.border = element_rect(color = "black", fill = NA, size = 1))
+grid.arrange(hist_log_sampX, hist_log_sampY, ncol = 2)
+```
+
+## [Disagreement Among the Little Ones]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: FALSE
+t.test(log(sampX), log(sampY))
+```
+
+## [Disagreement Among the Little Ones]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+t.test(log(sampX), log(sampY)) # Significant: mean(log(X)) < mean(log(Y))
+```
+
+## [Disagreement Among the Little Ones]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+hist_sqrt_sampX <- ggplot(data.frame(sqrt_sampX = sqrt(sampX)), aes(x = sqrt_sampX)) +
+  geom_histogram(binwidth = 2, fill = "#4682B4", color = "black", alpha = 0.7) +
+  labs(title = "Histogram of sqrt(Sample X)", x = "sqrt(Sample X)", y = "Frequency") +
+  theme_minimal() +
+  theme(panel.border = element_rect(color = "black", fill = NA, size = 1))
+
+hist_sqrt_sampY <- ggplot(data.frame(sqrt_sampY = sqrt(sampY)), aes(x = sqrt_sampY)) +
+  geom_histogram(binwidth = 2, fill = "#228B22", color = "black", alpha = 0.7) +
+  labs(title = "Histogram of sqrt(Sample Y)", x = "sqrt(Sample Y)", y = "Frequency") +
+  theme_minimal() +
+  theme(panel.border = element_rect(color = "black", fill = NA, size = 1))
+grid.arrange(hist_sqrt_sampX, hist_sqrt_sampY, ncol = 2)
+```
+
+## [Disagreement Among the Little Ones]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: FALSE
+t.test(sqrt(sampX), sqrt(sampY))
+```
+
+## [Disagreement Among the Little Ones]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+t.test(sqrt(sampX), sqrt(sampY)) # Significant: mean(sqrt(X)) > mean(sqrt(Y))
+```
+
+## [Disagreement Among the Little Ones]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+# Create the individual histograms
+hist_sampX <- ggplot(data.frame(sampX), aes(x = sampX)) +
+  geom_histogram(binwidth = 20, fill = "#87CEEB", color = "black", alpha = 0.7) +
+  labs(title = "Histogram of Sample X", x = "Sample X", y = "Frequency") +
+  theme_minimal() +
+  theme(panel.border = element_rect(color = "black", fill = NA, size = 1))
+
+hist_sampY <- ggplot(data.frame(sampY), aes(x = sampY)) +
+  geom_histogram(binwidth = 20, fill = "#98FB98", color = "black", alpha = 0.7) +
+  labs(title = "Histogram of Sample Y", x = "Sample Y", y = "Frequency") +
+  theme_minimal() +
+  theme(panel.border = element_rect(color = "black", fill = NA, size = 1))
+
+hist_log_sampX <- ggplot(data.frame(log_sampX = log(sampX)), aes(x = log_sampX)) +
+  geom_histogram(binwidth = 0.5, fill = "#1E90FF", color = "black", alpha = 0.7) +
+  labs(title = "Histogram of log(Sample X)", x = "log(Sample X)", y = "Frequency") +
+  theme_minimal() +
+  theme(panel.border = element_rect(color = "black", fill = NA, size = 1))
+
+hist_log_sampY <- ggplot(data.frame(log_sampY = log(sampY)), aes(x = log_sampY)) +
+  geom_histogram(binwidth = 0.5, fill = "#3CB371", color = "black", alpha = 0.7) +
+  labs(title = "Histogram of log(Sample Y)", x = "log(Sample Y)", y = "Frequency") +
+  theme_minimal() +
+  theme(panel.border = element_rect(color = "black", fill = NA, size = 1))
+
+hist_sqrt_sampX <- ggplot(data.frame(sqrt_sampX = sqrt(sampX)), aes(x = sqrt_sampX)) +
+  geom_histogram(binwidth = 2, fill = "#4682B4", color = "black", alpha = 0.7) +
+  labs(title = "Histogram of sqrt(Sample X)", x = "sqrt(Sample X)", y = "Frequency") +
+  theme_minimal() +
+  theme(panel.border = element_rect(color = "black", fill = NA, size = 1))
+
+hist_sqrt_sampY <- ggplot(data.frame(sqrt_sampY = sqrt(sampY)), aes(x = sqrt_sampY)) +
+  geom_histogram(binwidth = 2, fill = "#228B22", color = "black", alpha = 0.7) +
+  labs(title = "Histogram of sqrt(Sample Y)", x = "sqrt(Sample Y)", y = "Frequency") +
+  theme_minimal() +
+  theme(panel.border = element_rect(color = "black", fill = NA, size = 1))
+
+# Combine all six histograms into a single layout
+grid.arrange(hist_sampX, hist_log_sampX, hist_sqrt_sampX,
+             hist_sampY, hist_log_sampY, hist_sqrt_sampY, 
+             nrow = 2)
+```
+
+## [Disagreement Among the Little Ones]{.r-fit-text} {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+- Our tests disagree... but why the underlying data is not being changed?
+  - These three tests are addressing fundamentally different questions. The results need not coincide: it is entirely possible that:
+    - the original scale means are equal, 
+    - the mean of the log-transformed data suggests Group $Y$ have larger values than Group $X$,
+    - the mean of the square-root–transformed data suggests Group $X$ have larger values than Group $Y$.
+  - Tests on transformed data provide no direct information about comparisons on the original scale, and vice versa.
+  - These tests are targeting distinct population parameters.
+
+## [Disagreement Among the Little Ones]{.r-fit-text} {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+- I've started with discussing people's typical response to asymmetry / skewness. Let's clarify what we're talking about.
+  - Suppose there is some random variable $X$ with mean $\mu$ and standard deviation $\sigma$
+  - Skewness is defined as the standardized third central moment of a distribution:
+  
+
+::: {.fragment}
+$$
+\text{Population Skewness} = \frac{\kappa_{3}}{\kappa_{2}^{3/2}}
+$$
+:::
+
+## [Disagreement Among the Little Ones]{.r-fit-text} {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+$$
+\text{Population Skewness} = \frac{\kappa_{3}}{\kappa_{2}^{3/2}}
+$$
+
+
+- Whoa, what are these funky symbols...
+  - $\kappa_{3}$ is the third cumulant
+  - $\kappa_{2}$ is the second cumulant
+  - Lucky for us the first three cumulants are the same as the central moments, that is
+  
+::: {.fragment}
+$$
+\begin{align*}
+  \kappa_{1} & = \mu = \operatorname{E}(X) \\[0.20cm]
+  \kappa_{2} & = \operatorname{E}\left[(X - \mu)^{2}\right] = \sigma^{2} \\[0.20cm]
+  \kappa_{3} & = \operatorname{E}\left[(X - \mu)^{3}\right] = \mu_{3} \\[0.20cm]
+\end{align*}
+$$
+:::
+
+- So I could have written it in a less scary way:
+
+::: {.fragment}
+$$
+\text{Population Skewness} = \frac{\mu_{3}}{\sigma^{3}} = \frac{\operatorname{E}\left[(X - \mu)^{3}\right]}{\sigma^{3}}
+$$
+:::
+
+## [Disagreement Among the Little Ones]{.r-fit-text} {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+I also mentioned **kurtosis**, which measures how heavily the tails of a distribution differ from those of a normal distribution.
+
+- It summarizes the **concentration of probability in the tails versus the center**.
+- In practical terms:
+  - **High kurtosis** → more extreme values (heavy tails)
+  - **Low kurtosis** → fewer extreme values (light tails)
+  
+::: {.fragment}
+Similar to skewness, kurtosis is the standardized fourth central moment
+$$
+\text{Population Kurtosis} = \frac{\mu_{4}}{\sigma^{4}} = \frac{\operatorname{E}\left[(X - \mu)^{4}\right]}{\sigma^{4}}
+$$
+:::
+
+- It's a little more complicated so I'll refrain from going further into it... Continuing with skewness... (after some plots)
+
+
+## [Disagreement Among the Little Ones]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: FALSE
+#| eval: TRUE
+set.seed(131)
+# High skewness: Exponential distribution
+samp_skew <- rexp(5000, rate = 0.05)
+hist_skew <- ggplot(data.frame(samp_skew), aes(x = samp_skew)) +
+  geom_histogram(binwidth = 3, fill = "#93f542", color = "black", alpha = 0.7) +
+  labs(title = "Histogram of High Skewness", x = "Value", y = "Frequency") +
+  theme_minimal() +
+  theme(panel.border = element_rect(color = "black", fill = NA, size = 1))
+
+# High kurtosis: t-distribution with low df (heavy tails)
+samp_kurt <- rt(5000, df = 2)
+hist_kurt <- ggplot(data.frame(samp_kurt), aes(x = samp_kurt)) +
+  geom_histogram(binwidth = 3, fill = "#f5425a", color = "black", alpha = 0.7) +
+  labs(title = "Histogram of High Kurtosis", x = "Value", y = "Frequency") +
+  theme_minimal() +
+  theme(panel.border = element_rect(color = "black", fill = NA, size = 1))
+
+# Combine plots side by side
+grid.arrange(hist_skew, hist_kurt, ncol = 2)
+```
+
+
+## [Disagreement Among the Little Ones]{.r-fit-text} {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+There are many different sample skewness formulas, one of the most simple being:
+  
+::: {.fragment}
+$$
+\text{Sample Skewness} = \frac{1}{n} \sum_{i=1}^{n} \left( \frac{x_i - \bar{x}}{s} \right)^3
+$$
+:::
+
+- where $s^{2} = \frac{1}{n - 1}\sum\limits_{i=1}^{n}\left(x_{i} - \bar{x}\right)^{2}$
+
+- **Positive skew**: The right tail is longer or fatter than the left.
+- **Negative skew**: The left tail is longer or fatter than the right.
+- **Zero skew**: The distribution is symmetric.
+
+
+## [Disagreement Among the Little Ones]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r, fig.align = 'center'}
+# Calculate skewness for each transformation
+skewness_values <- data.frame(
+  Transformation = c("Sample X", "Sample Y", "log(Sample X)", 
+                     "log(Sample Y)", "sqrt(Sample X)", "sqrt(Sample Y)"),
+  Skewness = c(skewness(sampX), 
+               skewness(sampY),
+               skewness(log(sampX)),
+               skewness(log(sampY)),
+               skewness(sqrt(sampX)),
+               skewness(sqrt(sampY))))
+skewness_values %>%
+  kable(format = "markdown") %>%
+  kable_styling(
+    bootstrap_options = c("striped", "hover", "responsive"),
+    full_width = FALSE,
+    position = "center",
+    font_size = 30
+  ) %>%
+  column_spec(1, color = "white", background = "#333333") %>%
+  column_spec(2, color = "lightblue", background = "#444444", bold = TRUE) %>%
+  row_spec(0, background = "#222222", color = "white", bold = TRUE) %>%
+  row_spec(1:nrow(skewness_values), color = "white", background = "#333333") %>%
+  add_header_above(c("Skewness Values Before and After Transformations" = 2))
+```
+
+<div class="footnote fragment" style="position: absolute; bottom: 1em; font-size: 0.8em;">
+   We see that absolute skewness is indeed smaller after transformation... but is this always the case?
+</div>
+
+## [Disagreement Among the Little Ones]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+
+```{r}
+#| echo: TRUE
+# Simulate right-skewed data (Gamma distribution)
+right_skewed_data <- rgamma(1000, shape = 2, scale = 2)
+
+# Simulate left-skewed data (Inverse Gamma distribution)
+left_skewed_data <- 1 / rgamma(1000, shape = 2, scale = 2)
+```
+
+## [Disagreement Among the Little Ones]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Simulate right-skewed data (Gamma distribution)
+right_skewed_data <- rgamma(1000, shape = 2, scale = 2)
+
+# Simulate left-skewed data (Inverse Gamma distribution)
+left_skewed_data <- 1 / rgamma(1000, shape = 2, scale = 2)
+
+# Apply concave transformation (log) to both datasets
+right_skewed_log <- log(right_skewed_data)
+left_skewed_log <- log(left_skewed_data)
+```
+
+## [Disagreement Among the Little Ones]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Simulate right-skewed data (Gamma distribution)
+right_skewed_data <- rgamma(1000, shape = 2, scale = 2)
+
+# Simulate left-skewed data (Inverse Gamma distribution)
+left_skewed_data <- 1 / rgamma(1000, shape = 2, scale = 2)
+
+# Apply concave transformation (log) to both datasets
+right_skewed_log <- log(right_skewed_data)
+left_skewed_log <- log(left_skewed_data)
+
+# Apply convex transformation (square) to both datasets
+right_skewed_square <- right_skewed_data^2
+left_skewed_square <- left_skewed_data^2
+```
+
+## [Disagreement Among the Little Ones]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+# Calculate skewness for each dataset before and after transformations
+shooskew <- data.frame(
+  Transformation = c("Right Skewed", "Left Skewed", "Log (Right Skewed)", 
+                     "Log (Left Skewed)", "Square (Right Skewed)", "Square (Left Skewed)"),
+  Skewness = c(
+    skewness(right_skewed_data), 
+    skewness(left_skewed_data),
+    skewness(right_skewed_log),
+    skewness(left_skewed_log),
+    skewness(right_skewed_square),
+    skewness(left_skewed_square)
+  )
+)
+
+shooskew %>%
+  kable(format = "markdown") %>%
+  kable_styling(
+    bootstrap_options = c("striped", "hover", "responsive"),
+    full_width = FALSE,
+    position = "center",
+    font_size = 30
+  ) %>%
+  column_spec(1, color = "white", background = "#333333") %>%
+  column_spec(2, color = "lightblue", background = "#444444", bold = TRUE) %>%
+  row_spec(0, background = "#222222", color = "white", bold = TRUE) %>%
+  row_spec(1:nrow(shooskew), color = "white", background = "#333333") %>%
+  add_header_above(c("Skewness Values Before and After Transformations" = 2))
+```
+
+## [Disagreement Among the Little Ones]{.r-fit-text} {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+- In General
+- Concave functions (e.g., log, square root, cube root) tend to reduce skewness by compressing the extreme values
+  - This in turn often results in a less skewed distribution
+  - This is in line with Jensen's inequality, which states for a concave function $f$
+
+::: {.fragment}
+$$
+f\left(E[X]\right) \ge E\left[f(X)\right]
+$$
+:::
+
+## [Disagreement Among the Little Ones]{.r-fit-text} {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+- In General
+- Convex functions (e.g., squaring, exponentiating) generally amplify skewness because they increase the effect of extreme values, 
+  - For right-skewed data, this increases the positive skew, and for left-skewed data, it may reverse the skew (creating positive skew by squaring negative values)
+    - An example of this follows
+  - Again, this comes from Jensen's, which states for a convex function $f$
+
+::: {.fragment}
+$$
+f\left(E[X]\right) \le E\left[f(X)\right]
+$$
+:::
+
+
+## You had one job... {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+# Step 1: Create data with small skew
+n <- 1000
+samp <- rnorm(n)
+samp <- samp - 2.5 * abs(rnorm(n))  # Normal distribution slightly negatively skewed
+
+# Step 2: Apply a transformation (squaring the data to induce positive skew)
+transformed_samp <- samp^2
+
+# Create the original and transformed histograms
+plot1 <- ggplot(data.frame(samp), aes(x = samp)) +
+  geom_histogram(binwidth = 0.75, fill = "skyblue", color = "white") +
+  labs(title = "Original Sample (Slightly Negative Skew)", x = "Values", y = "Frequency") +
+  theme_minimal()
+
+plot2 <- ggplot(data.frame(transformed_samp), aes(x = transformed_samp)) +
+  geom_histogram(binwidth = 2, fill = "lightcoral", color = "white") +
+  labs(title = "Transformed Sample (Very Positive Skew)", x = "Values", y = "Frequency") +
+  theme_minimal()
+
+# Arrange both plots side by side
+grid.arrange(plot1, plot2, ncol = 2)
+```
+
+## You had one job... {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r, fig.align = 'center'}
+# Step 3: Calculate skewness before and after transformation
+Skewed <- data.frame(
+  Type = c("Orginal", "Transformed"),
+  Skewness = c(skewness(samp), skewness(transformed_samp)))
+Skewed %>%
+  kable(format = "markdown") %>%
+  kable_styling(
+    bootstrap_options = c("striped", "hover", "responsive"),
+    full_width = FALSE,
+    position = "center",
+    font_size = 30
+  ) %>%
+  column_spec(1, color = "white", background = "#333333") %>%
+  column_spec(2, color = "lightblue", background = "#444444", bold = TRUE) %>%
+  row_spec(0, background = "#222222", color = "white", bold = TRUE) %>%
+  row_spec(1:nrow(Skewed), color = "white", background = "#333333") %>%
+  add_header_above(c("Skewness Values Before and After Transformation" = 2))
+```
+
+- We see that the direction of skewness can change and it can even be increased by transformation as shown here
+
+## [Interpreting Inference on Log-Transformed Data]{.r-fit-text}
+- As mentioned in the beginning, data transformations are often suggested for skewed data, data that "doesn't look Normal"
+- A common transformation is the natural log
+  - But, when we are interested in population means (as is often the case)...
+- Testing equality of two population means on log-transformed data is equivalent to testing equality of the population geometric means on the original scale
+
+## [Interpreting Inference on Log-Transformed Data]{.r-fit-text} {.smaller}
+\begin{align*}
+\text{Let } & y_{i} = \log(x_{i}) \\[0.25cm]
+\bar{y} & = \frac{1}{n} \sum_{i=1}^{n} y_{i}
+\end{align*}
+
+::: {.fragment}
+\begin{align*}
+            & = \frac{1}{n} \sum_{i=1}^{n} \log(x_{i})
+\end{align*}
+:::
+
+::: {.fragment}
+\begin{align*}
+            & = \frac{1}{n} \left(\log(x_{1}), \log(x_{2}), \cdots, \log(x_{n})\right)
+\end{align*}
+:::
+
+::: {.fragment}
+\begin{align*}
+            & = \frac{1}{n} \log \left( \prod_{i=1}^{n} x_{i}\right) && \Big(\log(a) + \log(b) = \log(ab)\Big)
+\end{align*}
+:::
+
+::: {.fragment}
+\begin{align*}
+            & = \log\left(\left(\prod_{i=1}^{n} x_{i}\right)^{\frac{1}{n}}\right) && \Big(x\log(a) = \log(a^x)\Big)
+\end{align*}
+:::
+
+::: {.fragment}
+\begin{align*}
+            & = \log\left(\text{GM}\right)
+\end{align*}
+:::
+
+## [Interpreting Inference on Log-Transformed Data]{.r-fit-text} {.smaller}
+\begin{align*}
+\text{Let } & y_{i} = \log(x_{i}) \\[0.25cm]
+    \bar{y} & = \frac{1}{n} \sum_{i=1}^{n} y_{i} \\[0.25cm]
+            & = \frac{1}{n} \sum_{i=1}^{n} \log(x_{i}) \\[0.25cm]
+            & = \frac{1}{n} \left(\log(x_{1}), \log(x_{2}), \cdots, \log(x_{n})\right) \\[0.25cm]
+            & = \frac{1}{n} \log \left( \prod_{i=1}^{n} x_{i}\right) && \Big(\log(a) + \log(b) = \log(ab)\Big) \\[0.25cm]
+            & = \log\left(\left(\prod_{i=1}^{n} x_{i}\right)^{\frac{1}{n}}\right) && \Big(x\log(a) = \log(a^x)\Big) \\[0.25cm]
+            & = \log\left(\text{GM}\right)
+\end{align*}
+
+## [Interpreting Inference on Log-Transformed Data]{.r-fit-text} {.smaller}
+- So we see that the arithmetic mean of the log-transformed data is the log of the geometric mean of the original data.
+- Notice we can't just exponentiate to interpret sample mean on original scale
+
+::: {.fragment}
+\begin{align*}
+    e^{\log\left(\left(\prod\limits_{i=1}^{n} x_{i}\right)^{\frac{1}{n}}\right)} = \left(\prod_{i=1}^{n} x_{i}\right)^{\frac{1}{n}} \neq \frac{1}{n} \sum_{i=1}^{n} x_{i}
+\end{align*}
+:::
+
+- Exponentiating the sample mean on the log-scale doesn't give the mean on the original scale
+
+## [Interpreting Inference on Log-Transformed Data]{.r-fit-text} {.smaller}
+- So, since
+
+::: {.fragment}
+\begin{align*}
+    \frac{1}{n} \sum_{i=1}^{n} \log(x_{i}) \neq \log\left(\frac{1}{n} \sum_{i=1}^{n} x_{i}\right)
+\end{align*}
+:::
+
+- By Jensen's inequality again
+
+
+## [Interpreting Inference on Log-Transformed Data]{.r-fit-text} {.smaller}
+- Suppose we are testing: $H_{0}: \delta_{X} = \delta_{Y}$, where
+  - $\delta_{X}$ is the population mean for the natural log of $X$
+  - $\delta_{Y}$ is the population mean for the natural log of $Y$
+- this isn't going to tell us about the population means of $X$ and $Y$
+  - Meaning it's not going to answer $H_{0}: \mu_{X} = \mu_{Y}$
+  - What it tests is...
+    - $H_{0}: \delta_{X} = \delta_{Y}$
+
+- Some people try to get around this by interpreting a different quantity, the *median*
+  - Why the median?
+
+<div class="footnote fragment" style="position: absolute; bottom: 1em; font-size: 0.8em;">
+   Notice, I didn't say $H_{0}: \ln\left(\mu_{X}\right) = \ln\left(\mu_{Y}\right)$, subtle difference
+</div>
+
+## [Interpreting Inference on Log-Transformed Data]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+To see why, let's generate some data... again!
+```{r}
+#| echo: TRUE
+some_data <- runif(9, 0, 100)
+log_some_data <- log(some_data)
+```
+
+## [Interpreting Inference on Log-Transformed Data]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+some_data <- runif(9, 0, 100)
+log_some_data <- log(some_data)
+
+Median_x <- median(some_data)
+Median_x
+```
+
+## [Interpreting Inference on Log-Transformed Data]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+Median_x <- median(some_data)
+Median_x
+Median_log <- median(log_some_data)
+Median_log
+```
+
+## [Interpreting Inference on Log-Transformed Data]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+Median_x
+Median_log
+
+log(Median_x)
+exp(Median_log)
+```
+
+## [Interpreting Inference on Log-Transformed Data]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+c(Median_log, log(Median_x))
+c(Median_x, exp(Median_log))
+```
+
+- We see that the median of the logs is the log of the medians
+
+## [Interpreting Inference on Log-Transformed Data]{.r-fit-text} {.smaller}
+- What is taught in ST 411/511 is the interpretation of a median on the original scale
+- To make this interpretation we've got to make some big leaps in assumption land
+  - If we assume the log-transformed data have a symmetric distribution, we know
+
+::: {.fragment}
+$$
+\text{Mean}\left[\log(Y)\right] = \text{Median}\left[\log(Y)\right]
+$$
+:::
+- And, as we have just demonstrated, the log preserves ordering meaning
+
+::: {.fragment}
+$$
+\text{Median}\left[\log(Y)\right] = \log\left[\text{Median}(Y)\right]
+$$
+:::
+
+## [Assuming Symmetry: The Statistical Shortcut We All Wish Worked]{.r-fit-text} {.evensmaller}
+- So the logic goes as such:
+
+::: {.fragment}
+$$
+\frac{1}{n}\sum\limits_{i=1}^{n}\log(X_{i}) - \frac{1}{m}\sum\limits_{i=1}^{m}\log(Y_{i}) = \bar{U} - \bar{W}
+$$
+:::
+
+::: {.fragment}
+Estimates
+$$
+\text{Mean}\left[\log(X)\right] - \text{Mean}\left[\log(Y)\right]
+$$
+:::
+
+::: {.fragment}
+If we assume the log-transformed data have a symmetric distribution
+$$
+\text{Median}\left[\log(X)\right] - \text{Median}\left[\log(Y)\right]
+$$
+:::
+
+::: {.fragment}
+Log preserves ordering 
+$$
+\log\left[\text{Median}(X)\right] - \log\left[\text{Median}(Y)\right] = \log\left(\frac{\text{Median}(X)}{\text{Median}(Y)}\right)
+$$
+:::
+
+::: {.fragment}
+Exponentiating we have
+$$
+e^{\bar{U} - \bar{W}} \quad \text{ estimates } \quad \frac{\text{Median}(X)}{\text{Median}(Y)}
+$$
+:::
+
+## [Assuming Symmetry: The Statistical Shortcut We All Wish Worked]{.r-fit-text} {.slightlysmaller}
+- Notice that symmetry is not technically required, we just need a setting where 
+$$
+\text{Mean}\left[\log(Y)\right] = \text{Median}\left[\log(Y)\right]
+$$
+symmetry just guarantees this property.
+- To demonstrate this assumption, I will show the best case and a seemingly indistinguishable case to that of the best that does not work
+- Assumption: If we have right skewed positive data that once transformed has a **symmetric distribution**
+
+## [Let’s Pretend Everything is Symmetric: A Statistical Fantasy]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+# Generating right-skewed positive data (log-normal data)
+da.data <- data.frame(vals = rlnorm(10000, mean = 0, sd = 1))
+ggplot(data = da.data, aes(x = vals)) +
+  geom_histogram(binwidth = 0.25, fill = "#eb34de", col = "white", alpha = 0.8) +
+  labs(x = expression(X),
+       y = "Frequency",
+       title = "Right-Skewed Positive Data (Log-Normal Data)") +
+  xlim(0, 20) +
+  theme_bw()
+```
+
+## [Let’s Pretend Everything is Symmetric: A Statistical Fantasy]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+# Natural log of that data
+ggplot(data = log(da.data), aes(x = vals)) +
+  geom_histogram(binwidth = 0.25, fill = "#eb34de", col = "white", alpha = 0.8) +
+  labs(x = expression(ln(X)),
+       y = "Frequency",
+       title = "Exact Same Data, Log Transformed") +
+  theme_bw()
+```
+
+## [Let’s Pretend Everything is Symmetric: A Statistical Fantasy]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+p1 <- ggplot(data = da.data, aes(x = vals)) +
+  geom_histogram(binwidth = 0.25, fill = "#eb34de", col = "white", alpha = 0.8) +
+  labs(x = expression(X),
+       y = "Frequency",
+       title = "Right-Skewed Positive Data (Log-Normal Data)") +
+  xlim(0, 20) +
+  theme_bw()
+
+p2 <- ggplot(data = log(da.data), aes(x = vals)) +
+  geom_histogram(binwidth = 0.25, fill = "#eb34de", col = "white", alpha = 0.8) +
+  labs(x = expression(ln(X)),
+       y = "Frequency",
+       title = "Exact Same Data, Log Transformed") +
+  theme_bw()
+gridExtra::grid.arrange(p1, p2, ncol = 2)
+```
+
+## [Assuming Symmetry: The Statistical Version of ‘Fake It Till You Make It]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+- The right skewed data shown was log-normal so unless you assume that your data is log-normal you won't have completely Normal data (symmetric) once transformed
+- Aka, just because it is positive and right-skewed, doesn't mean everything is golden
+  - The couple following of slides will illustrate this
+  
+## [Let’s Just Assume Symmetry: What Could Go Wrong?]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+# Generating right-skewed positive data (exponential data)
+da.data <- data.frame(vals = rexp(10000, rate = 1))
+ggplot(data = da.data, aes(x = vals)) +
+  geom_histogram(binwidth = 0.25, fill = "#ed6728", col = "white", alpha = 0.8) +
+  labs(x = expression(X),
+       y = "Frequency",
+       title = "Right-Skewed Positive Data (Exponential)") +
+  xlim(0, 20) +
+  theme_bw()
+```
+
+## [Let’s Just Assume Symmetry: What Could Go Wrong?]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+# Natural log of that data
+ggplot(data = log(da.data), aes(x = vals)) +
+  geom_histogram(binwidth = 0.25, fill = "#ed6728", col = "white", alpha = 0.8) +
+  labs(x = expression(ln(X)),
+       y = "Frequency",
+       title = "Exact Same Data, Log Transformed") +
+  theme_bw()
+```
+
+## [Let’s Just Assume Symmetry: What Could Go Wrong?]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+# Plotting side-by-side
+p3 <- ggplot(data = da.data, aes(x = vals)) +
+  geom_histogram(binwidth = 0.25, fill = "#ed6728", col = "white", alpha = 0.8) +
+  labs(x = expression(X),
+       y = "Frequency",
+       title = "Right-Skewed Positive Data (Exponential)") +
+  xlim(0, 20) +
+  theme_bw()
+p4 <- ggplot(data = log(da.data), aes(x = vals)) +
+  geom_histogram(binwidth = 0.25, fill = "#ed6728", col = "white", alpha = 0.8) +
+  labs(x = expression(ln(X)),
+       y = "Frequency",
+       title = "Exact Same Data, Log Transformed") +
+  theme_bw()
+grid.arrange(p3, p4, ncol = 2)
+```
+
+## [Symmetry in Statistics: It’s Like a Unicorn... We Hope It Exists]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+- We can see that since our original data was not log-normal we don't end up with a symmetric distribution
+
+## Shift and Forget? {auto-animate="true" auto-animate-easing="ease-in-out"}
+- Notice, I mentioned positively skewed data, we cannot have negative values before we log-transform (or the world will explode)
+- Some people try to circumvent this by shifting the data beforehand but... 
+  - then interpretation becomes challenging / hopeless and dependent on a perhaps arbitrary shift parameter
+
+## [Same Cat, Different Hat for Linear Regression]{.r-fit-text} {.evensmaller}
+- For linear regression, people often want to log transform the response if they suspect some non-normality of their residuals or want to address some nonlinearity
+
+::: {.fragment}
+Simple linear regression (SLR) setting
+$$
+E\left(Y \,|\, X\right) =\beta_{0} + \beta_{1}X
+$$
+:::
+
+::: {.fragment}
+Log transformation on $Y$
+$$
+E\left(\log(Y) \,|\, X\right) =\beta_{0} + \beta_{1}X
+$$
+:::
+
+::: {.fragment}
+We can exponentiate to interpret $Y$ on the original scale
+$$
+e^{E\left(\log(Y) \,|\, X\right)} = e^{\beta_{0} + \beta_{1}X}
+$$
+:::
+
+::: {.fragment}
+Back to our geometric mean on original scale
+$$
+\text{Geometric Mean}\left(Y \,|\, X\right) = e^{\beta_{0}}e^{\beta_{1}X}
+$$
+:::
+
+## [Same Cat, Different Hat for Linear Regression]{.r-fit-text} {.smaller}
+- Again we are faced with the mean of the log-transformed variable equal to the log of the geometric mean on the original scale
+  - Thus a one unit increase in $X$ corresponds to a multiplicative increase of $e^{\beta_{1}}$ in the geometric mean of $Y$
+- The *big assumption* of our data being symmetric after log transforming is sometimes made (although it probably shouldn't be) which leads to a slightly different interpretation
+  - A one unit increase in $X$ corresponds to a multiplicative increase of $e^{\beta_{1}}$ in the median of $Y$
+
+## [Same Cat, Different Hat for Linear Regression]{.r-fit-text} {.smaller}
+- If instead we log transform our predictor:
+
+::: {.fragment}
+$$
+E\left(Y \,|\, X\right) =\beta_{0} + \beta_{1}\log(X)
+$$
+:::
+- We can interpret a one unit increase in $\log(X)$ as an associated increase in $Y$ by $\beta_{1}$
+  - A one unit increase in $\log(X)$ is equivalent to a multiplicative increase of $e^{1}$ in $X$
+
+## Summary {.smaller}
+- Transformations change the question one is answering
+  - Interpreting on original scale comes with complications of dealing with the geometric mean or make big assumptions about the data
+- Transformations don't always fix the skewness problems
+- Also note:
+  - If plots and transformations are gone through prior to hypothesis testing:
+    - A form of data snooping
+    - A form of model selection
+      - Need to be accounted for or forgone all-together
+
+## Recommendations {.smaller}
+- A data transformation is not always inappropriate...
+  - If you're not interested in inference, only prediction
+  - There are situations in which one might be instead in the transformed scale
+    - Sound measurement in decibels follow a natural log scale
+    - Richter scale (quantification of earthquake magnitude) is on a base-10 logarithmic scale
+- I would caution making that symmetry assumption since it can't reliably be tested
+- If you have an adequate sample size, I probably wouldn't worry about skewness 
+  - What is considered "adequate" will depend on the skewness encountered
+  - CLT is our secret sauce
+
+## [From Any Shape to Bell Curve: The Magic of the Central Limit Theorem]{.r-fit-text} {.smaller}
+```{r}
+# Parameters
+n_simulations <- 1000  # Number of simulations for each sample size
+sample_sizes <- c(10, 30, 100)  # Sample sizes to test
+
+# Generalized function to simulate sample means for any distribution
+simulate_sample_means <- function(sample_size, dist_name, dist_params = list()) {
+  dist_fun <- match.fun(paste0("r", dist_name))  # Find the R function for the distribution
+  sample_means <- replicate(n_simulations, {
+    mean(do.call(dist_fun, c(list(n = sample_size), dist_params)))  # Generate and calculate mean
+  })
+  data.frame(sample_means = sample_means, sample_size = as.factor(sample_size), dist_type = dist_name)
+}
+
+# Define the distributions and their parameters
+distributions <- list(
+  list(name = "unif", params = list(min = 0, max = 1)),
+  list(name = "exp", params = list(rate = 1)),
+  list(name = "norm", params = list(mean = 0, sd = 1)),
+  list(name = "lnorm", params = list(meanlog = 0, sdlog = 1))
+)
+
+# Run simulations for each sample size and distribution type
+sample_means_data <- bind_rows(
+  lapply(distributions, function(dist) {
+    bind_rows(lapply(sample_sizes, simulate_sample_means, dist_name = dist$name, dist_params = dist$params))
+  })
+)
+# # Plot
+# ggplot(sample_means_data, aes(x = sample_means, fill = sample_size)) +
+#   geom_histogram(aes(y = ..density..), bins = 30, alpha = 0.6, color = "black", position = "identity") +
+#   geom_density(color = "black", size = 0.7, linetype = "dashed", alpha = 0.60) +
+#   facet_grid(dist_type ~ sample_size, scales = "free",  # Allow x and y to scale freely
+#              labeller = labeller(dist_type = c(
+#                "unif" = "Unif",
+#                "exp" = "Exp",
+#                "norm" = "Normal",
+#                "lnorm" = "Log-Norml"
+#              ))) +
+#   scale_fill_manual(values = c("#4B9CD3", "#74C476", "#f2715a")) +  # Custom colors for sample sizes
+#   labs(
+#     title = "Central Limit Theorem Demonstration across Distributions",
+#     subtitle = "Effect of Sample Size on Sample Means",
+#     x = "Sample Mean",
+#     y = "Density",
+#     fill = "Sample Size"
+#   ) +
+#   theme_minimal(base_size = 14) +
+#   theme(
+#     legend.position = "bottom",
+#     strip.text = element_text(size = 12, face = "bold"),
+#     plot.title = element_text(hjust = 0.5, size = 16, face = "bold"),
+#     plot.subtitle = element_text(hjust = 0.5, size = 12),
+#     panel.spacing = unit(1, "lines")
+#   )
+
+```
+
+```{r}
+ggplot(sample_means_data, aes(x = sample_means, fill = sample_size)) +
+  geom_histogram(aes(y = ..density..), bins = 30, alpha = 0.4, color = "black", position = "identity") +
+  geom_density(color = "black", size = 0.6, linetype = "dashed", alpha = 0.3) +
+  facet_wrap(~ dist_type, scales = "free", strip.position = "left", 
+             labeller = labeller(dist_type = c(
+               "unif" = "Uniform",
+               "exp" = "Exponential",
+               "norm" = "Normal",
+               "lnorm" = "Log-Normal"
+             ))) +
+  scale_fill_manual(values = c("#4B9CD3", "#74C476", "#f2715a")) +  # Custom colors for sample sizes
+  labs(
+    title = "Central Limit Theorem Demonstration across Distributions",
+    subtitle = "Effect of Sample Size on Sample Means",
+    x = "Sample Mean",
+    y = "Density",
+    fill = "Sample Size"
+  ) +
+  theme_minimal(base_size = 14) +
+  theme(
+    legend.position = "bottom",
+    strip.text = element_text(size = 12, face = "bold", hjust = 1),  # Make distribution names bold
+    strip.placement = "outside",
+    plot.title = element_text(hjust = 0.5, size = 16, face = "bold"),
+    plot.subtitle = element_text(hjust = 0.5, size = 12),
+    panel.spacing = unit(1, "lines"),
+    panel.grid.major = element_line(color = "gray90")
+  )
+```
+
+## The End
+- Homework 5 is posted and when you will be able to show off your transformation knowledge
+- I've got office hours 3:00 - 4:00pm Wednesday
+
+## References {.smaller}
+- Pek, J., Wong, O. & Wong, A. C., (2017) “Data Transformations for Inference with Linear Regression: Clarifications and Recommendations”, Practical Assessment, Research, and Evaluation 22(1): 9. doi: https://doi.org/10.7275/2w3n-0f07
+- Pek, J., Wong, A.C.M. and Wong, O.C.Y. (2017) Confidence Intervals for the Mean of Non-Normal Distribution: Transform or Not to Transform. Open Journal of Statistics, 7, 405-421. https://doi.org/10.4236/ojs.2017.73029
+- **The Real Deal Sarah Emerson (aka The Original)**

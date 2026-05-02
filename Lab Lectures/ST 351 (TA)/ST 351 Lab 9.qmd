@@ -1,0 +1,438 @@
+---
+title: "(ST 351) Population Proportion Inference (Bootstrap Methods)"
+format: 
+  revealjs:
+    incremental: TRUE
+    scrollable: TRUE
+    theme: dark
+    transition: slide
+    chalkboard: TRUE
+---
+
+## Example Scenerio
+Researchers were wondering if *more* than **30%** of adolescents have a poor level of cardiovascular fitness. In a recent study, 530 adolescents aged 12 to 19 years old took a cardiovascular treadmill test. Of those, 180 had a poor level of cardiovascular fitness. Is there evidence that more than 30% of all adolescents have a poor level of fitness?
+
+:::aside
+1 = adolescents with a poor level of fitness 
+:::
+
+:::aside
+0 = adolescents **not** with a poor level of fitness
+:::
+
+## [Identify the Variable of Interest and Population of Interest]{.r-fit-text} {transition="concave" transition-speed="slow"}
+- Variable of interest
+  - Whether or not an adolescent has a poor level of cardiovascular fitness. (Categorical)
+
+:::aside
+Lab Question 1
+:::
+  
+## [Assess Sample Representativeness]{.r-fit-text} {transition="concave" transition-speed="slow"}
+We’re not sure how these 530 adolescents were chosen to be part of the study. The article from which the data came said the researchers felt the sample was representative of the population of all adolescents. However, without knowing how the researchers selected these adolescents, we have to be cautious with using these data to make a conclusion about all adolescents.
+
+## [Hypothesis Test or Estimation Problem]{.r-fit-text} {transition="concave" transition-speed="slow"}
+- Since we are given a specific value to test against...
+  - Hypothesis test problem
+  
+## [State Null and Alternative Hypotheses]{.r-fit-text} {transition="zoom" transition-speed="slow"}
+- Null Hypothesis:
+  - $H_{0}: p = 0.3$
+- Alternative Hypothesis:
+  - $H_{A}: p > 0$
+- Proportion of all adolescents who have a poor level of cardiovascular fitness
+
+:::aside
+Lab Question 2
+:::
+
+## Importing & Viewing Data {auto-animate=true}
+```{r}
+#| echo: TRUE
+#| results: hide
+# setwd("C:/Users/Ghcto/OneDrive/Desktop/Fall 2023/ST 351 (TA)")
+setwd("C:/Users/Ghcto/OneDrive/Desktop/School/Fall 2023/ST 351 (TA)/Lab 9")
+
+fitness <- read.csv("C:/Users/Ghcto/OneDrive/Desktop/School/Fall 2023/ST 351 (TA)/Lab 9/fitness.txt", sep="")
+```
+
+## Exploring Data {auto-animate=true}
+```{r}
+#| echo: TRUE
+#| results: hide
+tbl <- table(fitness$level)
+
+```
+
+## Exploring Data {auto-animate=true}
+```{r}
+#| echo: TRUE
+#| results: hide
+tbl <- table(fitness$level)
+tbl
+```
+
+## Exploring Data {auto-animate=true}
+```{r}
+#| echo: TRUE
+tbl <- table(fitness$level)
+tbl
+```
+
+## Exploring Data {auto-animate=true}
+```{r}
+#| echo: TRUE
+#| results: hide
+tbl <- table(fitness$level)
+tbl
+
+samp.prop <- mean(fitness$level)
+```
+
+## Exploring Data {auto-animate=true}
+```{r}
+#| echo: TRUE
+#| results: hide
+tbl <- table(fitness$level)
+tbl
+
+samp.prop <- mean(fitness$level)
+samp.prop
+```
+
+## Exploring Data {auto-animate=true}
+```{r}
+#| echo: TRUE
+tbl <- table(fitness$level)
+tbl
+
+samp.prop <- mean(fitness$level)
+samp.prop
+```
+
+:::aside
+Lab Question 3
+:::
+
+## p-value Calculation
+- Number line visualization
+
+:::aside
+Lab Question 4
+:::
+
+## [Generate a bootstrap distribution of sample proportions using the data set created such that the null hypothesis is true]{.r-fit-text} {auto-animate=true}
+```{r}
+#| echo: TRUE
+fitnessadj <- c(rep(1,530*0.3), rep(0,530*0.7))
+```
+
+## [Generate a bootstrap distribution of sample proportions using the data set created such that the null hypothesis is true]{.r-fit-text} {auto-animate=true}
+```{r}
+#| echo: TRUE
+fitnessadj <- c(rep(1,530*0.3), rep(0,530*0.7))
+fitnessadj
+```
+
+## [Generate a bootstrap distribution of sample proportions using the data set created such that the null hypothesis is true]{.r-fit-text} {auto-animate=true}
+```{r}
+#| echo: TRUE
+#| results: hide
+# Creating Bootstrap Distribution
+library(mosaic)
+```
+
+## [Generate a bootstrap distribution of sample proportions using the data set created such that the null hypothesis is true]{.r-fit-text} {auto-animate=true}
+```{r}
+#| echo: TRUE
+#| results: hide
+# Creating Bootstrap Distribution
+library(mosaic)
+bootpropadj <- do(10000)*mean(sample(fitnessadj, length(fitnessadj), replace=TRUE))
+```
+
+## [Generate a bootstrap distribution of sample proportions using the data set created such that the null hypothesis is true]{.r-fit-text} {auto-animate=true}
+```{r}
+#| echo: TRUE
+# Creating Bootstrap Distribution
+library(mosaic)
+bootpropadj <- do(10000)*mean(sample(fitnessadj, length(fitnessadj), replace=TRUE))
+bootpropadj
+
+```
+
+## [Generate a bootstrap distribution of sample proportions using the data set created such that the null hypothesis is true]{.r-fit-text} {auto-animate=true}
+```{r}
+#| echo: TRUE
+#| results: hide
+# Creating Bootstrap Distribution
+library(mosaic)
+bootpropadj <- do(10000)*mean(sample(fitnessadj, length(fitnessadj), replace=TRUE))
+
+# Creating Bootstrap Distribution (Alternative Code)
+bootpropadj2 <- rep(0,10000)
+```
+
+## [Generate a bootstrap distribution of sample proportions using the data set created such that the null hypothesis is true]{.r-fit-text} {auto-animate=true}
+```{r}
+#| echo: TRUE
+#| results: hide
+# Creating Bootstrap Distribution
+library(mosaic)
+bootpropadj <- do(10000)*mean(sample(fitnessadj, length(fitnessadj), replace=TRUE))
+
+# Creating Bootstrap Distribution (Alternative Code)
+bootpropadj2 <- rep(0,10000)
+for (i in 1:10000) {
+  bootpropadj2[i] <- mean(sample(fitnessadj, length(fitnessadj), replace = TRUE))
+}
+
+```
+
+## [Generate a bootstrap distribution of sample proportions using the data set created such that the null hypothesis is true]{.r-fit-text} {auto-animate=true}
+```{r}
+#| echo: TRUE
+# Creating Bootstrap Distribution
+library(mosaic)
+bootpropadj <- do(10000)*mean(sample(fitnessadj, length(fitnessadj), replace=TRUE))
+
+# Creating Bootstrap Distribution (Alternative Code)
+bootpropadj2 <- rep(0,10000)
+for (i in 1:10000) {
+  bootpropadj2[i] <- mean(sample(fitnessadj, length(fitnessadj), replace = TRUE))
+}
+
+bootpropadj
+```
+
+## Histograms of Bootstrap Distributions {auto-animate=true}
+:::: {.columns}
+::: {.column width="50%"}
+```{r}
+#| echo: true
+hist(bootpropadj$mean,
+     col = "lawngreen",
+     main = "Adjusted Bootstrap Distribution",
+     xlab = "Bootstrap Sample Proportions")
+```
+:::
+::: {.column width="50%"}
+```{r}
+#| echo: true
+hist(bootpropadj2,
+     col = "lightblue",
+     main = "Adjusted Bootstrap Distribution",
+     xlab = "Bootstrap Sample Proportions")
+```
+:::
+::::
+
+## Determining p-value {auto-animate=true}
+```{r}
+#| echo: true
+# If your alternative hypothesis is >
+sum(bootpropadj$mean >= samp.prop) / length(bootpropadj$mean)
+
+```
+
+## Determining p-value {auto-animate=true}
+```{r}
+#| echo: true
+# If your alternative hypothesis is >
+sum(bootpropadj$mean >= samp.prop) / length(bootpropadj$mean)
+
+ # If your alternative hypothesis is <
+sum(bootpropadj$mean <= samp.prop) / length(bootpropadj$mean)
+
+```
+
+## Determining p-value {auto-animate=true}
+```{r}
+#| echo: true
+# If your alternative hypothesis is >
+sum(bootpropadj$mean >= samp.prop) / length(bootpropadj$mean)
+
+ # If your alternative hypothesis is <
+sum(bootpropadj$mean <= samp.prop) / length(bootpropadj$mean)
+
+# If your alternative hypothesis is not equal to:
+hypvalue <- 0.30
+
+```
+
+## Determining p-value {auto-animate=true}
+```{r}
+#| echo: true
+# If your alternative hypothesis is >
+sum(bootpropadj$mean >= samp.prop) / length(bootpropadj$mean)
+
+ # If your alternative hypothesis is <
+sum(bootpropadj$mean <= samp.prop) / length(bootpropadj$mean)
+
+# If your alternative hypothesis is not equal to:
+hypvalue <- 0.30
+
+diff <- abs(samp.prop - hypvalue)
+```
+
+## Determining p-value {auto-animate=true}
+```{r}
+#| echo: true
+# If your alternative hypothesis is >
+sum(bootpropadj$mean >= samp.prop) / length(bootpropadj$mean)
+
+ # If your alternative hypothesis is <
+sum(bootpropadj$mean <= samp.prop) / length(bootpropadj$mean)
+
+# If your alternative hypothesis is not equal to:
+hypvalue <- 0.30
+
+diff <- abs(samp.prop - hypvalue)
+count1 <- sum(bootpropadj$mean >= hypvalue + diff)
+count2 <- sum(bootpropadj$mean <= hypvalue - diff)
+
+```
+
+## Determining p-value {auto-animate=true}
+```{r}
+#| echo: true
+# If your alternative hypothesis is >
+sum(bootpropadj$mean >= samp.prop) / length(bootpropadj$mean)
+
+ # If your alternative hypothesis is <
+sum(bootpropadj$mean <= samp.prop) / length(bootpropadj$mean)
+
+# If your alternative hypothesis is not equal to:
+hypvalue <- 0.30
+
+diff <- abs(samp.prop - hypvalue)
+count1 <- sum(bootpropadj$mean >= hypvalue + diff)
+count2 <- sum(bootpropadj$mean <= hypvalue - diff)
+
+totalcount <- count1 + count2
+```
+
+## Determining p-value {auto-animate=true}
+```{r}
+#| echo: true
+# If your alternative hypothesis is >
+sum(bootpropadj$mean >= samp.prop) / length(bootpropadj$mean)
+
+ # If your alternative hypothesis is <
+sum(bootpropadj$mean <= samp.prop) / length(bootpropadj$mean)
+
+# If your alternative hypothesis is not equal to:
+hypvalue <- 0.30
+
+diff <- abs(samp.prop - hypvalue)
+count1 <- sum(bootpropadj$mean >= hypvalue + diff)
+count2 <- sum(bootpropadj$mean <= hypvalue - diff)
+
+totalcount <- count1 + count2
+totalcount / length(bootpropadj$mean)
+```
+
+:::aside
+Lab Question 7
+:::
+
+## [State Conclusion Based on p-value]{.r-fit-text}
+- There is _____ evidence to indicate that more than ____% of adolescents have poor level of cardiovascular fitness (p-value = ____)
+
+:::aside
+Lab Question 8
+:::
+
+
+## [Confidence Interval Construction for the Population Proportion]{.r-fit-text} {auto-animate=true}
+```{r}
+#| echo: TRUE
+#| results: hide
+bootprop <- do(10000)*mean(sample(fitness$level, length(fitness$level), replace=TRUE))
+
+```
+
+## [Confidence Interval Construction for the Population Proportion]{.r-fit-text} {auto-animate=true}
+```{r}
+#| echo: TRUE
+#| results: hide
+bootprop <- do(10000)*mean(sample(fitness$level, length(fitness$level), replace=TRUE))
+
+# Alternative Code
+bootprop2 <- rep(0,10000)
+```
+
+## [Confidence Interval Construction for the Population Proportion]{.r-fit-text} {auto-animate=true}
+```{r}
+#| echo: TRUE
+#| results: hide
+bootprop <- do(10000)*mean(sample(fitness$level, length(fitness$level), replace=TRUE))
+
+# Alternative Code
+bootprop2 <- rep(0,10000)
+for (i in 1:10000) {
+  bootprop2[i] <- mean(sample(fitness$level, length(fitness$level), replace=TRUE))
+}
+```
+
+## [Confidence Interval Construction for the Population Proportion]{.r-fit-text} {auto-animate=true}
+```{r}
+#| echo: TRUE
+#| results: hide
+bootprop <- do(10000)*mean(sample(fitness$level, length(fitness$level), replace=TRUE))
+
+# Alternative Code
+bootprop2 <- rep(0,10000)
+for (i in 1:10000) {
+  bootprop2[i] <- mean(sample(fitness$level, length(fitness$level), replace=TRUE))
+}
+
+# Ordering Bootstrap Results
+bootproporder <- sort(bootprop$mean)
+
+```
+
+## [Confidence Interval Construction for the Population Proportion]{.r-fit-text} {auto-animate=true}
+```{r}
+#| echo: TRUE
+bootprop <- do(10000)*mean(sample(fitness$level, length(fitness$level), replace=TRUE))
+
+# Alternative Code
+bootprop2 <- rep(0,10000)
+for (i in 1:10000) {
+  bootprop2[i] <- mean(sample(fitness$level, length(fitness$level), replace=TRUE))
+}
+
+# Ordering Bootstrap Results
+bootproporder <- sort(bootprop$mean)
+bootproporder
+```
+
+## [Confidence Interval Construction for the Population Proportion]{.r-fit-text} {auto-animate=true}
+```{r}
+#| echo: TRUE
+bootprop <- do(10000)*mean(sample(fitness$level, length(fitness$level), replace=TRUE))
+
+# Alternative Code
+bootprop2 <- rep(0,10000)
+for (i in 1:10000) {
+  bootprop2[i] <- mean(sample(fitness$level, length(fitness$level), replace=TRUE))
+}
+
+# Ordering Bootstrap Results
+bootproporder <- sort(bootprop$mean)
+
+# Find our percentiles (90% Confidence Interval)
+quantile(bootproporder, c(0.05, 0.95))
+```
+
+:::aside
+**NOTICE:** This is a different size confidence interval than in the lab assignment (Lab Question 9)
+:::
+
+## Interpreting Confidence Interval
+- We are ?% confident that between ?% and ?% of all adolescents have a poor level of cardiovascular fitness.
+
+:::aside
+Lab Question 10
+:::

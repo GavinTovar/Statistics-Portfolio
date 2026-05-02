@@ -1,0 +1,749 @@
+---
+title: "(ST 412/512) Lab 1 <br> Review of Regression Diagnostic Plots"
+format:
+  revealjs:
+    incremental: TRUE
+    scrollable: TRUE
+    theme: dark
+    transition: slide
+    transition-speed: slow
+    auto-animate: TRUE
+    chalkboard: TRUE
+---
+
+## NOTICE THERE ARE TWO DIFFERENT DATASETS THE LAB PDF DOES NOT MATCH THE R CODE
+
+
+```{r}
+#| echo: FALSE
+library(gridExtra)
+```
+
+## Hello! {.smaller}
+* Who am I?
+  * A deep philosophical question
+  * So instead I will answer any questions anyone may have about my identity
+  * If no questions I am content to be anonymous for the term and we can continue
+* Office Hours
+  * Monday 1:00pm - 2:00pm
+  * Monday 3:00pm - 4:00pm
+* Lab Structure
+  * I'll yap for a while
+  * After I have put everyone to sleep, I'll go around answering any homework (or whatever) questions
+
+## R we Ready to go?
+* Hopefully everyone has R and RStudio installed on their system
+
+## Lab Objectives
+* Long objective list today...
+  * Review of regression diagnostic plots
+
+## Why Plots? {.smaller}
+* To assess the common assumptions underpinning our models, we often look at what we refer to as diagnostic plots
+  * Some of plots that might be familiar from ST 411/511 include:
+    * Residual vs fitted values
+    * Residuals vs explanatory variable(s)
+    * Normal probability plot (QQ plot)
+* Though we can never be certain about the assumptions from mere plot inspections they do offer some insight into the model's fit
+
+## Loading Data {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+library(Sleuth3) # Package that contains the data
+library(ggplot2) # For plotting
+library(Rmisc) # For plotting
+```
+
+## Loading Data {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: FALSE
+# If you are curious about a dataset's details
+help(ex0824)
+```
+
+## Loading Data {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: FALSE
+# If you are curious about a dataset's details
+help(ex0824)
+
+# Or equivalently
+?ex0824
+```
+
+## Dataset {.smaller}
+* `ex0824` (Respiratory Rates for Children)
+* **Description**: A high respiratory rate is a potential diagnostic indicator of respiratory infection in children. To judge whether a respiratory rate is “high” however, a physician must have a clear picture of the distribution of normal rates. To this end, Italian researchers measured the respiratory rates of 618 children between the ages of 15 days and 3 years.
+* 618 observations
+* 2 variables:
+  * `Age`: age in months of child 
+  * `Rate`: respiratory rate (breaths per minute)
+    
+## Dataset {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: FALSE
+ex0824
+```
+
+## Dataset {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+ex0824
+```
+
+## Dataset {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# First 6 observations (rows)
+head(ex0824)
+```
+
+## Dataset {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# First 6 observations (rows)
+head(ex0824)
+
+# Last 6 observations (rows)
+tail(ex0824)
+```
+    
+## Fit Linear Regression {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Assigning the dataset a different name
+Data <- ex0824
+```
+
+## Fit Linear Regression {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Loading Data
+Data <- ex0824
+
+# Running Simple Linear Regression on the Data
+lin_mod <- lm(Mortality ~ Wine, data = Data)
+```
+
+## Fit Linear Regression {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Running Simple Linear Regression on the Data
+lin_mod <- lm(Mortality ~ Wine, data = Data)
+summary(lin_mod)
+```
+
+## Fit Linear Regression {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Updating our dataset to include the information from the model
+Data <- fortify(lin_mod, Data)
+```
+
+## Fit Linear Regression {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Viewing the updated dataset
+Data
+```
+
+## Plot Linear Regression Fit {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+# Plot the scatterplot with fitted line
+ggplot(aes(Wine, Mortality), data = Data) + 
+  geom_point() +
+  geom_smooth(method = 'lm', se = FALSE)
+```
+
+## Plot Linear Regression Fit {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+# Adjust size of text in axis labels        
+ggplot(aes(Wine, Mortality), data = Data) + 
+  geom_point() + 
+  geom_smooth(method = 'lm', se = FALSE) +
+  theme(text = element_text(size = 30),
+        axis.text.x = element_text(angle = 90, vjust = 1))
+```
+
+## Plot Linear Regression Fit {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+# Using prebuilt themes   
+ggplot(aes(Wine, Mortality), data = Data) + 
+  geom_point() + 
+  geom_smooth(method = 'lm', se = FALSE) +
+  theme_minimal()
+```
+
+## Plotting Residual Plots {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+# Fitted vs Residual Plot
+ggplot(aes(.fitted, .resid), data = Data) + 
+  geom_point() + 
+  geom_hline(aes(yintercept = 0)) +
+  theme_minimal()
+```
+
+## Plotting Residual Plots {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+# Explanatory variable vs Residual Plot
+ggplot(aes(Wine, .resid), data = Data) + 
+  geom_point() +
+  geom_hline(aes(yintercept = 0)) +
+  theme_minimal()
+```
+
+## Plotting Residual Plots {auto-animate="true" auto-animate-easing="ease-in-out"}
+* What are we looking for?
+  * We want a boring plot, no apparent patterns
+  * More specifically, we are looking for a constant variation in points with no clear pattern
+  * An a typical pattern might present in a number of different ways:
+    * Curvature
+    * Clustering
+    * Funnel shaped
+    * Etc.
+
+## Plotting Residual Plots {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: FALSE
+# QQ-Plot for checking normality
+ggplot(aes(sample = .resid), data = Data) + 
+  geom_qq() +
+  stat_qq_line() +
+  theme_minimal()
+```
+
+## Plotting Residual Plots {auto-animate="true" auto-animate-easing="ease-in-out"}
+* What are we looking for?
+  * Ideally we see the points oscillate closely around the reference line
+
+## Plotting Residual Plots {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+#| code-line-numbers: "4"
+# QQ-Plot for checking normality
+ggplot(aes(sample = .resid), data = Data) + 
+  geom_qq() +
+  stat_qq_line() + # Notice the function is corrected from the notes
+  theme_minimal()
+```
+
+## Plotting Residual Plots {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: slide
+# Fitted vs Residual Plot
+plot1 <- ggplot(aes(.fitted, .resid), data = Data) + 
+  geom_point() + 
+  geom_hline(aes(yintercept = 0)) +
+  labs(title = "Fitted vs Residual Plot") +
+  theme_minimal()
+
+# Explanatory variable vs Residual Plot
+plot2 <- ggplot(aes(Wine, .resid), data = Data) + 
+  geom_point() +
+  geom_hline(aes(yintercept = 0)) +
+  labs(title = "Explanatory variable vs Residual Plot") +
+  theme_minimal()
+
+# QQ-Plot for checking normality
+plot3 <- ggplot(aes(sample = .resid), data = Data) + 
+  geom_qq() +
+  stat_qq_line() +
+  labs(title = "QQ-Plot of Residuals") +
+  theme_minimal()
+
+multiplot(plot1, plot2, plot3, cols = 3)
+```
+
+## Log-Transformation {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+# Plot the log-Transformed scatterplot with fitted line
+ggplot(aes(log(Wine), log(Mortality)), data = Data) + 
+  geom_point() + 
+  geom_smooth(method = 'lm', se = FALSE) +
+  theme_minimal()
+```
+
+## Log-Transformation {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Adding the log-transformed data as new variables
+Data$log.Wine <- log(Data$Wine)
+```
+
+## Log-Transformation {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Adding the log-transformed data as new variables
+Data$log.Wine <- log(Data$Wine)
+Data$log.Mortality <- log(Data$Mortality)
+```
+
+## [Log-Transformed Response Linear Regression]{.r-fit-text} {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Running Simple Linear Regression on the log-Transformed Data
+lin_mod1 <- lm(log.Mortality ~ log.Wine, data = Data)
+```
+
+## [Log-Transformed Response Linear Regression]{.r-fit-text} {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Running Simple Linear Regression on the log-Transformed Data
+lin_mod1 <- lm(log.Mortality ~ log.Wine, data = Data)
+summary(lin_mod1)
+```
+
+## [Log-Transformed Response Linear Regression]{.r-fit-text} {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Updating our dataset to include the information from the new model
+Data <- fortify(lin_mod1, Data) # This will overwrite the other model's information
+```
+
+## [Log-Transformed Response Linear Regression]{.r-fit-text} {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Viewing the updated dataset
+Data
+```
+
+## Reassessing Residual Plots {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+# Fitted vs Residual Plot
+ggplot(aes(.fitted, .resid), data = Data) + 
+  geom_point() +
+  geom_hline(aes(yintercept = 0)) +
+  theme_minimal()
+```
+
+## Reassessing Residual Plots {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+# Explanatory variable vs Residual Plot
+ggplot(aes(Wine, .resid), data = Data) + 
+  geom_point() +
+  geom_hline(aes(yintercept = 0)) +
+  theme_minimal()
+```
+
+## Reassessing Residual Plots {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+# QQ-Plot for checking normality
+ggplot(aes(sample = .resid), data = Data) + 
+  stat_qq() + 
+  stat_qq_line() + # Notice the function is corrected from the notes
+  theme_minimal()
+```
+
+## Reassessing Residual Plots {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: slide
+# Fitted vs Residual Plot
+plot1 <- ggplot(aes(.fitted, .resid), data = Data) + 
+  geom_point() + 
+  geom_hline(aes(yintercept = 0)) +
+  labs(title = "Fitted vs Residual Plot") +
+  theme_minimal()
+
+# Explanatory variable vs Residual Plot
+plot2 <- ggplot(aes(Wine, .resid), data = Data) + 
+  geom_point() +
+  geom_hline(aes(yintercept = 0)) +
+  labs(title = "Explanatory variable vs Residual Plot") +
+  theme_minimal()
+
+# QQ-Plot for checking normality
+plot3 <- ggplot(aes(sample = .resid), data = Data) + 
+  geom_qq() +
+  stat_qq_line() +
+  labs(title = "QQ-Plot of Residuals") +
+  theme_minimal()
+
+multiplot(plot1, plot2, plot3, cols = 3)
+```
+
+## Reassessing Residual Plots {auto-animate="true" auto-animate-easing="ease-in-out"}
+* Do the residual plots look more like we hope?
+
+## [Interpreting Inference on Log-Transformed Data]{.r-fit-text}
+- Data transformations are often suggested for skewed data, data that "doesn't look Normal"
+- A common transformation is the natural log
+  - But, when we are interested in the population mean (as is the case in this class)
+- Without a big assumption, we are talking about something called a geometric mean on the original scale
+
+## [Interpreting Inference on Log-Transformed Data]{.r-fit-text} {.smaller}
+- What is taught in ST 411/511 is the interpretation of a median on the original scale
+- To make this interpretation we've got to make some big leaps in assumption land
+  - If we assume the log-transformed data have a symmetric distribution, we know
+
+::: {.fragment}
+$$
+\text{Mean}\left[\log(Y)\right] = \text{Median}\left[\log(Y)\right]
+$$
+:::
+- The log preserves ordering meaning that the median of the logs is the log of the medians
+
+::: {.fragment}
+$$
+\text{Median}\left[\log(Y)\right] = \log\left[\text{Median}(Y)\right]
+$$
+:::
+
+## [Interpreting Inference on Log-Transformed Data]{.r-fit-text} {.smaller}
+- So in a two sample case (instead of linear regression) the logic goes as such:
+
+::: {.fragment}
+$$
+\frac{1}{n}\sum\limits_{i=1}^{n}\log(X_{i}) - \frac{1}{m}\sum\limits_{i=1}^{m}\log(Y_{i}) = \bar{U} - \bar{W}
+$$
+:::
+
+::: {.fragment}
+Estimates
+$$
+\text{Mean}\left[\log(X)\right] - \text{Mean}\left[\log(Y)\right]
+$$
+:::
+
+::: {.fragment}
+If we assume the log-transformed data have a symmetric distribution
+$$
+\text{Median}\left[\log(X)\right] - \text{Median}\left[\log(Y)\right]
+$$
+:::
+
+::: {.fragment}
+Log preserves ordering 
+$$
+\log\left[\text{Median}(X)\right] - \log\left[\text{Median}(Y)\right] = \log\left(\frac{\text{Median}(X)}{\text{Median}(Y)}\right)
+$$
+:::
+
+::: {.fragment}
+Exponentiating we have
+$$
+e^{\bar{U} - \bar{W}} \quad \text{ estimates } \quad \frac{\text{Median}(X)}{\text{Median}(Y)}
+$$
+:::
+
+## [Interpreting Inference on Log-Transformed Data]{.r-fit-text}
+- Notice that symmetry is not technically required, we just need a setting where $\text{Mean}\left[\log(Y)\right] = \text{Median}\left[\log(Y)\right]$, symmetry just guarantees this
+- To demonstrate this assumption, I will show the best case and a seemingly indistinguishable case to that of the best that does not work
+- Assumption: If we have right skewed positive data that once transformed has a **symmetric distribution**
+
+## [Interpreting Inference on Log-Transformed Data]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+# Generating right-skewed positive data (log-normal data)
+da.data <- data.frame(vals = rlnorm(10000, mean = 0, sd = 1))
+ggplot(data = da.data, aes(x = vals)) +
+  geom_histogram(binwidth = 0.25, fill = "#eb34de", col = "white", alpha = 0.8) +
+  labs(x = expression(X),
+       y = "Frequency",
+       title = "Right-Skewed Positive Data (Log-Normal Data)") +
+  xlim(0, 20) +
+  theme_bw()
+```
+
+## [Interpreting Inference on Log-Transformed Data]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+# Natural log of that data
+ggplot(data = log(da.data), aes(x = vals)) +
+  geom_histogram(binwidth = 0.25, fill = "#eb34de", col = "white", alpha = 0.8) +
+  labs(x = expression(ln(X)),
+       y = "Frequency",
+       title = "Exact Same Data, Log Transformed") +
+  theme_bw()
+```
+
+## [Interpreting Inference on Log-Transformed Data]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+p1 <- ggplot(data = da.data, aes(x = vals)) +
+  geom_histogram(binwidth = 0.25, fill = "#eb34de", col = "white", alpha = 0.8) +
+  labs(x = expression(X),
+       y = "Frequency",
+       title = "Right-Skewed Positive Data (Log-Normal Data)") +
+  xlim(0, 20) +
+  theme_bw()
+
+p2 <- ggplot(data = log(da.data), aes(x = vals)) +
+  geom_histogram(binwidth = 0.25, fill = "#eb34de", col = "white", alpha = 0.8) +
+  labs(x = expression(ln(X)),
+       y = "Frequency",
+       title = "Exact Same Data, Log Transformed") +
+  theme_bw()
+gridExtra::grid.arrange(p1, p2, ncol = 2)
+```
+
+## [Interpreting Inference on Log-Transformed Data]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+- The right skewed data shown was log-normal so unless you assume that your data is log-normal you won't have completely Normal data (symmetric) once transformed
+- Aka, just because it is positive and right-skewed, doesn't mean everything is golden
+  - The couple following of slides will illustrate this
+  
+## [Interpreting Inference on Log-Transformed Data]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+# Generating right-skewed positive data (exponential data)
+da.data <- data.frame(vals = rexp(10000, rate = 1))
+ggplot(data = da.data, aes(x = vals)) +
+  geom_histogram(binwidth = 0.25, fill = "#ed6728", col = "white", alpha = 0.8) +
+  labs(x = expression(X),
+       y = "Frequency",
+       title = "Right-Skewed Positive Data (Exponential)") +
+  xlim(0, 20) +
+  theme_bw()
+```
+
+## [Interpreting Inference on Log-Transformed Data]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+# Natural log of that data
+ggplot(data = log(da.data), aes(x = vals)) +
+  geom_histogram(binwidth = 0.25, fill = "#ed6728", col = "white", alpha = 0.8) +
+  labs(x = expression(ln(X)),
+       y = "Frequency",
+       title = "Exact Same Data, Log Transformed") +
+  theme_bw()
+```
+
+## [Interpreting Inference on Log-Transformed Data]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+# Plotting side-by-side
+p3 <- ggplot(data = da.data, aes(x = vals)) +
+  geom_histogram(binwidth = 0.25, fill = "#ed6728", col = "white", alpha = 0.8) +
+  labs(x = expression(X),
+       y = "Frequency",
+       title = "Right-Skewed Positive Data (Exponential)") +
+  xlim(0, 20) +
+  theme_bw()
+p4 <- ggplot(data = log(da.data), aes(x = vals)) +
+  geom_histogram(binwidth = 0.25, fill = "#ed6728", col = "white", alpha = 0.8) +
+  labs(x = expression(ln(X)),
+       y = "Frequency",
+       title = "Exact Same Data, Log Transformed") +
+  theme_bw()
+grid.arrange(p3, p4, ncol = 2)
+```
+
+## [Interpreting Inference on Log-Transformed Data]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+- We can see that since our original data was not log-normal we don't end up with a symmetric distribution
+
+## [Interpreting Inference on Log-Transformed Data]{.r-fit-text}
+- Notice, I mentioned positively skewed data, we cannot have negative values before we log-transform (or the world will explode)
+- Some people try to circumvent this by shifting the data beforehand but... 
+  - then interpretation becomes challenging / hopeless and dependent on a perhaps arbitrary shift parameter
+  
+## [Interpreting Inference on Log-Transformed Data]{.r-fit-text} {.smaller}
+* Thus a one unit increase in $X$ corresponds to a multiplicative increase of $e^{\beta_{1}}$ in the geometric mean of $Y$
+* The *big assumption* of our data being symmetric after log transforming is sometimes made (although it probably shouldn't be) which leads to a slightly different interpretation
+  * A one unit increase in $X$ corresponds to a multiplicative increase of $e^{\beta_{1}}$ in the median of $Y$
+
+## More plots! {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Generating Data (X is randomly generated)
+# For reproducibility, can set a seed
+set.seed(23)
+```
+
+## More plots! {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Generating Data (X is randomly generated)
+# For reproducibility, can set a seed
+set.seed(23)
+
+# n represents the sample size
+n <- 200
+```
+
+## More plots! {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: FALSE
+# n represents the sample size
+n <- 200
+
+# Continuous Explanatory
+x <- rnorm(n, 0, 1)
+```
+
+## More plots! {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Continuous Explanatory
+x <- rnorm(n, 0, 1)
+
+# Discrete Explanatory
+x <- sample(0:4, n, replace = T)
+```
+
+## More plots! {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+## Plotting Function for a linear case
+plot_diagnostics <- function(n = 200, Continuous = TRUE) {
+  if(Continuous == TRUE){
+    x <- rnorm(n, 0, 1)
+  } else {
+    x <- sample(0:4, n, replace = T)
+  }
+  # Initialize our parameters
+  e <- rnorm(n, 0, 1)
+  alpha <- 4
+  beta <- 7
+  y <- alpha + beta * x + e
+  
+  # Create our dataframe
+  data <- as.data.frame(cbind(x, y))
+  colnames(data) <- c("x", "y")
+  
+  # Create linear model
+  lmod <- lm(y ~ x)
+  
+  # Combine data and model output
+  data <- fortify(lmod, data)
+  
+  # Plots
+  plot1 <- qplot(.fitted, .resid, data = data) +
+    xlab("fitted values") + 
+    ylab("residuals") + 
+    geom_line(y = 0, col = 2)
+  
+  plot2 <- qplot(x, .resid, data = data) +
+    xlab("Explanatory variable") + 
+    ylab("residuals") + 
+    geom_line(y = 0, col = 2)
+  
+  plot3 <- qplot(sample = data$.resid) + 
+    stat_qq_line()
+  
+  multiplot(plot1, plot2, plot3, cols = 2)
+}
+```
+
+## More plots! {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+plot_diagnostics(n = 20, Continuous = TRUE)
+```
+
+## More plots! {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+plot_diagnostics(n = 20, Continuous = FALSE)
+```
+
+## More plots! {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+plot_diagnostics(n = 50, Continuous = TRUE)
+```
+
+## More plots! {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+plot_diagnostics(n = 50, Continuous = FALSE)
+```
+
+## More plots! {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+plot_diagnostics(n = 200, Continuous = TRUE)
+```
+
+## More plots! {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+plot_diagnostics(n = 200, Continuous = FALSE)
+```
+
+## More plots! {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+## Plotting Function for a non-linear case
+plot_diagnostics2 <- function(n = 200) {
+  # Only continuous option now
+  x <- rnorm(n, 0, 1)
+  
+  # Initialize our parameters
+  e <- rnorm(n, 0, 1)
+  alpha <- 4
+  beta <- 7
+  y <- alpha + beta * (x^(4)) + e
+  
+  # Create our dataframe
+  data <- as.data.frame(cbind(x, y))
+  colnames(data) <- c("x", "y")
+  
+  # Create linear model
+  lmod <- lm(y ~ x)
+  
+  # Combine data and model output
+  data <- fortify(lmod, data)
+  
+  # Plots
+  plot1 <- qplot(.fitted, .resid, data = data) +
+    xlab("fitted values") + 
+    ylab("residuals") + 
+    geom_line(y = 0, col = 2)
+  
+  plot2 <- qplot(x, .resid, data = data) +
+    xlab("Explanatory variable") + 
+    ylab("residuals") + 
+    geom_line(y = 0, col = 2)
+  
+  plot3 <- qplot(sample = data$.resid) + 
+    stat_qq_line()
+  
+  multiplot(plot1, plot2, plot3, cols = 2)
+}
+```
+
+## More plots! {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+plot_diagnostics2(n = 20)
+```
+
+## More plots! {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+plot_diagnostics2(n = 50)
+```
+
+## More plots! {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+plot_diagnostics2(n = 200)
+```

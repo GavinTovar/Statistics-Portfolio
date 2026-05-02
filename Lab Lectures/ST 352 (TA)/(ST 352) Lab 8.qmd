@@ -1,0 +1,377 @@
+---
+title: "(ST 352) Lab 8 - Two-Factor Analysis of Variance"
+format:
+  revealjs:
+    incremental: TRUE
+    scrollable: TRUE
+    theme: dark
+    transition: slide
+    transition-speed: slow
+    auto-animate: TRUE
+    chalkboard: TRUE
+---
+
+## Objectives {transition="zoom" transition-speed="slow"}
+- Use R to perform a Two-Way Analysis of Variance procedure to test for main effects and an interaction. 
+
+## Today's Example
+Something something about spruce moths. Researchers set traps in four different parts of trees (top branches, middle branches, lower branches, or ground beneath the tree) and used three different types of lures scent, sugar, or chemical). The number of moths found in the traps after 48 hours was recorded. 
+
+- `number`, the number of spruce moths found in traps after 48 hours (response variable)
+- `location`, the location of trap in tree (top branches, middle branches, lower branches, or ground) (first factor)
+- `lure`, the type of lure in trap (scent, sugar, or chemical) (second factor)
+
+## Today's Data {transition="zoom" transition-speed="slow"}
+```{r}
+moths <- read.delim("C:/Users/Ghcto/OneDrive/Desktop/School/Spring 2024/ST 352 (TA)/Lab 8/moths.txt")
+moths
+```
+
+## Using the aggregate() Function
+Function description:
+
+- Splits the data into subsets, computes summary statistics for each, and returns the result in a convenient form.
+
+## Using the aggregate() Function {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+aggregate(number ~ location + lure, data = moths, FUN = mean)
+```
+
+## Using the aggregate() Function {auto-animate="true" auto-animate-easing="ease-in-out"}
+|                 	|       	| Type of Lure 	|          	|
+|-----------------	|-------	|--------------	|----------	|
+| Location        	| Scent 	| Sugar        	| Chemical 	|
+| Top Branches    	| 21.4  	| 25.6         	| 23.0     	|
+| Middle Branches 	| 27.8  	| 33.4         	| 31.8     	|
+| Lower Branches  	| 32.8  	| 31.2         	| 36.0     	|
+| Ground          	| 17.0  	| 21.0         	| 19.2     	|
+
+:::aside
+Question 1 can be answered at this time
+:::
+
+## Creating an Interaction Plot {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+interaction.plot(x.factor = moths$location, trace.factor = moths$lure, response = moths$number)
+```
+
+## Creating an Interaction Plot {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+# Notice fun = mean is the default
+interaction.plot(x.factor = moths$location, trace.factor = moths$lure, response = moths$number,
+                 fun = mean, type = "l")
+```
+
+## Creating an Interaction Plot {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+interaction.plot(x.factor = moths$location, trace.factor = moths$lure, response = moths$number,
+                 fun = mean, type = "p")
+```
+
+## Creating an Interaction Plot {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+interaction.plot(x.factor = moths$location, trace.factor = moths$lure, response = moths$number,
+                 fun = mean, type = "b")
+```
+
+## Creating an Interaction Plot {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+interaction.plot(x.factor = moths$location, trace.factor = moths$lure, response = moths$number,
+                 fun = mean, type = "o")
+```
+
+## Creating an Interaction Plot {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+interaction.plot(x.factor = moths$location, trace.factor = moths$lure, response = moths$number,
+                 fun = mean, type = "c")
+```
+
+## Creating an Interaction Plot {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+# Specifies a line type for each line, default is c(1, 2, 3)
+interaction.plot(x.factor = moths$location, trace.factor = moths$lure, response = moths$number,
+                 fun = mean, type = "l", lty = c(1, 2, 3))
+# lty = 1 is a solid line
+# lty = 2 is a dashed line
+# lty = 3 is a dotted line
+```
+
+## Creating an Interaction Plot {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+# Specifies a line type for each line, default is c(1, 2, 3)
+interaction.plot(x.factor = moths$location, trace.factor = moths$lure, response = moths$number,
+                 fun = mean, type = "l", lty = c(4, 5, 6))
+# lty = 4 is dotdashed line
+# lty = 5 is longdashed line
+# lty = 6 is twodashed line
+```
+
+## Creating an Interaction Plot {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+# Specifies colors for each line
+interaction.plot(x.factor = moths$location, trace.factor = moths$lure, response = moths$number,
+                 fun = mean, type = "l", lty = c(1, 2, 3), col = c("red", "blue", "green"))
+```
+
+
+## Creating an Interaction Plot {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+interaction.plot(x.factor = moths$lurelocation, trace.factor = moths$lure, response = moths$number,
+                 fun = mean, type = "l", lty = c(1, 2, 3), col = c("red", "blue", "green"),
+                 main = "Interaction Plot",
+                 ylab = "Mean # of Spruce Moths in Traps",
+                 xlab = "Location of Trap")
+```
+
+## Creating an Interaction Plot {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+interaction.plot(x.factor = moths$location, trace.factor = moths$lure, response = moths$number,
+                 fun = mean, type = "l", lty = c(1, 2, 3), col = c("red", "blue", "green"),
+                 main = "Interaction Plot",
+                 ylab = "Mean # of Spruce Moths in Traps",
+                 xlab = "Location of Trap",
+                 legend = FALSE) # We can do better than this legend
+```
+
+## Creating an Interaction Plot {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+interaction.plot(x.factor = moths$location, trace.factor = moths$lure, response = moths$number,
+                 fun = mean, type = "l", lty = c(1, 2, 3), col = c("red", "blue", "green"),
+                 main = "Interaction Plot",
+                 ylab = "Mean # of Spruce Moths in Traps",
+                 xlab = "Location of Trap",
+                 legend = FALSE)
+axis(side = 1, at = c(1, 2, 3, 4), labels = c("Ground", "Lower", "Middle", "Top"))
+```
+
+## Creating an Interaction Plot {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+interaction.plot(x.factor = moths$location, trace.factor = moths$lure, response = moths$number,
+                 fun = mean, type = "l", lty = c(1, 2, 3), col = c("red", "blue", "green"),
+                 main = "Interaction Plot",
+                 ylab = "Mean # of Spruce Moths in Traps",
+                 xlab = "Location of Trap",
+                 legend = FALSE,
+                 xaxt = "n") # Removing default x axis
+axis(side = 1, at = c(1, 2, 3, 4), labels = c("Ground", "Lower", "Middle", "Top"))
+```
+
+## Creating an Interaction Plot {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+interaction.plot(x.factor = moths$location, trace.factor = moths$lure, response = moths$number,
+                 fun = mean, type = "l", lty = c(1, 2, 3), col = c("red", "blue", "green"),
+                 main = "Interaction Plot",
+                 ylab = "Mean # of Spruce Moths in Traps",
+                 xlab = "Location of Trap",
+                 legend = FALSE,
+                 xaxt = "n")
+axis(side = 1, at = c(1, 2, 3, 4), labels = c("Ground", "Lower", "Middle", "Top"))
+legend("topright", legend = c("Chemical", "Scent", "Sugar"))
+```
+
+## Creating an Interaction Plot {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+interaction.plot(x.factor = moths$location, trace.factor = moths$lure, response = moths$number,
+                 fun = mean, type = "l", lty = c(1, 2, 3), col = c("red", "blue", "green"),
+                 main = "Interaction Plot",
+                 ylab = "Mean # of Spruce Moths in Traps",
+                 xlab = "Location of Trap",
+                 legend = FALSE,
+                 xaxt = "n")
+axis(side = 1, at = c(1, 2, 3, 4), labels = c("Ground", "Lower", "Middle", "Top"))
+legend("topright", legend = c("Chemical", "Scent", "Sugar"), 
+       lty = c(1, 2, 3), col = c("red", "blue", "green"))
+```
+
+## Creating an Interaction Plot {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+interaction.plot(x.factor = moths$location, trace.factor = moths$lure, response = moths$number,
+                 fun = mean, type = "l", lty = c(1, 2, 3), col = c("red", "blue", "green"),
+                 main = "Interaction Plot",
+                 ylab = "Mean # of Spruce Moths in Traps",
+                 xlab = "Location of Trap",
+                 legend = FALSE,
+                 xaxt = "n")
+axis(side = 1, at = c(1, 2, 3, 4), labels = c("Ground", "Lower", "Middle", "Top"))
+legend("topright", legend = c("Chemical", "Scent", "Sugar"), 
+       lty = c(1, 2, 3), col = c("red", "blue", "green"),
+       cex = 1, title = "Type of Lure")
+```
+
+## Creating an Interaction Plot {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: FALSE
+interaction.plot(x.factor = moths$location, trace.factor = moths$lure, response = moths$number,
+                 fun = mean, type = "l", lty = c(1, 2, 3), col = c("red", "blue", "green"),
+                 main = "Interaction Plot",
+                 ylab = "Mean # of Spruce Moths in Traps",
+                 xlab = "Location of Trap",
+                 legend = FALSE,
+                 xaxt = "n")
+axis(side = 1, at = c(1, 2, 3, 4), labels = c("Ground", "Lower", "Middle", "Top"))
+legend("topright", legend = c("Chemical", "Scent", "Sugar"), 
+       lty = c(1, 2, 3), col = c("red", "blue", "green"),
+       cex = 1, title = "Type of Lure")
+```
+
+:::aside
+Questions 2 through 5 can be answered at this time
+:::
+
+## Two-Way Analysis of Variance {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+mothmod <- aov(number ~ location + lure + location*lure, data = moths)
+```
+
+## Two-Way Analysis of Variance {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+mothmod <- aov(number ~ location + lure + location*lure, data = moths)
+summary(mothmod)
+```
+
+:::aside
+Questions 6 through 8 can be answered at this time
+:::
+
+## Example in Model Notation {.smaller}
+$$
+\begin{align*}
+  y_{ijk} = \mu + \alpha_{i} + \beta_{j} + (\alpha\beta)_{ij} + \epsilon_{ijk}
+\end{align*}
+$$
+
+- $y_{ijk}$ is the number of spruce moths for the $k^{th}$ replicate using the $j^{th}$ lure in the $i^{th}$ location
+  - $i \in \{1, 2, 3, 4\}$, $j \in \{1, 2, 3\}$, $k \in \{1, 2, 3, 4\}$
+- $\mu$ is the overall mean
+- $\alpha_{i}$ is the effect of the $i^{th}$ location
+- $\beta_{j}$ is the effect of the $j^{th}$ lure
+- $(\alpha\beta)_{ij}$ is the two-way interaction effect between the $j^{th}$ lure and the $i^{th}$ location
+- $\epsilon_{ijk}$ is the random error associated with the $k^{th}$ replicate using the $j^{th}$ lure in the $i^{th}$ location
+
+:::aside
+If these definitions and the notation feels overwhelming, don't worry, we will draw a picture next!
+:::
+
+## Structure of Factorial Experiment
+- Chalkboard / whiteboard time
+
+## [Testing the Interaction Effect Between Location and Lure]{.r-fit-text}{.smaller}
+$$
+\begin{align*}
+  \textbf{Notation:} & \\[0.25cm]
+  & H_{0}: (\alpha\beta)_{ij} = 0 \hspace{2cm} H_{A}: \text{At least one } (\alpha\beta)_{ij} \neq 0 \\[0.25cm]
+  \textbf{In Words:} & \\[0.25cm]
+  & H_{0}: \text{The interaction term is not significant in the model}  \\[0.25cm] 
+  & H_{A}: \text{The interaction term is significant in the model}
+\end{align*}
+$$
+
+## [Testing the Main Effect of Location]{.r-fit-text}{.smaller}
+$$
+\begin{align*}
+  & \textbf{Notation:} \\[0.25cm]
+  & H_{0}: \alpha_{i} = 0 \hspace{2cm} H_{A}: \text{At least one } \alpha_{i} \neq 0 \\[0.25cm]
+  & \textbf{In Words:} \\[0.25cm]
+  & H_{0}: \text{The mean response variable is the same at all levels of factor A} \\[0.25cm] 
+  & H_{A}: \text{The mean response variable is different for at least one level of factor A} 
+\end{align*}
+$$
+
+:::aside
+Fill in *response variable* and *factor A* in the context of the problem
+:::
+
+:::aside
+One can also write the main effect for _____ is, or is not significant (depending on which hypothesis is being defined)
+:::
+
+## [Testing the Main Effect of Lure]{.r-fit-text}{.smaller}
+$$
+\begin{align*}
+  & \textbf{Notation:} \\[0.25cm]
+  & H_{0}: \beta_{j} = 0 \hspace{2cm} H_{A}: \text{At least one } \beta_{j} \neq 0 \\[0.25cm]
+  & \textbf{In Words:} \\[0.25cm]
+  & H_{0}: \text{The mean response variable is the same at all levels of factor B} \\[0.25cm] 
+  & H_{A}: \text{The mean response variable is different for at least one level of factor B} 
+\end{align*}
+$$
+
+:::aside
+Fill in *response variable* and *factor B* in the context of the problem
+:::
+
+:::aside
+One can also write the main effect for _____ is, or is not significant (depending on which hypothesis is being defined)
+:::
+
+## [Bonferroni Multiple Comparison Method]{.r-fit-text}
+$$
+\text{Reject } H_{0} \text{ if } \\[0.25cm]
+p < \frac{\alpha}{k} \quad\Leftrightarrow\quad k \times p < \alpha
+$$
+
+:::aside
+Where $k$ is the number of pairwise comparisons and $p$ is our p-value
+:::
+
+## [Bonferroni Multiple Comparison Method]{.r-fit-text}
+$$
+\text{Reject } H_{0} \text{ if } \\[0.25cm]
+p < \frac{0.05}{6} \quad\Leftrightarrow\quad 6 \times p < 0.05
+$$
+
+:::aside
+Our specific problem numbers have been input
+:::
+
+## [Bonferroni Multiple Comparison Method]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+pairwise.t.test(moths$number, moths$location, p.adjust.method = "none")
+```
+
+## [Bonferroni Multiple Comparison Method]{.r-fit-text} {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Notice our p-values are 6 (the number of pairwise comparisons) times larger now
+pairwise.t.test(moths$number, moths$location, p.adjust.method = "bonf")
+```
+
+:::aside
+The code and output is provided in the lab assignment to answer Question 9
+:::

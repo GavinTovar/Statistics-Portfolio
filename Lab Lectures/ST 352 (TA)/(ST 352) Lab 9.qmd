@@ -1,0 +1,283 @@
+---
+title: "(ST 352) Lab 9 <br> The Chi-Square Test of Association"
+format:
+  revealjs:
+    incremental: TRUE
+    scrollable: TRUE
+    theme: dark
+    transition: slide
+    transition-speed: slow
+    auto-animate: TRUE
+    chalkboard: TRUE
+---
+
+## Objectives {transition="zoom" transition-speed="slow"}
+- Use R to perform a Test of Association for two categorical variables using the Chi-square methods
+
+## Today's Example {.smaller}
+Using the data collected from the “memory” activity in which you tried to remember as many items as possible that were displayed for 30 seconds, we will investigate if an association exists between the type of person students identified as (morning or evening) and whether or not at least 60% of the items were remembered.
+
+- `pctremember`
+  - "yes" if person remembered at least 60% of the items
+  - "no" if a person remembered less than 60% of the items
+- `type`
+  - "evening" for a self-proclaimed `evening' person
+  - "morning" for a self-proclaimed `morning' person
+
+## Today's Data {transition="zoom" transition-speed="slow"}
+```{r}
+memorygame <- read.delim("C:/Users/Ghcto/OneDrive/Desktop/School/Spring 2024/ST 352 (TA)/Lab 9/memorygame.txt")
+memorygame
+```
+
+## Hypotheses Defined (Notation) {.smaller}
+$$
+\begin{align*}
+\text{Notation:} &  \\[0.25cm]
+  & H_{0}: p_{\text{evening}} = p_{\text{morning}} \quad\quad\Leftrightarrow\quad\quad H_{0}: p_{\text{evening}} - p_{\text{morning}} = 0 \\[0.25cm]
+  & H_{A}: p_{\text{evening}} \neq p_{\text{morning}} \quad\quad\Leftrightarrow\quad\quad H_{A}: p_{\text{evening}} - p_{\text{morning}} \neq 0 \\[0.25cm]
+\end{align*}
+$$
+
+- Where $p_{\text{evening}}$ is the proportion of evening people who remembered at least 60% of the items
+- Where $p_{\text{morning}}$ is the proportion of morning people who remembered at least 60% of the items
+
+## Hypotheses Defined (In Words) {.smaller}
+- Null Hypothesis $H_{0}$
+  - There is no association between type of person (morning or evening) and whether or not they remembered at least 60% of the items
+  - There is no difference in proportions between evening and morning people remembering at least 60% of the items
+- Alternative Hypothesis $H_{A}$
+  - There is an association between type of person (morning or evening) and whether or not they remembered at least 60% of the items
+  - There is a difference in the proportions between evening and morning people remembering at least 60% of the items
+
+:::aside
+Notice, either of each hypothesis (or similar variant) can be used. You don't need two null and two alternative hypothesis in words.
+:::
+
+
+## Table of Counts {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# To make your life easier I would suggest putting the response variable first
+memory.tbl <- table(memorygame$pctremember, memorygame$type)
+```
+
+## Table of Counts {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# To make your life easier I would suggest putting the response variable first
+memory.tbl <- table(memorygame$pctremember, memorygame$type)
+memory.tbl
+```
+
+## Table of Counts {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+addmargins(memory.tbl)
+```
+
+## Proportions Table {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+prop.tbl <- prop.table(memory.tbl, margin = 2)
+```
+
+## Proportions Table {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+prop.tbl <- prop.table(memory.tbl, margin = 2)
+prop.tbl
+```
+
+## Proportions Table {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+round(prop.tbl, 3)
+```
+
+## [Example Format for Question (2) Table]{.r-fit-text}
+|       	| Evening     	| Morning     	| Total 	|
+|-------	|-------------	|-------------	|-------	|
+| No    	| 72 (0.6154) 	| 36 (0.6429) 	| 108   	|
+| Yes   	| 45 (0.3846) 	| 20 (0.3571) 	| 65    	|
+| Total 	| 117         	| 56          	| 173   	|
+
+
+:::aside
+Question 2 can be answered at this time
+:::
+
+## "Expected" Counts {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+memory.test <- chisq.test(memory.tbl)
+```
+
+## "Expected" Counts {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+memory.test <- chisq.test(memory.tbl)
+memory.test
+```
+
+## "Expected" Counts {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+names(memory.test)
+```
+
+## "Expected" Counts {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+memory.test[1:length(memory.test)]
+```
+
+## "Expected" Counts {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+memory.test$expected
+```
+
+## Side-by-Side Bar Chart {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+barplot(prop.tbl)
+```
+
+## Side-by-Side Bar Chart {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+barplot(prop.tbl, beside = TRUE)
+```
+
+## Side-by-Side Bar Chart {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+barplot(prop.tbl, beside = TRUE,
+        col = c("springgreen2", "plum"))
+```
+
+## Side-by-Side Bar Chart {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+barplot(prop.tbl, beside = TRUE,
+        col = c("springgreen2", "plum"),
+        main = "Memory Game Activity",
+        xlab = "Type of Person",
+        ylab = "Proportion")
+```
+
+## Side-by-Side Bar Chart {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+barplot(prop.tbl, beside = TRUE,
+        col = c("springgreen2", "plum"),
+        main = "Memory Game Activity",
+        xlab = "Type of Person",
+        ylab = "Proportion",
+        ylim = c(0,1))
+```
+
+## Side-by-Side Bar Chart {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+barplot(prop.tbl, beside = TRUE,
+        col = c("springgreen2", "plum"),
+        main = "Memory Game Activity",
+        xlab = "Type of Person",
+        ylab = "Proportion",
+        ylim = c(0,1))
+legend("topright", legend = c("Less than 60%", "At least 60%"))
+```
+
+## Side-by-Side Bar Chart {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+barplot(prop.tbl, beside = TRUE,
+        col = c("springgreen2", "plum"),
+        main = "Memory Game Activity",
+        xlab = "Type of Person",
+        ylab = "Proportion",
+        ylim = c(0,1))
+legend("topright", legend = c("Less than 60%", "At least 60%"),
+       fill = c("springgreen2", "plum"))
+```
+
+## Side-by-Side Bar Chart {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+barplot(prop.tbl, beside = TRUE,
+        col = c("springgreen2", "plum"),
+        main = "Memory Game Activity",
+        xlab = "Type of Person",
+        ylab = "Proportion",
+        ylim = c(0,1))
+legend("topright", legend = c("Less than 60%", "At least 60%"),
+       fill = c("springgreen2", "plum"),
+       title = "Percentage (%) Remembered")
+```
+
+## Side-by-Side Bar Chart {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: FALSE
+barplot(prop.tbl, beside = TRUE,
+        col = c("springgreen2", "plum"),
+        main = "Memory Game Activity",
+        xlab = "Type of Person",
+        ylab = "Proportion",
+        ylim = c(0,1))
+legend("topright", legend = c("Less than 60%", "At least 60%"),
+       fill = c("springgreen2", "plum"),
+       title = "Percentage (%) Remembered")
+```
+
+:::aside
+Question 3 can be answered at this time
+:::
+
+## [Extracting $p$-value from Chi-Squared Test]{.r-fit-text}{auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+### Multiple ways to see the p-value
+# Printing out default object output
+memory.test
+```
+
+## [Extracting $p$-value from Chi-Squared Test]{.r-fit-text}{auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Printing only p-value
+memory.test$p.value
+```
+
+## [Extracting $p$-value from Chi-Squared Test]{.r-fit-text}{auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Re-running chi-squared test again
+chisq.test(memory.tbl)
+```
+
+## [Extracting $p$-value from Chi-Squared Test]{.r-fit-text}{auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Printing out default object output
+memory.test
+
+# Printing only p-value
+memory.test$p.value
+
+# Re-running chi-squared test again
+chisq.test(memory.tbl)
+```
+
+:::aside
+All lab questions can be answered at this time
+:::

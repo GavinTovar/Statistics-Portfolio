@@ -1,0 +1,537 @@
+---
+title: "(ST 352) Lab 6 - Multiple Linear Regression Analysis (Interaction & Transformations)"
+format:
+  revealjs:
+    incremental: TRUE
+    scrollable: TRUE
+    theme: dark
+    transition: slide
+    transition-speed: slow
+    auto-animate: TRUE
+    chalkboard: TRUE
+---
+
+## Objectives {transition="zoom" transition-speed="slow"}
+- Perform a regression analysis using a quantitative and categorical explanatory variable 
+  - Explain when an interaction term is needed in the regression model.
+  - Perform a hypothesis test to determine if an interaction term is significant in the model.
+- Obtain and interpret appropriate graphical displays to assess conditions from a multiple linear regression analysis to make inferences to a population of interest, including transforming the response and explanatory variables.
+- Using R, obtain output from a Multiple Linear Regression analysis that best satisfies the conditions.
+  - Using appropriate information in the output, write and interpret the least-squares regression equation
+  - Interpret coefficients in the context of the problem
+  - Use the appropriate information in the output to perform a hypothesis test to determine if at least one of the explanatory variables helps to predict the response variable
+  - Use the appropriate information in the output to perform a hypothesis test to determine if a particular explanatory variable helps to explain the response variable after accounting for the effects of the other explanatory variables in the model
+- Use the least-squares regression equation for prediction
+
+
+## [Part 1: Multiple Linear Regression with Interaction]{.r-fit-text}
+In the Lab 4A and 4B notes, we looked at a data set comparing brain weight and the head size of adults. In particular, we used simple linear regression to answer the question, “Can the brain weight of an adult be predicted by their head size?” In these lab notes, we’ll include a categorical explanatory variable and concentrate on whether an interaction is occurring between the quantitative explanatory variable (head size) and categorical explanatory variable (gender). (Note: the data for this data set were collected many years ago. At that time, there were only two choices for gender for each participant to choose from.)
+
+## Today's Data {transition="zoom" transition-speed="slow"}
+```{r}
+brainhead <- read.delim("C:/Users/Ghcto/OneDrive/Desktop/School/Spring 2024/ST 352 (TA)/Lab 6/brainhead.txt")
+brainhead
+```
+
+## Subsetting the Data
+```{r}
+#| echo: TRUE
+# Only male observations (134 obs)
+brainhead[brainhead$gender == "male",]
+
+# Another way to do the same thing
+subset(brainhead, gender == "male")
+
+# Are these two methods the same?
+identical(subset(brainhead, gender == "male"), brainhead[brainhead$gender == "male",])
+```
+
+## Subsetting the Data
+```{r}
+#| echo: TRUE
+# Only female observations (103 obs)
+brainhead[brainhead$gender == "female",]
+
+# Another way to do the same thing
+subset(brainhead, gender == "female")
+
+# Are these two methods the same?
+identical(subset(brainhead, gender == "female"), brainhead[brainhead$gender == "female",])
+```
+
+## Scatterplot (Part 1: Question 1)
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+# Male observations plotted
+plot(brainwt ~ headsize,
+     data = brainhead[brainhead$gender == "male",])
+```
+
+## Scatterplot (Part 1: Question 1)
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+# Male observations plotted
+plot(brainwt ~ headsize,
+     data = brainhead[brainhead$gender == "male",],
+     pch = 19,
+     col = "blue")
+```
+
+## Scatterplot (Part 1: Question 1)
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+# Male observations plotted
+plot(brainwt ~ headsize,
+     data = brainhead[brainhead$gender == "male",],
+     pch = 19,
+     col = "blue",
+     main = "Brain Weight Versus Head Size by Gender",
+     xlab = "Head Size (cm^3)",
+     ylab = "Brain Weight (grams)")
+```
+
+## Scatterplot (Part 1: Question 1)
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+# Male observations plotted
+plot(brainwt ~ headsize,
+     data = brainhead[brainhead$gender == "male",],
+     pch = 19,
+     col = "blue",
+     main = "Brain Weight Versus Head Size by Gender",
+     xlab = "Head Size (cm^3)",
+     ylab = "Brain Weight (grams)")
+# Overlaying female observations
+points(brainwt ~ headsize,
+       data = brainhead[brainhead$gender == "female",],
+       col = "pink",
+       pch = 17)
+```
+
+## Scatterplot (Part 1: Question 1)
+```{r}
+#| echo: TRUE
+#| code-line-numbers: "9,10"
+#| output-location: fragment
+# Male observations plotted
+plot(brainwt ~ headsize,
+     data = brainhead[brainhead$gender == "male",],
+     pch = 19,
+     col = "blue",
+     main = "Brain Weight Versus Head Size by Gender",
+     xlab = "Head Size (cm^3)",
+     ylab = "Brain Weight (grams)",
+     xlim = c(2000, 5000),
+     ylim = c(500, 2000))
+# Overlaying female observations
+points(brainwt ~ headsize,
+       data = brainhead[brainhead$gender == "female",],
+       col = "pink",
+       pch = 17)
+```
+
+## Determining limits
+```{r}
+#| echo: TRUE
+summary(brainhead)
+```
+
+- We want our limits to be a little wider than the range so our minimum and maximum points can be clearly seen
+
+## Scatterplot (Part 1: Question 1)
+```{r}
+#| echo: TRUE
+#| code-line-numbers: "9,10"
+#| output-location: fragment
+# Male observations plotted
+plot(brainwt ~ headsize,
+     data = brainhead[brainhead$gender == "male",],
+     pch = 19,
+     col = "blue",
+     main = "Brain Weight Versus Head Size by Gender",
+     xlab = "Head Size (cm^3)",
+     ylab = "Brain Weight (grams)",
+     xlim = c(2500, 5000),
+     ylim = c(800, 1800))
+# Overlaying female observations
+points(brainwt ~ headsize,
+       data = brainhead[brainhead$gender == "female",],
+       col = "pink",
+       pch = 17)
+```
+
+## [Seperate Linear Models for Male and Female Observations]{.r-fit-text}
+```{r}
+#| echo: TRUE
+# Linear model for male observations
+male.mod <- lm(brainwt ~ headsize, data = brainhead[brainhead$gender == "male",])
+
+# Linear model for female observations
+female.mod <- lm(brainwt ~ headsize, data = brainhead[brainhead$gender == "female",])
+```
+
+## [Scatterplot with Regression Lines (Part 1: Question 1)]{.r-fit-text}
+```{r}
+#| echo: TRUE
+#| code-line-numbers: "16,17"
+#| output-location: fragment
+# Male observations plotted
+plot(brainwt ~ headsize,
+     data = brainhead[brainhead$gender == "male",],
+     pch = 19,
+     col = "blue",
+     main = "Brain Weight Versus Head Size by Gender",
+     xlab = "Head Size (cm^3)",
+     ylab = "Brain Weight (grams)",
+     xlim = c(2500, 5000),
+     ylim = c(800, 1800))
+# Overlaying female observations
+points(brainwt ~ headsize,
+       data = brainhead[brainhead$gender == "female",],
+       col = "pink",
+       pch = 17)
+# Male linear model regression line
+abline(male.mod, col = "blue", lty = 1, lwd = 2)
+```
+
+## [Scatterplot with Regression Lines (Part 1: Question 1)]{.r-fit-text}
+```{r}
+#| echo: TRUE
+#| code-line-numbers: "18,19"
+#| output-location: fragment
+# Male observations plotted
+plot(brainwt ~ headsize,
+     data = brainhead[brainhead$gender == "male",],
+     pch = 19,
+     col = "blue",
+     main = "Brain Weight Versus Head Size by Gender",
+     xlab = "Head Size (cm^3)",
+     ylab = "Brain Weight (grams)",
+     xlim = c(2500, 5000),
+     ylim = c(800, 1800))
+# Overlaying female observations
+points(brainwt ~ headsize,
+       data = brainhead[brainhead$gender == "female",],
+       col = "pink",
+       pch = 17)
+# Male linear model regression line
+abline(male.mod, col = "blue", lty = 1, lwd = 2)
+# Female linear model regression line
+abline(female.mod, col = "pink", lty = 1, lwd = 2)
+```
+
+## [Scatterplot with Regression Lines & Legend (Part 1: Question 1)]{.r-fit-text}
+```{r}
+#| echo: TRUE
+#| code-line-numbers: "20,21,22"
+#| output-location: fragment
+# Male observations plotted
+plot(brainwt ~ headsize,
+     data = brainhead[brainhead$gender == "male",],
+     pch = 19,
+     col = "blue",
+     main = "Brain Weight Versus Head Size by Gender",
+     xlab = "Head Size (cm^3)",
+     ylab = "Brain Weight (grams)",
+     xlim = c(2500, 5000),
+     ylim = c(800, 1800))
+# Overlaying female observations
+points(brainwt ~ headsize,
+       data = brainhead[brainhead$gender == "female",],
+       col = "pink",
+       pch = 17)
+# Male linear model regression line
+abline(male.mod, col = "blue", lty = 1, lwd = 2)
+# Female linear model regression line
+abline(female.mod, col = "pink", lty = 1, lwd = 2)
+# Adding a legend
+legend("topleft",
+       legend = c("Males", "Females"))
+```
+
+## [Scatterplot with Regression Lines & Legend (Part 1: Question 1)]{.r-fit-text}
+```{r}
+#| echo: TRUE
+#| code-line-numbers: "20,21,22,23"
+#| output-location: fragment
+# Male observations plotted
+plot(brainwt ~ headsize,
+     data = brainhead[brainhead$gender == "male",],
+     pch = 19,
+     col = "blue",
+     main = "Brain Weight Versus Head Size by Gender",
+     xlab = "Head Size (cm^3)",
+     ylab = "Brain Weight (grams)",
+     xlim = c(2500, 5000),
+     ylim = c(800, 1800))
+# Overlaying female observations
+points(brainwt ~ headsize,
+       data = brainhead[brainhead$gender == "female",],
+       col = "pink",
+       pch = 17)
+# Male linear model regression line
+abline(male.mod, col = "blue", lty = 1, lwd = 2)
+# Female linear model regression line
+abline(female.mod, col = "pink", lty = 1, lwd = 2)
+# Adding a legend
+legend("topleft",
+       legend = c("Males", "Females"),
+       col = c("blue", "pink"))
+```
+
+## [Scatterplot with Regression Lines & Legend (Part 1: Question 1)]{.r-fit-text}
+```{r}
+#| echo: TRUE
+#| code-line-numbers: "20,21,22,23,24,25"
+#| output-location: fragment
+# Male observations plotted
+plot(brainwt ~ headsize,
+     data = brainhead[brainhead$gender == "male",],
+     pch = 19,
+     col = "blue",
+     main = "Brain Weight Versus Head Size by Gender",
+     xlab = "Head Size (cm^3)",
+     ylab = "Brain Weight (grams)",
+     xlim = c(2500, 5000),
+     ylim = c(800, 1800))
+# Overlaying female observations
+points(brainwt ~ headsize,
+       data = brainhead[brainhead$gender == "female",],
+       col = "pink",
+       pch = 17)
+# Male linear model regression line
+abline(male.mod, col = "blue", lty = 1, lwd = 2)
+# Female linear model regression line
+abline(female.mod, col = "pink", lty = 1, lwd = 2)
+# Adding a legend
+legend("topleft",
+       legend = c("Males", "Females"),
+       col = c("blue", "pink"),
+       pch = c(19, 17),
+       lty = c(1, 1))
+```
+
+## All for what?
+- Why did we go through the trouble of making this plot and all its additions?
+  - Visually looking for some kind of "interaction effect"
+  - Lab note: The reason for adding separate regression lines for each comparison group is to see if the relationship between the response and quantitative explanatory variable is the same for both comparison groups. 
+    - If the lines have different slopes, this may indicate that an interaction term is needed in the model.
+    
+:::aside
+Questions 1 and 2 can be answered at this time
+:::
+
+## Constructing the Linear Model
+```{r}
+#| echo: TRUE
+lmod <- lm(brainwt ~ headsize + gender + headsize:gender, data = brainhead)
+summary(lmod)
+```
+
+## Constructing the Linear Model
+```{r}
+#| echo: TRUE
+# Similar code (same in this case), the * does all interaction effects (if there are more than one)
+lmod <- lm(brainwt ~ headsize + gender + headsize*gender, data = brainhead)
+summary(lmod)
+```
+
+## [Hypothesis Test to Determine if the Interaction Term]{.r-fit-text}{.smaller}
+$$
+\begin{align*}
+\text{Model:} & \\[0.25cm]
+\hat{y} & = \beta_{0} + \beta_{1}x_{1} + \beta_{2}x_{2} + \beta_{3}(x_{1}*x_{2}) \\[0.25cm]
+\text{Same Model:} & \\[0.25cm]
+\hat{y} & = \beta_{0} + \beta_{1}\text{headsize} + \beta_{2}\text{male} + \beta_{3}\text{headsize}\times\text{male} \\[0.50cm]
+& H_{0}: \beta_{3} = 0 \\[0.25cm]
+& \text{Implies the interaction term is not statistically significant} \\[0.25cm]
+& H_{A}: \beta_{3} \neq 0 \\[0.25cm]
+& \text{Implies the interaction term is statistically significant} \\[0.25cm]
+\end{align*}
+$$
+
+:::aside
+Using the summary regression output and information above, Questions 3 to 5 can be answered
+:::
+
+## [Part 2: Multiple Linear Regression with Transformation]{.r-fit-text}
+```{r}
+fish <- read.delim("C:/Users/Ghcto/OneDrive/Desktop/School/Spring 2024/ST 352 (TA)/Lab 6/fish.txt")
+fish
+```
+
+## [Assessing High Correlation Among Explanatory Variables]{.r-fit-text}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+pairs(~ residences + size + structure, data = fish,
+      pch = 19,
+      col = "salmon")
+```
+
+## [Assessing High Correlation Among Explanatory Variables]{.r-fit-text}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+pairs(~ residences + size + structure, data = fish,
+      pch = 19,
+      col = "salmon",
+      main = "Scatterplot Matrix of Explanatory Variables")
+```
+
+## [Assessing High Correlation Among Explanatory Variables]{.r-fit-text}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+pairs(~ residences + size + structure, data = fish,
+      pch = 19,
+      col = "salmon",
+      main = "Scatterplot Matrix of Explanatory Variables",
+      lower.panel = NULL)
+```
+
+## [Assessing High Correlation Among Explanatory Variables]{.r-fit-text}
+```{r}
+#| echo: TRUE
+cor(fish)
+```
+
+:::aside
+Question 6 can be answered at this time
+:::
+
+## Assessing Linearity Condition
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+pairs(catch ~ residences + size + structure, data = fish)
+```
+
+## Assessing Linearity Condition
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+pairs(catch ~ residences + size + structure, data = fish,
+      pch = 19,
+      col = "#e8b52a")
+```
+
+## Assessing Linearity Condition
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+pairs(catch ~ residences + size + structure, data = fish,
+      pch = 19,
+      col = "#e8b52a",
+      main = "Scatterplot Matrix (All Variables)",
+      lower.panel = NULL)
+```
+
+## [Assessing Constant Variance Condition]{.r-fit-text}
+```{r}
+#| echo: TRUE
+# Create linear model for the residuals
+fishmod <- lm(catch ~ residences + size + structure + access, data = fish)
+
+# Residual plot
+plot(fishmod$residuals ~ fishmod$fitted)
+```
+
+## [Assessing Constant Variance Condition]{.r-fit-text}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+# Residual plot
+plot(fishmod$residuals ~ fishmod$fitted,
+      pch = 19,
+      col = "purple")
+```
+
+## [Assessing Constant Variance Condition]{.r-fit-text}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+# Residual plot
+plot(fishmod$residuals ~ fishmod$fitted,
+      pch = 19,
+      col = "purple",
+      main = "Residuals vs Predicted Values",
+      xlab = "Residual",
+      ylab = "Predicted Value")
+```
+
+## [Assessing Constant Variance Condition]{.r-fit-text}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+# Residual plot
+plot(fishmod$residuals ~ fishmod$fitted,
+      pch = 19,
+      col = "purple",
+      main = "Residuals vs Predicted Values",
+      xlab = "Residual",
+      ylab = "Predicted Value")
+abline(h = 0)
+```
+
+## Assessing Normality Condition
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+qqnorm(fishmod$residuals)
+```
+
+## Assessing Normality Condition
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+qqnorm(fishmod$residuals,
+       pch = 19,
+       col = "lawngreen",
+       main = "Normal Probability Plot of Residuals")
+```
+
+## Assessing Normality Condition
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+qqnorm(fishmod$residuals,
+       pch = 19,
+       col = "lawngreen",
+       main = "Normal Probability Plot of Residuals")
+qqline(fishmod$residuals)
+```
+
+## Model Selection Options
+```{r}
+#| echo: TRUE
+# Natural log transformation of catch only
+fishmod2 <- lm(log(catch) ~ residences + size + structure + access, 
+               data = fish)
+
+# Natural log transformation of the quantitative explanatory variables 
+## only (ln(residences), ln(size) and ln(structure)
+fishmod3 <- lm(catch ~ log(residences) + log(size) + log(structure) + access, 
+               data = fish)
+
+# Natural log transformation of all variables (except access)
+fishmod4 <- lm(log(catch) ~ log(residences) + log(size) + log(structure) + access, 
+               data = fish)
+```
+
+:::aside
+Notice we can't log a categorical variable (`access`) since there are 0's (and it doesn't make sense to)
+:::
+
+## Predicting
+```{r}
+#| echo: TRUE
+#| eval: FALSE
+# You will input your chosen model here
+predict(lmod, data.frame(size = 1.5, residences = 85, access = 0, structure = 75))
+```
+

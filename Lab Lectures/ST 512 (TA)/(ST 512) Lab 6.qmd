@@ -1,0 +1,594 @@
+---
+title: "(ST 412/512) Lab 6 <br> Modeling Means"
+format:
+  revealjs:
+    incremental: TRUE
+    scrollable: TRUE
+    theme: dark
+    transition: concave
+    transition-speed: slow
+    auto-animate: TRUE
+    chalkboard: TRUE
+header-includes:
+  - |
+    <style>
+      .reveal .barelysmaller {
+          font-size: 0.90em;  /* Adjust as needed */
+        }
+      
+      .reveal .smaller {
+        font-size: 0.75em;  /* Adjust as needed */
+      }
+
+      .reveal .tiny-font {
+        font-size: 0.5em;  /* Even smaller font size */
+        white-space: nowrap;
+        overflow-x: auto;  /* Allow horizontal scrolling */
+      }
+    </style>
+---
+
+## Lab Objectives
+* Displaying modeled means
+
+## Loading Data and Packages {auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+library(Sleuth3)
+library(ggplot2)
+```
+
+## Dataset {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+* `case1301` (Seaweed Grazers)
+  * The grazers were limpets (L), small fishes (f) and large fishes (F). Each plot received one of six treatments named by which grazers were allowed access. In addition, the researcher applied the treatments in eight blocks of 12 plots each. Within each block she randomly assigned treatments to plots. The blocks covered a wide range of tidal conditions.
+  * 96 observations (rows)
+  * 3 variables (columns)
+    * `Cover`: percent of regenerated seaweed cover
+    * `Block`: a factor with levels "B1", "B2", "B3", "B4", "B5", "B6", "B7" and "B8"
+    * `Treat`: a factor indicating treatment, with levels "C", "f", "fF", "L", "Lf" and "LfF"
+
+## Dataset {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+case1301
+```
+
+## Dataset {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Create log-odds ratio
+case1301$log_r_ratio <- with(case1301, log(Cover/(100-Cover)))
+```
+
+## Dataset {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Check what it looks like
+case1301
+```
+
+## Cell Average {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Find all cell averages
+cell_avgs <- aggregate(log_r_ratio ~ Block + Treat, data = case1301, FUN = mean)
+```
+
+## Cell Average {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Find all cell averages
+cell_avgs <- aggregate(log_r_ratio ~ Block + Treat, data = case1301, FUN = mean)
+cell_avgs
+```
+
+## Cell Average {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| eval: FALSE
+# What this code is doing
+round(addmargins(xtabs(log_r_ratio ~ Block + Treat, cell_avgs), FUN = mean), 2)
+```
+
+## Cell Average {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# What this code is doing
+xtabs(log_r_ratio ~ Block + Treat, data = cell_avgs)
+```
+
+## Cell Average {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# What this code is doing
+addmargins(xtabs(log_r_ratio ~ Block + Treat, data = cell_avgs), FUN = mean)
+```
+
+## Cell Average {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# What this code is doing
+round(addmargins(xtabs(log_r_ratio ~ Block + Treat, data = cell_avgs), FUN = mean), 2)
+```
+
+## Plotting {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+qplot(Block, log_r_ratio, data = cell_avgs, colour = Treat) +
+  ylab("Average log regeneratio ratio")
+```
+
+## Plotting {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+# ggplot() syntax
+ggplot(data = cell_avgs, aes(x = Block, y = log_r_ratio, color = Treat)) +
+  geom_point() +
+  labs(y = "Average Log Regeneratio Ratio")
+```
+
+## Plotting {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+# Reordering Block by the ordering of the log ratio
+qplot(reorder(Block, log_r_ratio), log_r_ratio, data = cell_avgs,
+  colour = Treat, geom = "line", group = Treat) + 
+  ylab("Average log regeneratio ratio")
+```
+
+## Plotting {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+# ggplot() syntax
+ggplot(data = cell_avgs, aes(x = reorder(Block, log_r_ratio), y = log_r_ratio, 
+                             color = Treat, group = Treat)) +
+  geom_line() +
+  labs(y = "Average Log Regeneratio Ratio")
+```
+
+## Plotting {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+# Adding points to plot
+qplot(reorder(Block, log_r_ratio), log_r_ratio, data = cell_avgs,
+  colour = Treat, geom = "line", group = Treat) + 
+  ylab("Average log regeneratio ratio") +
+  geom_point(data = cell_avgs)
+```
+
+## Plotting {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+# ggplot() syntax
+ggplot(data = cell_avgs, aes(x = reorder(Block, log_r_ratio), y = log_r_ratio, 
+                             color = Treat, group = Treat)) +
+  geom_line() +
+  geom_point() +
+  labs(y = "Average Log Regeneratio Ratio")
+```
+
+## Predicting {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Creating additive model
+fit_add <- lm(log_r_ratio ~ Block + Treat, data = case1301)
+```
+
+## Predicting {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Creating additive model
+fit_add <- lm(log_r_ratio ~ Block + Treat, data = case1301)
+
+# Creating saturated model
+fit_sat <- lm(log_r_ratio ~ Block + Treat + Block:Treat, data = case1301)
+```
+
+## Predicting {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Creating all explanatory combinations (in a new object)
+new_data <- expand.grid(
+  Block = unique(case1301$Block),
+  Treat = unique(case1301$Treat))
+```
+
+## Predicting {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Creating all explanatory combinations (in a new object)
+new_data <- expand.grid(
+  Block = unique(case1301$Block),
+  Treat = unique(case1301$Treat))
+
+# Predicting all explanatory value combinations on additive model
+new_data$pred <- predict(fit_add, newdata = new_data)
+```
+
+## Predicting {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Looking at new_data object we're creating
+new_data
+```
+
+## Predicting {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Present as a table
+round(xtabs(pred ~ Block + Treat, new_data), 2)
+```
+
+## Plotting Predicting {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+# Plotting reordered Block and predictions for additive model
+qplot(reorder(Block, pred), pred, data = new_data, 
+      colour = Treat, geom = "line", group = Treat)
+```
+
+## Plotting Predicting {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+# ggplot() syntax
+ggplot(data = new_data, aes(x = reorder(Block, pred), y = pred, 
+                             color = Treat, group = Treat)) +
+  geom_line()
+```
+
+## Predicting {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Predicting all explanatory value combinations on saturated model
+new_data$pred_sat <- predict(fit_sat, newdata = new_data)
+```
+
+## Predicting {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Looking at new_data object we're creating
+new_data
+```
+
+## Predicting {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Present as a table
+round(xtabs(pred_sat ~ Block + Treat, new_data), 2)
+```
+
+## Plotting Predicting {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+# Plotting reordered Block and predictions for saturated model
+qplot(reorder(Block, pred_sat), pred_sat, data = new_data,
+      colour = Treat, geom = "line", group = Treat)
+```
+
+## Plotting Predicting {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+# ggplot() syntax
+ggplot(data = new_data, aes(x = reorder(Block, pred_sat), y = pred_sat, 
+                             color = Treat, group = Treat)) +
+  geom_line()
+```
+
+## Next Dataset {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Load another package
+library(MASS)
+```
+
+## Dataset {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+* `ex1416` (Blood Brain Barrier)
+  * Researchers designed an experiment to investigate how delivery of brain cancer antibody is influenced by tumor size, antibody molecular weight, blood-brain barrier disruption, and delivery route.
+  * 36 observations (rows)
+  * 6 variables (columns)
+    * `Agent`: a factor with levels "AIB", "DEX7" and "MTX"
+    * `Treatment`: a factor with levels "BD" and "NS"
+    * `Route`: a factor with levels "IA" and "IV"
+    * `DaysPost`: days after inoculation
+    * `BAT`: concentration of antibody in the part of the brain around the tumor
+    * `LH`: concentration of antibody in the unaffected part of the brain
+    
+## Next Dataset {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Next data set
+ex1416
+```
+
+## Next Dataset {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Renaming data as "Data1" (optional)
+Data1 <- ex1416
+```
+
+## Next Dataset {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Creating repsonse variables
+Data1$Response <- Data1$BAT/Data1$LH
+```
+
+## Next Dataset {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Creating repsonse variables
+Data1$Response <- Data1$BAT/Data1$LH
+
+# Changing DaysPost to a factor variable
+Data1$fac.DaysPost <- factor(Data1$DaysPost)
+```
+
+## Plotting {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+# Not sure why the points are made to be so small
+# Grouping by `Treatment'
+ggplot(data = Data1, aes(x = fac.DaysPost, y = Response, group = Treatment, colour = Treatment)) +
+  geom_point(size = 1) + 
+  theme(axis.text = element_text(size = 12),
+        axis.title = element_text(size = 14, face = "bold"))
+```
+
+## Plotting {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+# Fixing point size
+# Grouping by `Treatment'
+ggplot(data = Data1, aes(x = fac.DaysPost, y = Response, group = Treatment, colour = Treatment)) +
+  geom_point() + 
+  theme(axis.text = element_text(size = 12),
+        axis.title = element_text(size = 14, face = "bold"))
+```
+
+## Plotting {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+# Removed "size = 1" from lab notes
+# Grouping by `Route'
+ggplot(data = Data1, aes(x = fac.DaysPost, y = Response, group = Route, colour = Route)) +
+  geom_point() + 
+  theme(axis.text = element_text(size = 12),
+        axis.title = element_text(size = 14, face = "bold"))
+```
+
+## Plotting {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+# Removed "size = 1" from lab notes
+# Grouping by `Agent'
+ggplot(data = Data1, aes(x = fac.DaysPost, y = Response, group = Agent, colour = Agent)) +
+  geom_point() + 
+  theme(axis.text = element_text(size = 12),
+        axis.title = element_text(size = 14, face = "bold"))
+```
+
+## Fitting Model {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+# Create linear model on new dataset
+lmod1 <- lm(Response ~ fac.DaysPost + Treatment + Agent + Route, data = Data1)
+```
+
+## Fitting Model {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+# Fortify data
+lmod1 <- lm(Response ~ fac.DaysPost + Treatment + Agent + Route, data = Data1)
+Data2 <- fortify(lmod1, Data1)
+```
+
+## Fitting Model {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+# Looking at Data2
+Data2
+```
+
+## Plotting {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+# Plotting Fitted vs. Residuals
+ggplot(data = Data2, aes(.fitted, .resid)) + 
+  geom_point() +
+  theme(axis.text = element_text(size = 12),
+        axis.title = element_text(size = 14, face = "bold"))
+```
+
+## Box-Cox Transformation {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+# Checking for transformation
+boxcox(lmod1)
+```
+
+## Box-Cox Transformation {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+$$
+y^{(\lambda)} = \begin{cases}
+  \frac{y^{\lambda} - 1}{\lambda}, & \text{if } \lambda \neq 0 \\[0.25cm]
+  \ln(y), & \text{if } \lambda = 0
+\end{cases}
+$$
+
+* Where $y$ is our positive response variable
+* and $\lambda$ is the transformation parameter that determines the shape of the transformation, notice if
+  * $\lambda = 1$ it is the identity function and thus no transformation
+  * $\lambda = 0$ implies a natural log transformation
+  * $\lambda = -1$ implies a reciprocal transformation $\frac{1}{y}$
+  * $\lambda = 0.5$ implies a square root transformation
+  * etc.
+  
+## Box-Cox Transformation {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Performing a log transformation
+Data1$log.Response <- log(Data1$Response)
+```
+
+## Fitting Log Model {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+lmod2 <- lm(log.Response ~ fac.DaysPost + Treatment + Agent + Route, data = Data1)
+Data3 <- fortify(lmod2, Data1)
+```
+
+## Fitting Log Model {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Fortify data
+lmod2 <- lm(log.Response ~ fac.DaysPost + Treatment + Agent + Route, data = Data1)
+Data3 <- fortify(lmod2, Data1)
+```
+
+## Fitting Log Model {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Looking at Data3
+Data3
+```
+
+## Plotting {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+# Plotting Fitted vs. Residuals
+ggplot(data = Data3, aes(.fitted, .resid)) + 
+  geom_point() +
+  theme(axis.text = element_text(size = 12),
+        axis.title = element_text(size = 14, face = "bold"))
+```
+
+## Plotting {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+# Plotting reordered DaysPost with fitted values - grouped by Treatment
+ggplot(data = Data3, aes(x = reorder(DaysPost, Response), y = .fitted, 
+                         group = Treatment, color = Treatment)) + 
+  geom_point() +
+  theme(axis.text = element_text(size = 12),
+        axis.title = element_text(size = 14, face = "bold")) +
+  labs(y = "Mean log(Reponse)")
+```
+
+## Plotting {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+# Plotting reordered DaysPost with fitted values - grouped by Route
+ggplot(data = Data3, aes(x = reorder(DaysPost, Response), y = .fitted, 
+                         group = Route, color = Route)) + 
+  geom_point() +
+  theme(axis.text = element_text(size = 12),
+        axis.title = element_text(size = 14, face = "bold")) +
+  labs(y = "Mean log(Reponse)")
+```
+
+## Plotting {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+#| output-location: fragment
+# Plotting reordered DaysPost with fitted values - grouped by Agent
+ggplot(data = Data3, aes(x = reorder(DaysPost, Response), y = .fitted, 
+                         group = Agent, color = Agent)) + 
+  geom_point() +
+  theme(axis.text = element_text(size = 12),
+        axis.title = element_text(size = 14, face = "bold")) +
+  labs(y = "Mean log(Reponse)")
+```
+
+## Fitting Saturated Model {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+
+* With 4 factors:
+  * `Agent`: Factor w/ 3 levels "AIB", "DEX7" and "MTX"
+  * `Treatment`: Factor w/ 2 with levels "BD" and "NS"
+  * `Route`: Factor w/ 2 levels "IA" and "IV"
+  * `DaysPost`: Factor w/ 3 levels "8","12","16"
+* This means there are $3 \cdot 2 \cdot 2 \cdot 3 = 36$ cells
+* Recall we only have 36 observations, thus this model cannot be fit, if we try...
+
+## Fitting Saturated Model {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Trying to fit saturated model
+lmod3 <- lm(log.Response ~ fac.DaysPost + Treatment + Agent + Route + 
+              fac.DaysPost * Treatment * Agent * Route,
+            data = Data1)
+summary(lmod3)
+```
+
+## Fitting Saturated Model {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Uh-Oh
+summary(lmod3)
+```
+
+## Fitting Saturated Model {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Uh-Oh
+anova(lmod3)
+```
+
+## Fitting Saturated Model {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Fitting model with continuous version of DaysPost
+lmod4 <- lm(log.Response ~ DaysPost + Treatment + Agent + Route + 
+              DaysPost * Treatment * Agent * Route, 
+            data = Data1)
+```
+
+## Fitting Saturated Model {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Nice
+summary(lmod4)
+```
+
+## Fitting Saturated Model {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+anova(lmod4)
+```
+
+## Fitting Saturated Model {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# Removing `Agent` from model
+lmod5 <- lm(log.Response ~ DaysPost + Treatment + Route + 
+              DaysPost * Treatment * Route, 
+            data = Data1)
+```
+
+## Fitting Saturated Model {.smaller auto-animate="true" auto-animate-easing="ease-in-out"}
+```{r}
+#| echo: TRUE
+# It works!
+summary(lmod5)
+```
