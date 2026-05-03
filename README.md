@@ -9,12 +9,16 @@ The materials in this repository reflect graduate-level training in statistical 
 Core areas include:
 
 - Statistical modeling and inference  
-- Model selection and regularization  
-- Simulation-based methodology  
-- Generalized linear and mixed models  
-- Survival and time series analysis  
-- Computational statistics in R and Python  
-- Resampling and missing data methods  
+- Model selection
+  - Sequential variable selection in survival analysis
+  - Effects of imputation and resampling techniques in missing data
+  - Sequential and regularization model selection
+- Simulation-based methodology
+- Generalized linear mixed models (GLMMs)
+- Resampling methods
+- Missing Data Explorations
+  - EC and ECM implementations
+  - Stan Usage
 
 ## Contents
 
@@ -36,17 +40,15 @@ Code and analyses exploring statistical behavior through simulation, including:
 More in-depth work connected to ongoing research interests, including:
 - Model selection and inference under uncertainty  
 - Effects of human judgment in statistical decision-making  
-- Methodological comparisons in survival and regression settings  
+- Methodological comparisons in survival and regression settings
+- Missing data mechanisms 
 
-### Presentations & Writing
-Supporting materials for conference presentations, guest lectures, and written research work.
-
-### Software Contributions
-Development and maintenance of statistical software, including contributions to R packages and computational tools.
+### Presentations, Guides, Reports
+Supporting materials for conference presentations, guest lectures, guides, and written research work.
 
 ## Tools & Technologies
 
-- **Languages:** R, Python, C/C++, Stan, JavaScript  
+- **Languages:** R, Python, C/C++, Stan, JavaScript
 - **Statistical Computing:** Tidyverse, data.table, NumPy, SciPy  
 - **Modeling:** GLMs, GLMMs, survival models, time series methods  
 - **Simulation & Inference:** Monte Carlo methods, bootstrap, resampling techniques  
